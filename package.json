@@ -2,6 +2,10 @@
   "name": "zapatos",
   "version": "0.1.0",
   "description": "Zero-abstraction Postgres for TypeScript",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jawj/zapatos"
+  },
   "main": "src/index.js",
   "bin": "./generate-schema.ts",
   "scripts": {
