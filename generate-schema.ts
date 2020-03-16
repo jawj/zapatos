@@ -223,14 +223,19 @@ const tsForDBConfigAndSchemaRules = async (dbConfig: pg.ClientConfig, schemas: S
   return ts;
 }
 
+const getOpts = () => {
+  const
+    argsJSON = process.argv[2],
+    args = JSON.parse(argsJSON),
+    schemaRules = args.schemas ?? { public: { include: '*', exclude: [] } },
+    dbConfig = args.db;
+  
+  return { dbConfig, schemaRules };
+};
 
 (async () => {
   const
-    [$0, $1, dbConfigJSON, schemaRulesJSON] = process.argv,
-    dbConfig = JSON.parse(dbConfigJSON),
-    schemaRules = schemaRulesJSON ?
-      JSON.parse(schemaRulesJSON) :
-      { public: { include: '*', exclude: [] } },
+    { dbConfig, schemaRules } = getOpts(),
     ts = await tsForDBConfigAndSchemaRules(dbConfig, schemaRules),
     folderName = 'zapatos',
     srcName = 'src',
@@ -240,10 +245,9 @@ const tsForDBConfigAndSchemaRules = async (dbConfig: pg.ClientConfig, schemas: S
     relativePathToCode = path.relative(folderName, pathToCode),
     schemaLocation = path.join(folderName, schemaName);
   
-  fs.mkdirSync(folderName, { recursive: true });  // i.e. mkdir -p
-  fs.unlinkSync(symlinkLocation);
+  if (!fs.existsSync(folderName)) fs.mkdirSync(folderName);
+  if (fs.existsSync(symlinkLocation)) fs.unlinkSync(symlinkLocation);
   fs.symlinkSync(relativePathToCode, symlinkLocation);
   fs.writeFileSync(schemaLocation, ts, { flag: 'w' });
 })();
-
-// npx zapatos '{ "connectionString": "postgresql://localhost/mostly_ormless" }' '{ "public": { "include": "*", "exclude": ["geography_columns", "geometry_columns", "raster_columns", "raster_overviews", "spatial_ref_sys"] } }'
+  
