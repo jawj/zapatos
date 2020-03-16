@@ -2,6 +2,7 @@
 
 import * as pg from 'pg';
 import * as fs from 'fs';
+import * as path from 'path';
 import * as db from './src';
 import * as s from './schema'
 
@@ -225,16 +226,24 @@ const tsForDBConfigAndSchemaRules = async (dbConfig: pg.ClientConfig, schemas: S
 
 (async () => {
   const
-    [_0, _1, dbConfigJSON, schemaRulesJSON] = process.argv,
+    [$0, $1, dbConfigJSON, schemaRulesJSON] = process.argv,
     dbConfig = JSON.parse(dbConfigJSON),
     schemaRules = schemaRulesJSON ?
       JSON.parse(schemaRulesJSON) :
       { public: { include: '*', exclude: [] } },
-    ts = await tsForDBConfigAndSchemaRules(dbConfig, schemaRules);
+    ts = await tsForDBConfigAndSchemaRules(dbConfig, schemaRules),
+    folderName = 'zapatos',
+    srcName = 'src',
+    schemaName = 'schema.ts',
+    symlinkLocation = path.join(folderName, srcName),
+    pathToCode = path.join(__dirname, srcName),
+    relativePathToCode = path.relative(folderName, pathToCode),
+    schemaLocation = path.join(folderName, schemaName);
   
-  fs.mkdirSync('zapatos', { recursive: true });  // i.e. mkdir -p
-  fs.symlinkSync(`${__dirname}/src`, 'zapatos/src');
-  fs.writeFileSync('zapatos/schema.ts', ts, { flag: 'w' });
+  fs.mkdirSync(folderName, { recursive: true });  // i.e. mkdir -p
+  fs.unlinkSync(symlinkLocation);
+  fs.symlinkSync(relativePathToCode, symlinkLocation);
+  fs.writeFileSync(schemaLocation, ts, { flag: 'w' });
 })();
 
 // npx zapatos '{ "connectionString": "postgresql://localhost/mostly_ormless" }' '{ "public": { "include": "*", "exclude": ["geography_columns", "geometry_columns", "raster_columns", "raster_overviews", "spatial_ref_sys"] } }'
