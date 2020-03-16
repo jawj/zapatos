@@ -1,5 +1,6 @@
 
-// NOT auto-generated, since system tables do not show up the same way as normal ones
+// this schema describes the system tables/views that we interrogate to generate the user's schema
+// it is NOT auto-generated, since data on system tables doesn't show up in system tables!
 
 import {
   JSONValue,
