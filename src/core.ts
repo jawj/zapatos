@@ -14,19 +14,19 @@ import { TxnClient } from './transaction';
 // === symbols, types, wrapper classes and shortcuts ===
 
 /**
- * Compiles to DEFAULT for use in INSERT/UPDATE queries.
+ * Compiles to `DEFAULT` for use in `INSERT`/`UPDATE` queries.
  */
 export const Default = Symbol('DEFAULT');
 export type DefaultType = typeof Default;
 
 /**
- * Compiles to the current column name within a Whereable
+ * Compiles to the current column name within a `Whereable`.
  */
 export const self = Symbol('self');
 export type SelfType = typeof self;
 
 /**
- * Signals all rows are to be returned, without filtering via a WHERE clause
+ * Signals all rows are to be returned (without filtering via a `WHERE` clause)
  */
 export const all = Symbol('all');
 export type AllType = typeof all;
@@ -36,67 +36,67 @@ export type JSONObject = { [k: string]: JSONValue };
 export type JSONArray = JSONValue[];
 
 /**
- * Date represented as an ISO8601 string in JSON
+ * Date represented as an ISO8601 string in JSON.
  */
 export type DateString = string;
 
 /**
- * Compiles to a numbered query parameter ($1, $2, etc) and adds the wrapped value 
+ * Compiles to a numbered query parameter (`$1`, `$2`, etc) and adds the wrapped value 
  * at the appropriate position of the values array passed to pg  
  */
 export class Parameter { constructor(public value: any) { } }
 /**
- * Returns a Parameter instance, which compiles to a numbered query parameter 
- * ($1, $2, etc) and adds its wrapped value at the appropriate position of the
- * values array passed to pg
+ * Returns a `Parameter` instance, which compiles to a numbered query parameter (`$1`, 
+ * `$2`, etc) and adds its wrapped value at the appropriate position of the values array 
+ * passed to pg
  */
 export function param(x: any) { return new Parameter(x); }
 
 /**
- * Compiles to the wrapped string value, as is. Dangerous.
+ * Compiles to the wrapped string value, as is. Dangerous: https://xkcd.com/327/.
  */
 export class DangerousRawString { constructor(public value: string) { } }
 /**
- * Returns a DangerousRawString instance, wrapping a string. DangerousRawString
- * compiles to the wrapped string value, as is. Dangerous.
+ * Returns a `DangerousRawString` instance, wrapping a string. `DangerousRawString`
+ * compiles to the wrapped string value, as is. Dangerous: https://xkcd.com/327/.
  */
 export function raw(x: string) { return new DangerousRawString(x); }
 
 /**
- * Returns a ColumnNames instance, wrapping either an array or object.
- * ColumnNames compiles to a quoted, comma-separated list of array values
- * (for use in a SELECT QUERY) or object keys (for use in an INSERT, UDPATE
- * or UPSERT query, alongside ColumnValues).
+ * Returns a `ColumnNames` instance, wrapping either an array or object. `ColumnNames` 
+ * compiles to a quoted, comma-separated list of array values (for use in a `SELECT` 
+ * query) or object keys (for use in an `INSERT`, `UDPATE` or `UPSERT` query, alongside 
+ * `ColumnValues`).
  */
 export class ColumnNames<T> { constructor(public value: T) { } }
 /**
- * Returns a ColumnNames instance, wrapping either an array or object. 
- * ColumnNames compiles to a quoted, comma-separated list of array values 
- * (for use in a SELECT QUERY) or object keys (for use in an INSERT, UDPATE 
- * or UPSERT query, alongside ColumnValues).
+ * Returns a `ColumnNames` instance, wrapping either an array or an object. `ColumnNames` 
+ * compiles to a quoted, comma-separated list of array values (for use in a `SELECT` 
+ * query) or object keys (for use in an `INSERT`, `UDPATE` or `UPSERT` query alongside 
+ * a `ColumnValues`).
  */
 export function cols<T>(x: T) { return new ColumnNames<T>(x); }
 
 /**
- * Compiles to a quoted, comma-separated list of object keys for use in an INSERT, 
- * UPDATE or UPSERT query, alongside ColumnNames.
+ * Compiles to a quoted, comma-separated list of object keys for use in an `INSERT`, 
+ * `UPDATE` or `UPSERT` query, alongside `ColumnNames`.
  */
 export class ColumnValues<T> { constructor(public value: T) { } }
 /**
- * Returns a ColumnValues instance, wrapping an object. ColumnValues compiles 
- * to a quoted, comma-separated list of object keys for use in an INSERT, UPDATE 
- * or UPSERT query, alongside ColumnNames.
+ * Returns a ColumnValues instance, wrapping an object. ColumnValues compiles to a 
+ * quoted, comma-separated list of object keys for use in an INSERT, UPDATE or UPSERT 
+ * query alongside a `ColumnNames`.
  */
 export function vals<T>(x: T) { return new ColumnValues<T>(x); }
 
 /**
- * Compiles to the name of column it wraps in the table of the parent query.
+ * Compiles to the name of the column it wraps in the table of the parent query.
  * @param value The column name
  */
 export class ParentColumn { constructor(public value: Column) { } }
 /**
- * Returns a ParentColumn instance, wrapping a column name, which compiles to that column 
- * name of the table of the parent query.
+ * Returns a `ParentColumn` instance, wrapping a column name, which compiles to that 
+ * column name of the table of the parent query.
  */
 export function parent(x: Column) { return new ParentColumn(x); }
 
@@ -115,20 +115,34 @@ interface SQLResultType {
 };
 
 /**
- * Tagged template function returning a SQLFragment. The first generic type argument 
+ * Tagged template function returning a `SQLFragment`. The first generic type argument 
  * defines what interpolated value types are allowed. The second defines what type the 
- * SQLFragment produces, where relevant (e.g. when calling .run(...)).
+ * `SQLFragment` produces, where relevant (i.e. when calling `.run(...)` on it, or using 
+ * it as the value of an `extras` object).
  */
 export function sql<T = SQL, RunResult = pg.QueryResult['rows']>(literals: TemplateStringsArray, ...expressions: T[]) {
   return new SQLFragment<RunResult>(Array.prototype.slice.apply(literals), expressions);
 }
 
 export class SQLFragment<RunResult = pg.QueryResult['rows']> {
-  runResultTransform: (qr: pg.QueryResult) => any = (qr) => qr.rows;  // default is to return the rows array, but some shortcut functions alter this
+
+  /**
+   * When calling `run`, this function is applied to the object returned by `pg` to 
+   * produce the result that is returned. By default, the `rows` array is returned — i.e.
+   * `(qr) => qr.rows` — but some shortcut functions alter this in order to match their 
+   * declared `RunResult` type.
+   */
+  runResultTransform: (qr: pg.QueryResult) => any = (qr) => qr.rows;
+
   parentTable?: string = undefined;  // used for nested shortcut select queries
 
   constructor(private literals: string[], private expressions: SQLExpression[]) { }
 
+  /**
+   * Compile and run this query using the provided database connection. What's returned 
+   * is piped via `runResultTransform` before being returned.
+   * @param queryable A database client or pool
+   */
   async run(queryable: Queryable): Promise<RunResult> {
     const query = this.compile();
     if (getConfig().verbose) console.log(query);
@@ -136,6 +150,11 @@ export class SQLFragment<RunResult = pg.QueryResult['rows']> {
     return this.runResultTransform(qr);
   }
 
+  /**
+   * Compile this query, returning a `{ text: string, values: any[] }` object that could 
+   * be passed to the `pg` query function. Arguments are generally only passed when the 
+   * function calls itself recursively.
+   */
   compile(result: SQLResultType = { text: '', values: [] }, parentTable?: string, currentColumn?: Column) {
     if (this.parentTable) parentTable = this.parentTable;
 

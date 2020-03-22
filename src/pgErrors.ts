@@ -3,6 +3,11 @@ interface Error {
   code?: string;
 }
 
+/**
+ * Check whether an error object matches any of a set of Postgres error types.
+ * @param err The error to check
+ * @param types The Postgres error types to check against
+ */
 export function isDatabaseError(err: Error, ...types: (keyof typeof pgErrors)[]) {
   const { code } = err;
   if (!code || code.length !== 5) return false;

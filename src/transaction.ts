@@ -33,6 +33,14 @@ export interface TxnClient<T extends Isolation | undefined> extends pg.PoolClien
 
 let txnSeq = 0;
 
+/**
+ * Provides a database client to the callback, whose queries are then wrapped in a 
+ * database transaction. The transaction is committed, retried, or rolled back as 
+ * appropriate. 
+ * @param pool The `pg` `Pool` from which to check out the database client
+ * @param isolationMode The isolation mode (e.g `Serializable`) 
+ * @param callback The callback function that runs queries on the provided client
+ */
 export async function transaction<T, M extends Isolation>(
   pool: pg.Pool,
   isolationMode: M,
