@@ -41,6 +41,11 @@ interface InsertSignatures {
   <T extends Table>(table: T, values: InsertableForTable<T>[]): SQLFragment<JSONSelectableForTable<T>[]>;
 }
 
+/**
+ * Generate an `INSERT` query `SQLFragment`.
+ * @param table The table into which to insert
+ * @param values The `Insertable` values (or array thereof) to be inserted
+ */
 export const insert: InsertSignatures = function
   (table: Table, values: Insertable | Insertable[]): SQLFragment<any> {
 
@@ -70,6 +75,16 @@ interface UpsertSignatures {
   <T extends Table>(table: T, values: InsertableForTable<T>[], uniqueCols: ColumnForTable<T> | ColumnForTable<T>[], noNullUpdateCols?: ColumnForTable<T> | ColumnForTable<T>[]): SQLFragment<UpsertReturnableForTable<T>[]>;
 }
 
+/**
+ * Generate an 'upsert' (`INSERT ... ON CONFLICT ...`) query `SQLFragment`.
+ * @param table The table to update or insert into
+ * @param values An `Insertable` of values (or an array thereof) to be inserted or updated
+ * @param uniqueCols A `UNIQUE`-indexed column (or array thereof) that determines 
+ * whether this is an `UPDATE` (when there's a matching existing value) or an `INSERT` 
+ * (when there isn't)
+ * @param noNullUpdateCols Optionally, a column (or array thereof) that should not be 
+ * overwritten with `NULL` values during an update
+ */
 export const upsert: UpsertSignatures = function
   (table: Table, values: Insertable | Insertable[], uniqueCols: Column | Column[], noNullUpdateCols: Column | Column[] = []): SQLFragment<any> {
 
@@ -108,6 +123,12 @@ interface UpdateSignatures {
   <T extends Table>(table: T, values: UpdatableForTable<T>, where: WhereableForTable<T> | SQLFragment): SQLFragment<JSONSelectableForTable<T>[]>;
 }
 
+/**
+ * Generate an `UPDATE` query `SQLFragment`.
+ * @param table The table to update
+ * @param values An `Updatable` of the new values with which to update the table
+ * @param where A `Whereable` (or `SQLFragment`) defining which rows to update
+ */
 export const update: UpdateSignatures = function (
   table: Table,
   values: Updatable,
@@ -128,7 +149,12 @@ export interface DeleteSignatures {
   <T extends Table>(table: T, where: WhereableForTable<T> | SQLFragment): SQLFragment<JSONSelectableForTable<T>[]>;
 }
 
-export const deletes: DeleteSignatures = function  // sadly, delete is a reserved word
+/**
+ * Generate an `DELETE` query `SQLFragment` (sadly, plain 'delete' is a reserved word).
+ * @param table The table to delete from
+ * @param where A `Whereable` (or `SQLFragment`) defining which rows to delete
+ */
+export const deletes: DeleteSignatures = function
   (table: Table, where: Whereable | SQLFragment): SQLFragment {
 
   const query = sql<SQL>`DELETE FROM ${table} WHERE ${where} RETURNING to_jsonb(${table}.*) AS result`;
@@ -148,6 +174,11 @@ interface TruncateSignatures {
   (table: Table | Table[], optId: TruncateIdentityOpts, optFK: TruncateForeignKeyOpts): SQLFragment<undefined>;
 }
 
+/**
+ * Generate a `TRUNCATE` query `SQLFragment`.
+ * @param table The table (or array thereof) to truncate
+ * @param opts Options: 'CONTINUE IDENTITY'/'RESTART IDENTITY' and/or 'RESTRICT'/'CASCADE'
+ */
 export const truncate: TruncateSignatures = function
   (table: Table | Table[], ...opts: string[]): SQLFragment<undefined> {
 
@@ -209,6 +240,15 @@ export interface SelectSignatures {
   ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, M>>;
 }
 
+/**
+ * Generate a `SELECT` query `SQLFragment`. This can be nested with other `select`/
+ * `selectOne`/`count` queries using the `lateral` option.
+ * @param rawTable The table to select from
+ * @param where A `Whereable` or `SQLFragment` defining the rows to be selected, or `all`
+ * @param rawOptions Options object. Keys are: `columns`, `alias`, `extras`, `lateral`, 
+ * `order`, `limit`, and `offset`.
+ * @param mode Used internally by `selectOne` and `count`
+ */
 export const select: SelectSignatures = function (
   rawTable: Table,
   where: Whereable | SQLFragment | AllType = all,
@@ -270,6 +310,15 @@ export interface SelectOneSignatures {
   ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, SelectResultMode.One>>;
 }
 
+/**
+ * Generate a `SELECT` query `SQLFragment` that returns only a single result. A `LIMIT 1` 
+ * clause is added automatically. This can be nested with other `select`/`selectOne`/
+ * `count` queries using the `lateral` option.
+ * @param table The table to select from
+ * @param where A `Whereable` or `SQLFragment` defining the rows to be selected, or `all`
+ * @param options Options object. Keys are: `columns`, `alias`, `extras`, `lateral`,
+ * `order`, `limit`, and `offset`.
+ */
 export const selectOne: SelectOneSignatures = function (
   table: any,
   where: any,
@@ -283,13 +332,20 @@ export const selectOne: SelectOneSignatures = function (
   return select(table, where, options, SelectResultMode.One);
 }
 
+
+/* === count === */
+
 export interface CountSignatures {
   <T extends Table>(table: T, where: WhereableForTable<T> | SQLFragment | AllType, options?: { columns?: ColumnForTable<T>[], alias?: string }): SQLFragment<number>;
 }
 
-
-/* === count === */
-
+/**
+ * Generate a `SELECT` query `SQLFragment` that returns a count. This can be nested in 
+ * other `select`/`selectOne` queries using their `lateral` option.
+ * @param table The table to count from
+ * @param where A `Whereable` or `SQLFragment` defining the rows to be counted, or `all`
+ * @param options Options object. Keys are: `columns`, `alias`.
+ */
 export const count: CountSignatures = function (
   table: any,
   where: any,
