@@ -243,52 +243,60 @@ export interface SelectSignatures {
 /**
  * Generate a `SELECT` query `SQLFragment`. This can be nested with other `select`/
  * `selectOne`/`count` queries using the `lateral` option.
- * @param rawTable The table to select from
+ * @param table The table to select from
  * @param where A `Whereable` or `SQLFragment` defining the rows to be selected, or `all`
- * @param rawOptions Options object. Keys are: `columns`, `alias`, `extras`, `lateral`, 
- * `order`, `limit`, and `offset`.
+ * @param options Options object. Keys (all optional) are: 
+ * * `columns` — an array of column names: only these columns will be returned
+ * * `order` — an array of `OrderSpec` objects, such as `{ by: 'column', direction: 'ASC' 
+ * }`  
+ * * `limit` and `offset` — numbers: apply this limit and offset to the query
+ * * `lateral` — an object mapping key(s) to nested `select`/`selectOne`/`count` queries 
+ * to be `LATERAL JOIN`ed
+ * * `alias` — table alias (string): required if using `lateral` to join a table to itself
+ * * `extras` — an object mapping key(s) to `SQLFragment`s, so that derived 
+ * quantities can be included in the JSON result
  * @param mode Used internally by `selectOne` and `count`
  */
 export const select: SelectSignatures = function (
-  rawTable: Table,
+  table: Table,
   where: Whereable | SQLFragment | AllType = all,
-  rawOptions: SelectOptionsForTable<Table, ColumnForTable<Table>[], SQLFragmentsMap, SQLFragmentsMap> = {},
+  options: SelectOptionsForTable<Table, ColumnForTable<Table>[], SQLFragmentsMap, SQLFragmentsMap> = {},
   mode: SelectResultMode = SelectResultMode.Many,
 ) {
 
   const
-    options = mode === SelectResultMode.One ? Object.assign({}, rawOptions, { limit: 1 }) : rawOptions,
-    table = options.alias || rawTable,
-    tableAliasSQL = table === rawTable ? [] : sql` AS ${table}`,
+    allOptions = mode === SelectResultMode.One ? Object.assign({}, options, { limit: 1 }) : options,
+    aliasedTable = allOptions.alias || table,
+    tableAliasSQL = aliasedTable === table ? [] : sql` AS ${aliasedTable}`,
     colsSQL = mode === SelectResultMode.Count ?
-      (options.columns ? sql`count(${cols(options.columns)})` : sql`count(${table}.*)`) :
-      options.columns ?
-        sql`jsonb_build_object(${mapWithSeparator(options.columns, sql`, `, c => raw(`'${c}', "${c}"`))})` :
-        sql`to_jsonb(${table}.*)`,
-    colsLateralSQL = options.lateral === undefined ? [] :
+      (allOptions.columns ? sql`count(${cols(allOptions.columns)})` : sql`count(${aliasedTable}.*)`) :
+      allOptions.columns ?
+        sql`jsonb_build_object(${mapWithSeparator(allOptions.columns, sql`, `, c => raw(`'${c}', "${c}"`))})` :
+        sql`to_jsonb(${aliasedTable}.*)`,
+    colsLateralSQL = allOptions.lateral === undefined ? [] :
       sql` || jsonb_build_object(${mapWithSeparator(
-        Object.keys(options.lateral), sql`, `, k => raw(`'${k}', "cj_${k}".result`))})`,
-    colsExtraSQL = options.extras === undefined ? [] :
+        Object.keys(allOptions.lateral), sql`, `, k => raw(`'${k}', "cj_${k}".result`))})`,
+    colsExtraSQL = allOptions.extras === undefined ? [] :
       sql` || jsonb_build_object(${mapWithSeparator(
-        Object.keys(options.extras), sql`, `, k => [raw(`'${k}', `), options.extras![k]])})`,
+        Object.keys(allOptions.extras), sql`, `, k => [raw(`'${k}', `), allOptions.extras![k]])})`,
     allColsSQL = sql`${colsSQL}${colsLateralSQL}${colsExtraSQL}`,
     whereSQL = where === all ? [] : [sql` WHERE `, where],
-    orderSQL = !options.order ? [] :
-      [sql` ORDER BY `, ...mapWithSeparator(options.order, sql`, `, o =>
+    orderSQL = !allOptions.order ? [] :
+      [sql` ORDER BY `, ...mapWithSeparator(allOptions.order, sql`, `, o =>
         sql`${o.by} ${raw(o.direction)}${o.nulls ? sql` NULLS ${raw(o.nulls)}` : []}`)],
-    limitSQL = options.limit === undefined ? [] : sql` LIMIT ${raw(String(options.limit))}`,
-    offsetSQL = options.offset === undefined ? [] : sql` OFFSET ${raw(String(options.offset))}`,
-    lateralSQL = options.lateral === undefined ? [] : Object.keys(options.lateral).map(k => {
-      const subQ = options.lateral![k];
-      subQ.parentTable = table;  // enables db.parent('column') in nested query Wherables
+    limitSQL = allOptions.limit === undefined ? [] : sql` LIMIT ${raw(String(allOptions.limit))}`,
+    offsetSQL = allOptions.offset === undefined ? [] : sql` OFFSET ${raw(String(allOptions.offset))}`,
+    lateralSQL = allOptions.lateral === undefined ? [] : Object.keys(allOptions.lateral).map(k => {
+      const subQ = allOptions.lateral![k];
+      subQ.parentTable = aliasedTable;  // enables db.parent('column') in nested query Wherables
       return sql<SQL>` LEFT JOIN LATERAL (${subQ}) AS ${raw(`"cj_${k}"`)} ON true`;
     });
 
   const
-    rowsQuery = sql<SQL, any>`SELECT ${allColsSQL} AS result FROM ${rawTable}${tableAliasSQL}${lateralSQL}${whereSQL}${orderSQL}${limitSQL}${offsetSQL}`,
+    rowsQuery = sql<SQL, any>`SELECT ${allColsSQL} AS result FROM ${table}${tableAliasSQL}${lateralSQL}${whereSQL}${orderSQL}${limitSQL}${offsetSQL}`,
     query = mode !== SelectResultMode.Many ? rowsQuery :
       // we need the aggregate to sit in a sub-SELECT in order to keep ORDER and LIMIT working as usual
-      sql<SQL, any>`SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${raw(`"sq_${table}"`)}`;
+      sql<SQL, any>`SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${raw(`"sq_${aliasedTable}"`)}`;
 
   query.runResultTransform = mode === SelectResultMode.Count ?
     // note: pg deliberately returns strings for int8 in case 64-bit numbers overflow
@@ -316,8 +324,7 @@ export interface SelectOneSignatures {
  * `count` queries using the `lateral` option.
  * @param table The table to select from
  * @param where A `Whereable` or `SQLFragment` defining the rows to be selected, or `all`
- * @param options Options object. Keys are: `columns`, `alias`, `extras`, `lateral`,
- * `order`, `limit`, and `offset`.
+ * @param options Options object. See documentation for `select`.
  */
 export const selectOne: SelectOneSignatures = function (
   table: any,
