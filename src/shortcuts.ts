@@ -319,12 +319,12 @@ export interface SelectOneSignatures {
 }
 
 /**
- * Generate a `SELECT` query `SQLFragment` that returns only a single result. A `LIMIT 1` 
- * clause is added automatically. This can be nested with other `select`/`selectOne`/
- * `count` queries using the `lateral` option.
+ * Generate a `SELECT` query `SQLFragment` that returns only a single result (or 
+ * undefined). A `LIMIT 1` clause is added automatically. This can be nested with other 
+ * `select`/`selectOne`/`count` queries using the `lateral` option.
  * @param table The table to select from
  * @param where A `Whereable` or `SQLFragment` defining the rows to be selected, or `all`
- * @param options Options object. See documentation for `select`.
+ * @param options Options object. See documentation for `select` for details.
  */
 export const selectOne: SelectOneSignatures = function (
   table: any,
