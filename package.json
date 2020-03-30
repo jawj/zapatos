@@ -6,7 +6,8 @@
     "type": "git",
     "url": "https://github.com/jawj/zapatos"
   },
-  "main": "src/index.ts",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "prepublish": "tsc",
   "bin": {
     "zapatos": "dist/generate-schema.js"
