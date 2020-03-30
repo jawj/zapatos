@@ -12,7 +12,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "preversion": "npm build",
+    "preversion": "npm run-script build",
     "postversion": "npm publish"
   },
   "keywords": [
