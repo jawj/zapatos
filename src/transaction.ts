@@ -1,4 +1,4 @@
-import * as pg from 'pg';
+import type * as pg from 'pg';
 import { isDatabaseError } from './pgErrors';
 import { wait } from './utils';
 import { sql, raw } from './core';

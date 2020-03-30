@@ -1,4 +1,4 @@
-import * as pg from 'pg';
+import type * as pg from 'pg';
 
 import {
   Updatable,
