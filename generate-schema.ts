@@ -240,9 +240,9 @@ const tsForConfig = async (config: Config) => {
 
 const recursivelyInterpolateEnvVars = (obj: any): any =>
   typeof obj === 'string' ?
-    obj.replace(/\$\{\s*([^}\s]+)\s*\}/g, ($0, name) => {
+    obj.replace(/\{\{\s*([^}\s]+)\s*\}\}/g, ($0, name) => {
       const e = process.env[name];
-      if (e === undefined) throw new Error(`Environment variable ${name} is not set`);
+      if (e === undefined) throw new Error(`Environment variable '${name}' is not set`);
       return e;
     }) :
     Array.isArray(obj) ?
