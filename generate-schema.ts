@@ -176,12 +176,14 @@ export type ${thingable}ForTable<T extends Table> = {${tableNames.map(name => `
 `).join('')}
 `;
 
+const moduleRoot = () =>
+  fs.existsSync(path.join(__dirname, 'package.json')) ? __dirname : path.join(__dirname, '..');
+    
+
 const header = (config: Config) => {
   const
-    pkgHere = path.join(__dirname, 'package.json'),  // if running as .ts in root
-    pkgOneUp = path.join(__dirname, '..', 'package.json'),  // if running as .js in dist
-    pkgFound = fs.existsSync(pkgHere) ? pkgHere : pkgOneUp,
-    pkg = JSON.parse(fs.readFileSync(pkgFound, { encoding: 'utf8' }));
+    pkgPath = path.join(moduleRoot(), 'package.json'),
+    pkg = JSON.parse(fs.readFileSync(pkgPath, { encoding: 'utf8' }));
   
   return `
 /* 
@@ -304,7 +306,7 @@ const getConfig = () => {
     schemaName = 'schema.ts',
     folderLocation = path.join(config.outDir, folderName),
     symlinkLocation = path.join(folderLocation, srcName),
-    pathToCode = path.join(__dirname, srcName),
+    pathToCode = path.join(moduleRoot(), srcName),
     relativePathToCode = path.relative(folderLocation, pathToCode),
     schemaLocation = path.join(folderLocation, schemaName);
 
