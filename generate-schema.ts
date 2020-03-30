@@ -148,6 +148,11 @@ export namespace ${tableName} {
   };
   export interface Updatable extends Partial<Insertable> { };
   export type Whereable = { [K in keyof Insertable]?: Exclude<Insertable[K] | ParentColumn, null | DefaultType> };
+  export type JSONSelectable = { [K in keyof Selectable]:
+    Date extends Selectable[K] ? Exclude<Selectable[K], Date> | DateString :
+    Date[] extends Selectable[K] ? Exclude<Selectable[K], Date[]> | DateString[] :
+    Selectable[K]
+  };
   export type Column = keyof Selectable;
   export type OnlyCols<T extends readonly Column[]> = Pick<Selectable, T[number]>;
   export type SQLExpression = GenericSQLExpression | Table | Whereable | Column | ColumnNames<Updatable | (keyof Updatable)[]> | ColumnValues<Updatable>;
