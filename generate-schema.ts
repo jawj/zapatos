@@ -170,9 +170,9 @@ export type Column = ${tableNames.map(name => `${name}.Column`).join(' | ')};
 export type AllTables = [${tableNames.map(name => `${name}.Table`).join(', ')}];
 
 ${['Selectable', 'Whereable', 'Insertable', 'Updatable', 'Column', 'SQL'].map(thingable => `
-export type ${thingable}ForTable<T extends Table> = ${tableNames.map(name => `
-  T extends ${name}.Table ? ${name}.${thingable} :`).join('')}
-  ${thingable};
+export type ${thingable}ForTable<T extends Table> = {${tableNames.map(name => `
+  ${name}: ${name}.${thingable},`).join('')}
+}[T];
 `).join('')}
 `;
 
