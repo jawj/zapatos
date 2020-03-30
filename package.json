@@ -1,13 +1,15 @@
 {
   "name": "zapatos",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Zero-Abstraction Postgres for TypeScript",
   "repository": {
     "type": "git",
     "url": "https://github.com/jawj/zapatos"
   },
-  "main": "src/index.js",
-  "bin": "./generate-schema.ts",
+  "main": "src/index.ts",
+  "bin": {
+    "zapatos.ts": "./generate-schema.ts"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
