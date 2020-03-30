@@ -206,6 +206,7 @@ interface SchemaRules {
 
 interface Config {
   db: pg.ClientConfig;
+  outDir: string;
   schemas: SchemaRules;
 }
 
@@ -255,7 +256,11 @@ const recursivelyInterpolateEnvVars = (obj: any): any =>
 
 const getConfig = () => {
   const
-    config: Config = { db: {}, schemas: { public: { include: '*', exclude: [] } } },  // default
+    config: Config = {  // defaults
+      db: {},
+      outDir: '.',
+      schemas: { public: { include: '*', exclude: [] } },
+    },
     configFile = 'zapatosconfig.json',
     configJSON = fs.existsSync(configFile) ? fs.readFileSync(configFile, { encoding: 'utf8' }) : '{}',
     argsJSON = process.argv[2] ?? '{}';
@@ -287,12 +292,13 @@ const getConfig = () => {
     folderName = 'zapatos',
     srcName = 'src',
     schemaName = 'schema.ts',
-    symlinkLocation = path.join(folderName, srcName),
+    folderLocation = path.join(config.outDir, folderName),
+    symlinkLocation = path.join(folderLocation, srcName),
     pathToCode = path.join(__dirname, srcName),
-    relativePathToCode = path.relative(folderName, pathToCode),
-    schemaLocation = path.join(folderName, schemaName);
+    relativePathToCode = path.relative(folderLocation, pathToCode),
+    schemaLocation = path.join(folderLocation, schemaName);
 
-  if (!fs.existsSync(folderName)) fs.mkdirSync(folderName);
+  if (!fs.existsSync(folderLocation)) fs.mkdirSync(folderLocation);
   if (fs.existsSync(symlinkLocation)) fs.unlinkSync(symlinkLocation);
   fs.symlinkSync(relativePathToCode, symlinkLocation);
   fs.writeFileSync(schemaLocation, ts, { flag: 'w' });
