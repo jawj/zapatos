@@ -219,6 +219,7 @@ interface SchemaRules {
 interface Config {
   db: pg.ClientConfig;
   outDir: string;
+  srcMode: 'symlink' | 'copy';
   schemas: SchemaRules;
 }
 
@@ -271,6 +272,7 @@ const getConfig = () => {
     config: Config = {  // defaults
       db: {},
       outDir: '.',
+      srcMode: 'copy',
       schemas: { public: { include: '*', exclude: [] } },
     },
     configFile = 'zapatosconfig.json',
@@ -297,6 +299,11 @@ const getConfig = () => {
   return interpolatedConfig;
 };
 
+const recurseNodes = (node: string): string[] =>
+  fs.statSync(node).isFile() ? [node] :
+    fs.readdirSync(node).reduce<string[]>((memo, n) =>
+      memo.concat(recurseNodes(path.join(node, n))), []);
+
 (async () => {
   const
     config = getConfig(),
@@ -304,15 +311,35 @@ const getConfig = () => {
     folderName = 'zapatos',
     srcName = 'src',
     schemaName = 'schema.ts',
+    root = moduleRoot(),
     folderLocation = path.join(config.outDir, folderName),
-    symlinkLocation = path.join(folderLocation, srcName),
-    pathToCode = path.join(moduleRoot(), srcName),
+    srcLocation = path.join(folderLocation, srcName),
+    pathToCode = path.join(root, srcName),
     relativePathToCode = path.relative(folderLocation, pathToCode),
     schemaLocation = path.join(folderLocation, schemaName);
 
   if (!fs.existsSync(folderLocation)) fs.mkdirSync(folderLocation);
-  if (fs.existsSync(symlinkLocation)) fs.unlinkSync(symlinkLocation);
-  fs.symlinkSync(relativePathToCode, symlinkLocation);
+  
+  // TODO: deal with the case when we did have mode copy and now have mode symlink or vice versa
+
+  if (config.srcMode === 'symlink') {
+    if (fs.existsSync(srcLocation)) fs.unlinkSync(srcLocation);
+    fs.symlinkSync(relativePathToCode, srcLocation);
+  
+  } else {
+    const srcFiles = recurseNodes(pathToCode).map(p => path.relative(pathToCode, p));
+    for (const f of srcFiles) {
+      const
+        srcPath = path.join(pathToCode, f),
+        targetDirPath = path.join(srcLocation, path.dirname(f)),
+        targetPath = path.join(srcLocation, f);
+      
+      console.log(srcPath, targetPath);
+      fs.mkdirSync(targetDirPath, { recursive: true });
+      fs.copyFileSync(srcPath, targetPath);
+    }
+  }
+
   fs.writeFileSync(schemaLocation, ts, { flag: 'w' });
 })();
 
