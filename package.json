@@ -13,7 +13,8 @@
   "scripts": {
     "build": "tsc",
     "preversion": "npm run-script build",
-    "postversion": "npm publish"
+    "postversion": "npm publish",
+    "postinstall": "echo '>>> Zapatos was installed or upgraded. Please (re-)run `npx zapatos`.'"
   },
   "keywords": [
     "postgres",
