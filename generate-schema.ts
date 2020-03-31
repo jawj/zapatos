@@ -324,6 +324,8 @@ const recurseNodes = (node: string): string[] =>
 
   if (config.srcMode === 'symlink') {
     if (fs.existsSync(srcLocation)) fs.unlinkSync(srcLocation);
+
+    console.log(`Creating symlink: ${srcLocation} -> ${relativePathToCode}`);
     fs.symlinkSync(relativePathToCode, srcLocation);
   
   } else {
@@ -334,12 +336,13 @@ const recurseNodes = (node: string): string[] =>
         targetDirPath = path.join(srcLocation, path.dirname(f)),
         targetPath = path.join(srcLocation, f);
       
-      console.log(srcPath, targetPath);
+      console.log(`Writing file: ${targetPath}`);
       fs.mkdirSync(targetDirPath, { recursive: true });
       fs.copyFileSync(srcPath, targetPath);
     }
   }
 
+  console.log(`Writing generated schema: ${schemaLocation}`);
   fs.writeFileSync(schemaLocation, ts, { flag: 'w' });
 })();
 
