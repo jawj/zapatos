@@ -1,6 +1,6 @@
 {
   "name": "zapatos",
-  "version": "0.1.15",
+  "version": "0.1.16",
   "description": "Zero-Abstraction Postgres for TypeScript",
   "repository": {
     "type": "git",
