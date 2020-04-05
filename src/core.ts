@@ -112,7 +112,7 @@ export type Queryable = pg.Pool | TxnClient<any>;
 interface SQLResultType {
   text: string;
   values: any[];
-};
+}
 
 /**
  * Tagged template function returning a `SQLFragment`. The first generic type argument 

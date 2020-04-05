@@ -36,8 +36,7 @@ export const mapWithSeparator = <TIn, TSep, TOut>(
  * @param objs The array of objects
  */
 export const completeKeysWithDefault = <T extends object>(objs: T[]): T[] => {
-  // 
   const unionKeys = Object.assign({}, ...objs);
-  for (let k in unionKeys) unionKeys[k] = Default;
-  return objs.map(o => Object.assign({}, unionKeys, o));
+  for (const k in unionKeys) unionKeys[k] = Default;
+  return objs.map(o => ({ ...unionKeys, ...o }));
 };

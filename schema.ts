@@ -20,9 +20,9 @@ export namespace pg_type {
   export interface Selectable {
     typname: string;
     typnamespace: string;
-  };
-  export interface Insertable extends Selectable { };
-  export interface Updatable extends Partial<Insertable> { };
+  }
+  export interface Insertable extends Selectable { }
+  export interface Updatable extends Partial<Insertable> { }
   export type Whereable = { [K in keyof Insertable]?: Exclude<Insertable[K] | ParentColumn, null | DefaultType> };
   export type Column = keyof Selectable;
   export type OnlyCols<T extends readonly Column[]> = Pick<Selectable, T[number]>;
@@ -35,9 +35,9 @@ export namespace pg_enum {
   export interface Selectable {
     enumtypid: number;
     enumlabel: string;
-  };
-  export interface Insertable extends Selectable { };
-  export interface Updatable extends Partial<Insertable> { };
+  }
+  export interface Insertable extends Selectable { }
+  export interface Updatable extends Partial<Insertable> { }
   export type Whereable = { [K in keyof Insertable]?: Exclude<Insertable[K] | ParentColumn, null | DefaultType> };
   export type Column = keyof Selectable;
   export type OnlyCols<T extends readonly Column[]> = Pick<Selectable, T[number]>;
@@ -50,9 +50,9 @@ export namespace pg_namespace {
   export interface Selectable {
     oid: number;
     nspname: string;
-  };
-  export interface Insertable extends Selectable { };
-  export interface Updatable extends Partial<Insertable> { };
+  }
+  export interface Insertable extends Selectable { }
+  export interface Updatable extends Partial<Insertable> { }
   export type Whereable = { [K in keyof Insertable]?: Exclude<Insertable[K] | ParentColumn, null | DefaultType> };
   export type Column = keyof Selectable;
   export type OnlyCols<T extends readonly Column[]> = Pick<Selectable, T[number]>;
@@ -69,9 +69,9 @@ export namespace information_schema.columns {
     udt_name: string;
     is_nullable: 'YES' | 'NO';
     column_default: string;
-  };
-  export interface Insertable extends Selectable { };
-  export interface Updatable extends Partial<Insertable> { };
+  }
+  export interface Insertable extends Selectable { }
+  export interface Updatable extends Partial<Insertable> { }
   export type Whereable = { [K in keyof Insertable]?: Exclude<Insertable[K] | ParentColumn, null | DefaultType> };
   export type Column = keyof Selectable;
   export type OnlyCols<T extends readonly Column[]> = Pick<Selectable, T[number]>;

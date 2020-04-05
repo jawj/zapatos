@@ -11,10 +11,10 @@ export type NewConfig = Partial<Config>;
 /**
  * Get (a copy of) the current configuration.
  */
-export const getConfig = () => Object.assign({}, config);
+export const getConfig = () => ({ ...config });
 
 /**
  * Set key(s) on the configuration.
  * @param newConfig Partial configuration object
  */
-export const setConfig = (newConfig: NewConfig) => Object.assign(config, newConfig);
+export const setConfig = (newConfig: NewConfig) => ({ ...config, ...newConfig });

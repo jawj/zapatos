@@ -304,4 +304,4 @@ const pgErrors = {
   InternalError_InternalError: "XX000",
   InternalError_DataCorrupted: "XX001",
   InternalError_IndexCorrupted: "XX002",
-}
+};

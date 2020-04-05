@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "no-floating-promises": true,
+    "await-promise": true,
+    "no-invalid-template-strings": true,
+    "prefer-object-spread": true,
+    "radix": true,
+    "prefer-const": true,
+    "semicolon": [true, "always"]
+  }
+}

@@ -4,7 +4,7 @@ import * as pg from 'pg';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as db from './src';
-import * as s from './schema'
+import * as s from './schema';
 
 type EnumData = { [k: string]: string[] };
 
@@ -25,7 +25,7 @@ const enumDataForSchema = async (schemaName: string, pool: db.Queryable) => {
     }, {});
   
   return enums;
-}
+};
 
 const enumTypesForEnumData = (enums: EnumData) => {
   const types = Object.keys(enums)
@@ -37,7 +37,7 @@ export namespace every {
     .join('');
 
   return types;
-}
+};
 
 const tsTypeForPgType = (pgType: string, enums: EnumData) => {
   switch (pgType) {
@@ -99,7 +99,7 @@ const tsTypeForPgType = (pgType: string, enums: EnumData) => {
       console.log(`* Postgres type "${pgType}" was mapped to TypeScript type "any"`);
       return 'any';
   }
-}
+};
 
 const tablesInSchema = async (schemaName: string, pool: db.Queryable): Promise<string[]> => {
   const rows = await db.sql<s.information_schema.columns.SQL>`
@@ -108,7 +108,7 @@ const tablesInSchema = async (schemaName: string, pool: db.Queryable): Promise<s
     GROUP BY ${"table_name"} ORDER BY lower(${"table_name"})`.run(pool);
 
   return rows.map(r => r.table_name);
-}
+};
 
 const definitionForTableInSchema = async (tableName: string, schemaName: string, enums: EnumData, pool: db.Queryable) => {
   const
@@ -142,11 +142,11 @@ export namespace ${tableName} {
   export type Table = "${tableName}";
   export interface Selectable {
     ${selectables.join('\n    ')}
-  };
+  }
   export interface Insertable {
     ${insertables.join('\n    ')}
-  };
-  export interface Updatable extends Partial<Insertable> { };
+  }
+  export interface Updatable extends Partial<Insertable> { }
   export type Whereable = { [K in keyof Insertable]?: Exclude<Insertable[K] | ParentColumn, null | DefaultType> };
   export type JSONSelectable = { [K in keyof Selectable]:
     Date extends Selectable[K] ? Exclude<Selectable[K], Date> | DateString :
@@ -158,7 +158,7 @@ export namespace ${tableName} {
   export type SQLExpression = GenericSQLExpression | Table | Whereable | Column | ColumnNames<Updatable | (keyof Updatable)[]> | ColumnValues<Updatable>;
   export type SQL = SQLExpression | SQLExpression[];
 }`;
-}
+};
 
 const crossTableTypesForTables = (tableNames: string[]) => `
 export type Table = ${tableNames.map(name => `${name}.Table`).join(' | ')};
@@ -207,13 +207,13 @@ const header = (config: Config) => {
   } from "./src/core";
 
 `;
-}
+};
 
 interface SchemaRules {
   [schema: string]: {
     include: '*' | string[];
     exclude: '*' | string[];
-  }
+  };
 }
 
 interface Config {
@@ -248,9 +248,9 @@ const tsForConfig = async (config: Config) => {
         }))
       ).join('\n\n');
 
-  pool.end();
+  await pool.end();
   return ts;
-}
+};
 
 const recursivelyInterpolateEnvVars = (obj: any): any =>
   typeof obj === 'string' ?
@@ -304,7 +304,7 @@ const recurseNodes = (node: string): string[] =>
     fs.readdirSync(node).reduce<string[]>((memo, n) =>
       memo.concat(recurseNodes(path.join(node, n))), []);
 
-(async () => {
+void (async () => {
   const
     config = getConfig(),
     ts = await tsForConfig(config),

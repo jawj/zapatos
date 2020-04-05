@@ -62,12 +62,12 @@ export const insert: InsertSignatures = function
     (qr) => qr.rows[0].result;
 
   return query;
-}
+};
 
 
 /* === upsert === */
 
-interface UpsertAction { $action: 'INSERT' | 'UPDATE' };
+interface UpsertAction { $action: 'INSERT' | 'UPDATE'; }
 type UpsertReturnableForTable<T extends Table> = JSONSelectableForTable<T> & UpsertAction;
 
 interface UpsertSignatures {
@@ -114,7 +114,7 @@ export const upsert: UpsertSignatures = function
     (qr) => qr.rows[0].result;
 
   return query;
-}
+};
 
 
 /* === update === */
@@ -140,7 +140,7 @@ export const update: UpdateSignatures = function (
   const query = sql<SQL>`UPDATE ${table} SET (${cols(values)}) = ROW(${vals(values)}) WHERE ${where} RETURNING to_jsonb(${table}.*) AS result`;
   query.runResultTransform = (qr) => qr.rows.map(r => r.result);
   return query;
-}
+};
 
 
 /* === delete === */
@@ -160,7 +160,7 @@ export const deletes: DeleteSignatures = function
   const query = sql<SQL>`DELETE FROM ${table} WHERE ${where} RETURNING to_jsonb(${table}.*) AS result`;
   query.runResultTransform = (qr) => qr.rows.map(r => r.result);
   return query;
-}
+};
 
 
 /* === truncate === */
@@ -188,15 +188,15 @@ export const truncate: TruncateSignatures = function
     query = sql<SQL, undefined>`TRUNCATE ${tables}${raw((opts.length ? ' ' : '') + opts.join(' '))}`;
 
   return query;
-}
+};
 
 
 /* === select === */
 
 interface OrderSpecForTable<T extends Table> {
-  by: SQLForTable<T>,
-  direction: 'ASC' | 'DESC',
-  nulls?: 'FIRST' | 'LAST',
+  by: SQLForTable<T>;
+  direction: 'ASC' | 'DESC';
+  nulls?: 'FIRST' | 'LAST';
 }
 
 export interface SelectOptionsForTable<T extends Table, C extends ColumnForTable<T>[], L extends SQLFragmentsMap, E extends SQLFragmentsMap> {
@@ -204,12 +204,12 @@ export interface SelectOptionsForTable<T extends Table, C extends ColumnForTable
   limit?: number;
   offset?: number;
   columns?: C;
-  extras?: E,
+  extras?: E;
   lateral?: L;
   alias?: string;
 }
 
-export interface SQLFragmentsMap { [k: string]: SQLFragment<any> };
+export interface SQLFragmentsMap { [k: string]: SQLFragment<any>; }
 export type PromisedType<P> = P extends Promise<infer U> ? U : never;
 export type PromisedSQLFragmentReturnType<R extends SQLFragment<any>> = PromisedType<ReturnType<R['run']>>;
 export type PromisedSQLFragmentReturnTypeMap<L extends SQLFragmentsMap> = { [K in keyof L]: PromisedSQLFragmentReturnType<L[K]> };
@@ -229,7 +229,7 @@ export type FullSelectReturnTypeForTable<T extends Table, C extends ColumnForTab
   M extends SelectResultMode.Many ? EnhancedSelectReturnTypeForTable<T, C, L, E>[] :
   M extends SelectResultMode.One ? EnhancedSelectReturnTypeForTable<T, C, L, E> | undefined : number;
 
-export enum SelectResultMode { Many, One, Count };
+export enum SelectResultMode { Many, One, Count }
 
 export interface SelectSignatures {
   <T extends Table, C extends ColumnForTable<T>[], L extends SQLFragmentsMap, E extends SQLFragmentsMap, M extends SelectResultMode = SelectResultMode.Many> (
@@ -265,7 +265,7 @@ export const select: SelectSignatures = function (
 ) {
 
   const
-    allOptions = mode === SelectResultMode.One ? Object.assign({}, options, { limit: 1 }) : options,
+    allOptions = mode === SelectResultMode.One ? { ...options, limit: 1 } : options,
     aliasedTable = allOptions.alias || table,
     tableAliasSQL = aliasedTable === table ? [] : sql` AS ${aliasedTable}`,
     colsSQL = mode === SelectResultMode.Count ?
@@ -305,7 +305,7 @@ export const select: SelectSignatures = function (
     (qr) => qr.rows[0]?.result;
 
   return query;
-}
+};
 
 
 /* === selectOne === */
@@ -337,7 +337,7 @@ export const selectOne: SelectOneSignatures = function (
   // (see e.g. https://github.com/Microsoft/TypeScript/issues/13778)
 
   return select(table, where, options, SelectResultMode.One);
-}
+};
 
 
 /* === count === */
@@ -360,4 +360,4 @@ export const count: CountSignatures = function (
 ) {
 
   return select(table, where, options, SelectResultMode.Count);
-}
+};
