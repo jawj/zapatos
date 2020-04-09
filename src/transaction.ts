@@ -1,3 +1,6 @@
+
+/* tslint:disable */
+
 import type * as pg from 'pg';
 import { isDatabaseError } from './pgErrors';
 import { wait } from './utils';

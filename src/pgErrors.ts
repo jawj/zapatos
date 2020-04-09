@@ -1,4 +1,6 @@
 
+/* tslint:disable */
+
 interface Error {
   code?: string;
 }

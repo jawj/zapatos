@@ -192,6 +192,8 @@ const header = (config: Config) => {
  * 
  * MANUAL CHANGES ARE LIABLE TO GET OVERWRITTEN
  */
+ 
+ /* tslint:disable */
 
   import {
     JSONValue,

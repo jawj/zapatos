@@ -1,4 +1,6 @@
 
+/* tslint:disable */
+
 import {
   SelectableForTable,
   WhereableForTable,
