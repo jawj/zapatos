@@ -147,10 +147,17 @@ export class SQLFragment<RunResult = pg.QueryResult['rows']> {
    * @param queryable A database client or pool
    */
   async run(queryable: Queryable): Promise<RunResult> {
-    const query = this.compile();
-    if (getConfig().verbose) console.log(query);
-    const qr = await queryable.query(query);
-    return this.runResultTransform(qr);
+    const
+      query = this.compile(),
+      config = getConfig();
+    if (config.queryListener) config.queryListener(query);
+
+    const
+      qr = await queryable.query(query),
+      result = this.runResultTransform(qr);
+    if (config.resultListener) config.resultListener(result);
+    
+    return result;
   }
 
   /**
