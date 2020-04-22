@@ -112,7 +112,7 @@ export type Queryable = pg.Pool | TxnClient<any>;
 
 // === SQL tagged template strings ===
 
-interface SQLResultType {
+interface SQLQuery {
   text: string;
   values: any[];
 }
@@ -123,7 +123,11 @@ interface SQLResultType {
  * `SQLFragment` produces, where relevant (i.e. when calling `.run(...)` on it, or using 
  * it as the value of an `extras` object).
  */
-export function sql<T = SQL, RunResult = pg.QueryResult['rows']>(literals: TemplateStringsArray, ...expressions: T[]) {
+export function sql<
+  Interpolations = SQL,
+  RunResult = pg.QueryResult['rows'],
+  InferredInterpolations extends Interpolations = Interpolations
+>(literals: TemplateStringsArray, ...expressions: InferredInterpolations[]) {
   return new SQLFragment<RunResult>(Array.prototype.slice.apply(literals), expressions);
 }
 
@@ -135,7 +139,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows']> {
    * `(qr) => qr.rows` — but some shortcut functions alter this in order to match their 
    * declared `RunResult` type.
    */
-  runResultTransform: (qr: pg.QueryResult) => any = (qr) => qr.rows;
+  runResultTransform: (qr: pg.QueryResult) => any = qr => qr.rows;
 
   parentTable?: string = undefined;  // used for nested shortcut select queries
 
@@ -165,7 +169,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows']> {
    * be passed to the `pg` query function. Arguments are generally only passed when the 
    * function calls itself recursively.
    */
-  compile(result: SQLResultType = { text: '', values: [] }, parentTable?: string, currentColumn?: Column) {
+  compile(result: SQLQuery = { text: '', values: [] }, parentTable?: string, currentColumn?: Column) {
     if (this.parentTable) parentTable = this.parentTable;
 
     result.text += this.literals[0];
@@ -176,7 +180,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows']> {
     return result;
   }
 
-  compileExpression(expression: SQL, result: SQLResultType = { text: '', values: [] }, parentTable?: string, currentColumn?: Column) {
+  compileExpression(expression: SQL, result: SQLQuery = { text: '', values: [] }, parentTable?: string, currentColumn?: Column) {
     if (this.parentTable) parentTable = this.parentTable;
 
     if (expression instanceof SQLFragment) {
