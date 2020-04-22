@@ -269,17 +269,17 @@ export const select: SelectSignatures = function (
   const
     allOptions = mode === SelectResultMode.One ? { ...options, limit: 1 } : options,
     aliasedTable = allOptions.alias || table,
-    tableAliasSQL = aliasedTable === table ? [] : sql` AS ${aliasedTable}`,
+    tableAliasSQL = aliasedTable === table ? [] : sql<string>` AS ${aliasedTable}`,
     colsSQL = mode === SelectResultMode.Count ?
-      (allOptions.columns ? sql`count(${cols(allOptions.columns)})` : sql`count(${aliasedTable}.*)`) :
+      (allOptions.columns ? sql`count(${cols(allOptions.columns)})` : sql<typeof aliasedTable>`count(${aliasedTable}.*)`) :
       allOptions.columns ?
         sql`jsonb_build_object(${mapWithSeparator(allOptions.columns, sql`, `, c => raw(`'${c}', "${c}"`))})` :
-        sql`to_jsonb(${aliasedTable}.*)`,
+        sql<typeof aliasedTable>`to_jsonb(${aliasedTable}.*)`,
     colsLateralSQL = allOptions.lateral === undefined ? [] :
       sql` || jsonb_build_object(${mapWithSeparator(
         Object.keys(allOptions.lateral), sql`, `, k => raw(`'${k}', "cj_${k}".result`))})`,
     colsExtraSQL = allOptions.extras === undefined ? [] :
-      sql` || jsonb_build_object(${mapWithSeparator(
+      sql<any[]>` || jsonb_build_object(${mapWithSeparator(
         Object.keys(allOptions.extras), sql`, `, k => [raw(`'${k}', `), allOptions.extras![k]])})`,
     allColsSQL = sql`${colsSQL}${colsLateralSQL}${colsExtraSQL}`,
     whereSQL = where === all ? [] : [sql` WHERE `, where],
