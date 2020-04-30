@@ -171,6 +171,7 @@ type TruncateIdentityOpts = 'CONTINUE IDENTITY' | 'RESTART IDENTITY';
 type TruncateForeignKeyOpts = 'RESTRICT' | 'CASCADE';
 
 interface TruncateSignatures {
+  (table: Table | Table[]): SQLFragment<undefined>;
   (table: Table | Table[], optId: TruncateIdentityOpts): SQLFragment<undefined>;
   (table: Table | Table[], optFK: TruncateForeignKeyOpts): SQLFragment<undefined>;
   (table: Table | Table[], optId: TruncateIdentityOpts, optFK: TruncateForeignKeyOpts): SQLFragment<undefined>;
@@ -282,17 +283,19 @@ export const select: SelectSignatures = function (
       sql<any[]>` || jsonb_build_object(${mapWithSeparator(
         Object.keys(allOptions.extras), sql`, `, k => [raw(`'${k}', `), allOptions.extras![k]])})`,
     allColsSQL = sql`${colsSQL}${colsLateralSQL}${colsExtraSQL}`,
-    whereSQL = where === all ? [] : [sql` WHERE `, where],
+    whereSQL = where === all ? [] : sql` WHERE ${where}`,
     orderSQL = !allOptions.order ? [] :
       [sql` ORDER BY `, ...mapWithSeparator(allOptions.order, sql`, `, o =>
         sql`${o.by} ${raw(o.direction)}${o.nulls ? sql` NULLS ${raw(o.nulls)}` : []}`)],
     limitSQL = allOptions.limit === undefined ? [] : sql` LIMIT ${raw(String(allOptions.limit))}`,
     offsetSQL = allOptions.offset === undefined ? [] : sql` OFFSET ${raw(String(allOptions.offset))}`,
-    lateralSQL = allOptions.lateral === undefined ? [] : Object.keys(allOptions.lateral).map(k => {
-      const subQ = allOptions.lateral![k];
-      subQ.parentTable = aliasedTable;  // enables db.parent('column') in nested query Wherables
-      return sql<SQL>` LEFT JOIN LATERAL (${subQ}) AS ${raw(`"cj_${k}"`)} ON true`;
-    });
+    lateralOpt = allOptions.lateral,
+    lateralSQL = lateralOpt === undefined ? [] :
+      Object.keys(lateralOpt).map(k => {
+        const subQ = lateralOpt[k];
+        subQ.parentTable = aliasedTable;  // enables `parent('column')` in subquery's Wherables
+        return sql<SQL>` LEFT JOIN LATERAL (${subQ}) AS ${raw(`"cj_${k}"`)} ON true`;
+      });
 
   const
     rowsQuery = sql<SQL, any>`SELECT ${allColsSQL} AS result FROM ${table}${tableAliasSQL}${lateralSQL}${whereSQL}${orderSQL}${limitSQL}${offsetSQL}`,
