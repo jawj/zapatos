@@ -348,7 +348,11 @@ export const selectOne: SelectOneSignatures = function (
 /* === count === */
 
 export interface CountSignatures {
-  <T extends Table>(table: T, where: WhereableForTable<T> | SQLFragment | AllType, options?: { columns?: ColumnForTable<T>[], alias?: string }): SQLFragment<number>;
+  <T extends Table>(
+    table: T,
+    where: WhereableForTable<T> | SQLFragment | AllType,
+    options?: { columns?: ColumnForTable<T>[], alias?: string },
+  ): SQLFragment<number>;
 }
 
 /**
