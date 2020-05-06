@@ -33,6 +33,7 @@ import {
   cols,
   vals,
   raw,
+  param,
 } from './core';
 
 import { completeKeysWithDefault, mapWithSeparator } from './utils';
@@ -278,18 +279,20 @@ export const select: SelectSignatures = function (
   const
     allOptions = mode === SelectResultMode.One ? { ...options, limit: 1 } : options,
     aliasedTable = allOptions.alias || table,
+    lateralOpt = allOptions.lateral,
+    extrasOpt = allOptions.extras,
     tableAliasSQL = aliasedTable === table ? [] : sql<string>` AS ${aliasedTable}`,
     colsSQL = mode === SelectResultMode.Count ?
       (allOptions.columns ? sql`count(${cols(allOptions.columns)})` : sql<typeof aliasedTable>`count(${aliasedTable}.*)`) :
       allOptions.columns ?
-        sql`jsonb_build_object(${mapWithSeparator(allOptions.columns, sql`, `, c => raw(`'${c}', "${c}"`))})` :
+        sql`jsonb_build_object(${mapWithSeparator(allOptions.columns, sql`, `, c => sql<SQL>`${param(c)}, ${c}`)})` :
         sql<typeof aliasedTable>`to_jsonb(${aliasedTable}.*)`,
-    colsLateralSQL = allOptions.lateral === undefined ? [] :
+    colsLateralSQL = lateralOpt === undefined ? [] :
       sql` || jsonb_build_object(${mapWithSeparator(
-        Object.keys(allOptions.lateral), sql`, `, k => raw(`'${k}', "cj_${k}".result`))})`,
-    colsExtraSQL = allOptions.extras === undefined ? [] :
+        Object.keys(lateralOpt), sql`, `, (k, i) => sql<SQL>`${param(k)}, "ljoin_${raw(String(i))}".result`)})`,
+    colsExtraSQL = extrasOpt === undefined ? [] :
       sql<any[]>` || jsonb_build_object(${mapWithSeparator(
-        Object.keys(allOptions.extras), sql`, `, k => [raw(`'${k}', `), allOptions.extras![k]])})`,
+        Object.keys(extrasOpt), sql`, `, k => sql<SQL>`${param(k)}, ${extrasOpt![k]}`)})`,
     allColsSQL = sql`${colsSQL}${colsLateralSQL}${colsExtraSQL}`,
     whereSQL = where === all ? [] : sql` WHERE ${where}`,
     orderSQL = !allOptions.order ? [] :
@@ -297,12 +300,11 @@ export const select: SelectSignatures = function (
         sql`${o.by} ${raw(o.direction)}${o.nulls ? sql` NULLS ${raw(o.nulls)}` : []}`)],
     limitSQL = allOptions.limit === undefined ? [] : sql` LIMIT ${raw(String(allOptions.limit))}`,
     offsetSQL = allOptions.offset === undefined ? [] : sql` OFFSET ${raw(String(allOptions.offset))}`,
-    lateralOpt = allOptions.lateral,
     lateralSQL = lateralOpt === undefined ? [] :
-      Object.keys(lateralOpt).map(k => {
+      Object.keys(lateralOpt).map((k, i) => {
         const subQ = lateralOpt[k];
         subQ.parentTable = aliasedTable;  // enables `parent('column')` in subquery's Wherables
-        return sql<SQL>` LEFT JOIN LATERAL (${subQ}) AS ${raw(`"cj_${k}"`)} ON true`;
+        return sql<SQL>` LEFT JOIN LATERAL (${subQ}) AS "ljoin_${raw(String(i))}" ON true`;
       });
 
   const
