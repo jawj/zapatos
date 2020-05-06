@@ -1,17 +1,10 @@
 /*
-** DON'T EDIT THIS FILE **
+** DON'T EDIT THIS FILE (unless you're working on Zapatos) **
 It's part of Zapatos, and will be overwritten when the database schema is regenerated
 
-https://jawj.github.io/zapatos/
+Zapatos: https://jawj.github.io/zapatos/
 Copyright (C) 2020 George MacKerron
-
-This software is released under the MIT licence
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files(the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and / or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+Released under the MIT licence: see LICENCE file
 */
 
 /* tslint:disable */
@@ -175,7 +168,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows']> {
       qr = await queryable.query(query),
       result = this.runResultTransform(qr);
     if (config.resultListener) config.resultListener(result);
-    
+
     return result;
   }
 
