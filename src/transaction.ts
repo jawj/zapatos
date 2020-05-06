@@ -2,7 +2,7 @@
 ** DON'T EDIT THIS FILE **
 It's part of Zapatos, and will be overwritten when the database schema is regenerated
 
-https://jawj.github.io/zapatos
+https://jawj.github.io/zapatos/
 Copyright (C) 2020 George MacKerron
 
 This software is released under the MIT licence
