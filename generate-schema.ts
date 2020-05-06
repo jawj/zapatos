@@ -183,7 +183,7 @@ export type ${thingable}ForTable<T extends Table> = {${tableNames.map(name => `
 `).join('')}
 `;
 
-const moduleRoot = () =>
+const moduleRoot = () =>  // __dirname could be either module root (ts) or dist (js)
   fs.existsSync(path.join(__dirname, 'package.json')) ? __dirname : path.join(__dirname, '..');
 
 
@@ -348,8 +348,7 @@ void (async () => {
 
   } else {
     const srcFiles = recurseNodes(srcOriginPath)
-      .map(p => path.relative(srcOriginPath, p))
-      .concat(licenceOriginPathRelative);
+      .map(p => path.relative(srcOriginPath, p));
 
     for (const f of srcFiles) {
       const
@@ -357,10 +356,12 @@ void (async () => {
         targetDirPath = path.join(srcTargetPath, path.dirname(f)),
         targetPath = path.join(srcTargetPath, f);
 
-      console.log(`Writing file: ${targetPath}`);
+      console.log(`Copying source file to ${targetPath}`);
       fs.mkdirSync(targetDirPath, { recursive: true });
       fs.copyFileSync(srcPath, targetPath);
     }
+    console.log(`Copying licence file to ${licenceTargetPath}`);
+    fs.copyFileSync(licenceOriginPath, licenceTargetPath);
   }
 
   console.log(`Writing generated schema: ${schemaTargetPath}`);
