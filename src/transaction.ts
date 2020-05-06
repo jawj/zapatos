@@ -38,9 +38,7 @@ export namespace TxnSatisfying {
   export type SerializableRODeferrable = SerializableRO | Isolation.SerializableRODeferrable;
 }
 
-export interface TxnClient<T extends Isolation | undefined> extends pg.PoolClient {
-  transactionMode: T;
-}
+export interface TxnClient<T extends Isolation> extends pg.PoolClient { }
 
 let txnSeq = 0;
 
@@ -64,8 +62,6 @@ export async function transaction<T, M extends Isolation>(
     config = getConfig(),
     maxAttempts = config.transactionAttemptsMax,
     { minMs, maxMs } = config.transactionRetryDelay;
-
-  txnClient.transactionMode = isolationMode;
 
   try {
     for (let attempt = 1; ; attempt++) {
@@ -104,7 +100,6 @@ export async function transaction<T, M extends Isolation>(
     }
 
   } finally {
-    (txnClient as any).transactionMode = undefined;
     txnClient.release();
   }
 }
