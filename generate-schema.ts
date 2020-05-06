@@ -319,31 +319,43 @@ void (async () => {
     ts = await tsForConfig(config),
     folderName = 'zapatos',
     srcName = 'src',
+    licenceName = 'LICENCE',
     schemaName = 'schema.ts',
     root = moduleRoot(),
-    folderLocation = path.join(config.outDir, folderName),
-    srcLocation = path.join(folderLocation, srcName),
-    pathToCode = path.join(root, srcName),
-    relativePathToCode = path.relative(folderLocation, pathToCode),
-    schemaLocation = path.join(folderLocation, schemaName);
+    folderTargetPath = path.join(config.outDir, folderName),
 
-  if (!fs.existsSync(folderLocation)) fs.mkdirSync(folderLocation);
+    srcTargetPath = path.join(folderTargetPath, srcName),
+    srcOriginPath = path.join(root, srcName),
+    srcOriginPathRelative = path.relative(folderTargetPath, srcOriginPath),
+
+    licenceTargetPath = path.join(folderTargetPath, licenceName),
+    licenceOriginPath = path.join(root, licenceName),
+    licenceOriginPathRelative = path.relative(folderTargetPath, licenceOriginPath),
+
+    schemaTargetPath = path.join(folderTargetPath, schemaName);
+
+  if (!fs.existsSync(folderTargetPath)) fs.mkdirSync(folderTargetPath);
 
   // TODO: deal with the case when we did have mode copy and now have mode symlink or vice versa
 
   if (config.srcMode === 'symlink') {
-    if (fs.existsSync(srcLocation)) fs.unlinkSync(srcLocation);
+    if (fs.existsSync(srcTargetPath)) fs.unlinkSync(srcTargetPath);
 
-    console.log(`Creating symlink: ${srcLocation} -> ${relativePathToCode}`);
-    fs.symlinkSync(relativePathToCode, srcLocation);
+    console.log(`Creating symlink: ${srcTargetPath} -> ${srcOriginPathRelative}`);
+    fs.symlinkSync(srcOriginPathRelative, srcTargetPath);
+    console.log(`Creating symlink: ${licenceTargetPath} -> ${licenceOriginPathRelative}`);
+    fs.symlinkSync(licenceOriginPathRelative, licenceTargetPath);
 
   } else {
-    const srcFiles = recurseNodes(pathToCode).map(p => path.relative(pathToCode, p));
+    const srcFiles = recurseNodes(srcOriginPath)
+      .map(p => path.relative(srcOriginPath, p))
+      .concat(licenceOriginPathRelative);
+
     for (const f of srcFiles) {
       const
-        srcPath = path.join(pathToCode, f),
-        targetDirPath = path.join(srcLocation, path.dirname(f)),
-        targetPath = path.join(srcLocation, f);
+        srcPath = path.join(srcOriginPath, f),
+        targetDirPath = path.join(srcTargetPath, path.dirname(f)),
+        targetPath = path.join(srcTargetPath, f);
 
       console.log(`Writing file: ${targetPath}`);
       fs.mkdirSync(targetDirPath, { recursive: true });
@@ -351,7 +363,7 @@ void (async () => {
     }
   }
 
-  console.log(`Writing generated schema: ${schemaLocation}`);
-  fs.writeFileSync(schemaLocation, ts, { flag: 'w' });
+  console.log(`Writing generated schema: ${schemaTargetPath}`);
+  fs.writeFileSync(schemaTargetPath, ts, { flag: 'w' });
 })();
 
