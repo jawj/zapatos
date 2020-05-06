@@ -285,14 +285,14 @@ export const select: SelectSignatures = function (
     colsSQL = mode === SelectResultMode.Count ?
       (allOptions.columns ? sql`count(${cols(allOptions.columns)})` : sql<typeof aliasedTable>`count(${aliasedTable}.*)`) :
       allOptions.columns ?
-        sql`jsonb_build_object(${mapWithSeparator(allOptions.columns, sql`, `, c => sql<SQL>`${param(c)}, ${c}`)})` :
+        sql`jsonb_build_object(${mapWithSeparator(allOptions.columns, sql`, `, c => sql<SQL>`${param(c)}::text, ${c}`)})` :
         sql<typeof aliasedTable>`to_jsonb(${aliasedTable}.*)`,
     colsLateralSQL = lateralOpt === undefined ? [] :
       sql` || jsonb_build_object(${mapWithSeparator(
-        Object.keys(lateralOpt), sql`, `, (k, i) => sql<SQL>`${param(k)}, "ljoin_${raw(String(i))}".result`)})`,
+        Object.keys(lateralOpt), sql`, `, (k, i) => sql<SQL>`${param(k)}::text, "ljoin_${raw(String(i))}".result`)})`,
     colsExtraSQL = extrasOpt === undefined ? [] :
       sql<any[]>` || jsonb_build_object(${mapWithSeparator(
-        Object.keys(extrasOpt), sql`, `, k => sql<SQL>`${param(k)}, ${extrasOpt![k]}`)})`,
+        Object.keys(extrasOpt), sql`, `, k => sql<SQL>`${param(k)}::text, ${extrasOpt![k]}`)})`,
     allColsSQL = sql`${colsSQL}${colsLateralSQL}${colsExtraSQL}`,
     whereSQL = where === all ? [] : sql` WHERE ${where}`,
     orderSQL = !allOptions.order ? [] :
