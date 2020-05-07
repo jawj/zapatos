@@ -297,9 +297,9 @@ export const select: SelectSignatures = function (
     whereSQL = where === all ? [] : sql` WHERE ${where}`,
     orderSQL = !allOptions.order ? [] :
       sql` ORDER BY ${mapWithSeparator(allOptions.order, sql`, `, o => {
-        if (!['ASC', 'DESC'].includes(o.direction)) throw new Error(`Direction must be ASC or DESC, not '${o.direction}'`);
-        if (!['FIRST', 'LAST'].includes(o.direction)) throw new Error(`Nulls must be FIRST, LAST or unspecified, not '${o.nulls}'`);
-        return sql`${o.by} ${raw(o.direction)}${o.nulls ? sql` NULLS ${raw(o.nulls)}` : []}`
+        if (!['ASC', 'DESC'].includes(o.direction)) throw new Error(`Direction must be ASC/DESC, not '${o.direction}'`);
+        if (o.nulls && !['FIRST', 'LAST'].includes(o.nulls)) throw new Error(`Nulls must be FIRST/LAST/undefined, not '${o.nulls}'`);
+        return sql`${o.by} ${raw(o.direction)}${o.nulls ? sql` NULLS ${raw(o.nulls)}` : []}`;
       })}`,
     limitSQL = allOptions.limit === undefined ? [] : sql` LIMIT ${param(allOptions.limit)}`,
     offsetSQL = allOptions.offset === undefined ? [] : sql` OFFSET ${param(allOptions.offset)}`,
