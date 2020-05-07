@@ -296,10 +296,13 @@ export const select: SelectSignatures = function (
     allColsSQL = sql`${colsSQL}${colsLateralSQL}${colsExtraSQL}`,
     whereSQL = where === all ? [] : sql` WHERE ${where}`,
     orderSQL = !allOptions.order ? [] :
-      [sql` ORDER BY `, ...mapWithSeparator(allOptions.order, sql`, `, o =>
-        sql`${o.by} ${raw(o.direction)}${o.nulls ? sql` NULLS ${raw(o.nulls)}` : []}`)],
-    limitSQL = allOptions.limit === undefined ? [] : sql` LIMIT ${raw(String(allOptions.limit))}`,
-    offsetSQL = allOptions.offset === undefined ? [] : sql` OFFSET ${raw(String(allOptions.offset))}`,
+      sql` ORDER BY ${mapWithSeparator(allOptions.order, sql`, `, o => {
+        if (!['ASC', 'DESC'].includes(o.direction)) throw new Error(`Direction must be ASC or DESC, not '${o.direction}'`);
+        if (!['FIRST', 'LAST'].includes(o.direction)) throw new Error(`Nulls must be FIRST, LAST or unspecified, not '${o.nulls}'`);
+        return sql`${o.by} ${raw(o.direction)}${o.nulls ? sql` NULLS ${raw(o.nulls)}` : []}`
+      })}`,
+    limitSQL = allOptions.limit === undefined ? [] : sql` LIMIT ${param(allOptions.limit)}`,
+    offsetSQL = allOptions.offset === undefined ? [] : sql` OFFSET ${param(allOptions.offset)}`,
     lateralSQL = lateralOpt === undefined ? [] :
       Object.keys(lateralOpt).map((k, i) => {
         const subQ = lateralOpt[k];
