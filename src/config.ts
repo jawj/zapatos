@@ -14,6 +14,7 @@ export interface Config {
   transactionRetryDelay: { minMs: number, maxMs: number };
   queryListener?(str: any): void;
   resultListener?(str: any): void;
+  transactionListener?(str: any): void;
 };
 export type NewConfig = Partial<Config>;
 
