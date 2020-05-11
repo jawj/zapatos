@@ -1,0 +1,255 @@
+body {
+  padding: 30px 12.5%;
+  font: 12pt/1.667 source-serif-pro, Georgia, serif;
+  background: #fff;
+  color: #444;
+  text-size-adjust: none;
+  -webkit-text-size-adjust: none;
+}
+.logos {
+  margin-bottom: 15px;
+}
+.pg-logo {
+  padding-right: 10px;
+}
+
+h1 {
+  margin: 0 0 60px;
+}
+h2, h3, h4, h5, h6 {
+  margin: 40px 0 20px;
+  border-bottom: 1px #ddd solid;
+  padding-bottom: 5px;
+}
+h1, h2, h3, h4, h5 {
+  line-height: 1.1;
+  color: #000;
+}
+a {
+  color: #36e;
+  text-decoration: none;
+}
+li {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+p {
+  margin: 12px 0;
+}
+code, pre {
+  font: 11pt/1.5 source-code-pro, Menlo, Monaco, monospace;
+  font-weight: inherit;
+  background: #f4f4f4;
+}
+pre {
+  padding: 9px 12px;
+  margin: 15px 0 20px;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  counter-reset: line-no;
+}
+pre .indent-line {
+  display: inline-block;
+}
+pre code {
+  background: transparent;
+}
+#monaco-overlay {
+  position: fixed;
+  background: rgba(0,0,0,0.667);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  display: none;
+}
+#ts-editor {
+  position: fixed;
+  top: 10%;
+  right: 10%;
+  bottom: 10%;
+  left: 10%;
+  background: #fff;
+}
+#closemonaco {
+  display: block;
+  position: fixed;
+  color: #fff;
+  font: 50px source-code-pro;
+  top: 10%;
+  left: 90%;
+  line-height: 0.45;
+  padding-left: 5px;
+}
+.runnable {
+  position: relative;
+  margin-top: 30px;
+  padding-top: 20px;
+}
+.sqlstuff {
+  border: 1px solid #eee;
+  padding: 5px;
+}
+.sqltext, .sqlvalues, .sqlresult, .transactionlog, .console {
+  position: relative;
+  margin: 0;
+}
+.sqltext::before, .sqlvalues::before, .sqlresult::before, .transactionlog::before, .console::before, .openmonaco, .toggleimports {
+  background: #444;
+  color: #fff;
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-weight: bold;
+  font-size: 9pt;
+  display: inline-block;
+  padding: 0 7px;
+}
+.openmonaco, .toggleimports {
+  color: #36e;
+  border: 1px solid #36e;
+  background: #fff;
+  right: 10px;
+  top: -9px;
+  border-radius: 10px;
+  padding: 0 10px;
+}
+.toggleimports {
+  right: auto;
+  left: 10px;
+  color: #999;
+  border: 1px solid #999;
+}
+.imports {
+  display: none;
+  border-bottom: 1px dotted #ccc;
+  padding-bottom: 10px;
+  margin-bottom: 9px;
+}
+.sqltext, .language-sql {
+  background: #eeeeff;
+}
+.sqltext::before {
+  content: 'SQL';
+}
+.sqlvalues {
+  background: #ffeeff;
+  margin-top: 0;
+}
+.sqlvalues::before {
+  content: '+ $1, $2, ...';
+}
+.sqlresult {
+  background: #ffeedd;
+  margin: 15px 0 20px;
+}
+.sqlresult::before {
+  content: '⟶ result';
+}
+.transactionlog::before {
+  content: 'Transactions';
+}
+.console {
+  margin: 15px 0 20px;
+}
+.console::before {
+  content: 'Console';
+}
+code {
+  display: inline-block;
+  padding: 0 2px;
+}
+pre > code {
+  display: unset;
+  padding: unset;
+}
+#content {
+  margin-left: 260px;
+  padding-left: 50px;
+}
+#toc {
+  position: fixed;
+  line-height: 1.1;
+  overflow-y: auto;
+  box-sizing: border-box;
+  width: 260px;
+  height: 100%;
+  top: 0;
+  padding: 30px 0;
+}
+#toc-toggle {
+  display: none;
+  position: fixed;
+  left: 0;
+  bottom: 20px;
+  padding: 5px 10px;
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px;
+  background: #777;
+  color: #fff;
+  z-index: 1001;
+}
+p {
+  max-width: 85%;
+}
+@media (max-width: 1280px) {
+  body {
+    padding-right: 2.5%;
+    padding-left: 2.5%;
+  }
+}
+@media (max-width: 900px) {
+  #content {
+    margin: 0;
+    padding: 0;
+  }
+  #toc {
+    display: none;
+    background: rgba(255, 255, 255, 0.95);
+    border-right: 1px solid #ccc;
+    width: 290px;
+    padding-right: 30px;
+    z-index: 1000;
+  }
+  #toc-toggle {
+    display: block;
+  }
+  p {
+    max-width: none;
+  }
+}
+#toc ol {
+  list-style-type: none;
+}
+#toc li {
+  margin: 4px 0;
+}
+.toc-list {
+  padding-left: 20px;
+}
+#toc > .toc-list {
+  position: relative;
+  overflow: hidden;
+}
+.toc-link {
+  display: inline-block;
+  padding: 5px 0;
+}
+.src-link {
+  float: right;
+  margin: 40px 0 0 30px;
+}
+.toc-link::before {
+  margin-top: -5px;
+}
+
+h1 .extra-vowels {
+  position: relative;
+  top: -40px;
+  transition: 0.45s all;
+  opacity: 0;
+}
+h1 .extra-vowels.o {
+  transition-delay: 0.15s;
+}
