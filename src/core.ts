@@ -158,7 +158,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows']> {
    * is piped via `runResultTransform` before being returned.
    * @param queryable A database client or pool
    */
-  run = async (queryable: Queryable): Promise<RunResult> => {
+  async run(queryable: Queryable): Promise<RunResult> {
     const
       query = this.compile(),
       config = getConfig();
@@ -177,7 +177,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows']> {
    * be passed to the `pg` query function. Arguments are generally only passed when the 
    * function calls itself recursively.
    */
-  compile = (result: SQLQuery = { text: '', values: [] }, parentTable?: string, currentColumn?: Column) => {
+  compile(result: SQLQuery = { text: '', values: [] }, parentTable?: string, currentColumn?: Column) {
     if (this.parentTable) parentTable = this.parentTable;
 
     result.text += this.literals[0];
@@ -188,7 +188,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows']> {
     return result;
   }
 
-  compileExpression = (expression: SQL, result: SQLQuery = { text: '', values: [] }, parentTable?: string, currentColumn?: Column) => {
+  compileExpression(expression: SQL, result: SQLQuery = { text: '', values: [] }, parentTable?: string, currentColumn?: Column) {
     if (this.parentTable) parentTable = this.parentTable;
 
     if (expression instanceof SQLFragment) {
