@@ -15,6 +15,7 @@ import {
   InsertableForTable,
   UpdatableForTable,
   ColumnForTable,
+  UniqueIndexForTable,
   SQLForTable,
   Insertable,
   Updatable,
@@ -78,39 +79,56 @@ export const insert: InsertSignatures = function
 
 /* === upsert === */
 
+/**
+ * Wraps a unique index of the target table for use as the arbiter constraint of an 
+ * `upsert` shortcut query.
+ */
+export class Constraint<T extends Table> { constructor(public value: UniqueIndexForTable<T>) { } }
+/**
+ * Returns a `Constraint` instance, wrapping a unique index of the target table for 
+ * use as the arbiter constraint of an `upsert` shortcut query.
+ */
+export function constraint<T extends Table>(x: UniqueIndexForTable<T>) { return new Constraint<T>(x); }
+
 interface UpsertAction { $action: 'INSERT' | 'UPDATE'; }
 type UpsertReturnableForTable<T extends Table> = JSONSelectableForTable<T> & UpsertAction;
+type UpsertConflictTargetForTable<T extends Table> = Constraint<T> | ColumnForTable<T> | ColumnForTable<T>[];
 
 interface UpsertSignatures {
-  <T extends Table>(table: T, values: InsertableForTable<T>, uniqueCols: ColumnForTable<T> | ColumnForTable<T>[], noNullUpdateCols?: ColumnForTable<T> | ColumnForTable<T>[]): SQLFragment<UpsertReturnableForTable<T>>;
-  <T extends Table>(table: T, values: InsertableForTable<T>[], uniqueCols: ColumnForTable<T> | ColumnForTable<T>[], noNullUpdateCols?: ColumnForTable<T> | ColumnForTable<T>[]): SQLFragment<UpsertReturnableForTable<T>[]>;
+  <T extends Table>(table: T, values: InsertableForTable<T>, conflictTarget: UpsertConflictTargetForTable<T>, noNullUpdateCols?: ColumnForTable<T> | ColumnForTable<T>[]): SQLFragment<UpsertReturnableForTable<T>>;
+  <T extends Table>(table: T, values: InsertableForTable<T>[], conflictTarget: UpsertConflictTargetForTable<T>, noNullUpdateCols?: ColumnForTable<T> | ColumnForTable<T>[]): SQLFragment<UpsertReturnableForTable<T>[]>;
 }
 
 /**
  * Generate an 'upsert' (`INSERT ... ON CONFLICT ...`) query `SQLFragment`.
  * @param table The table to update or insert into
  * @param values An `Insertable` of values (or an array thereof) to be inserted or updated
- * @param uniqueCols A `UNIQUE`-indexed column (or array thereof) that determines 
+ * @param conflictTarget A `UNIQUE` index or `UNIQUE`-indexed column (or array thereof) that determines
  * whether this is an `UPDATE` (when there's a matching existing value) or an `INSERT` 
  * (when there isn't)
  * @param noNullUpdateCols Optionally, a column (or array thereof) that should not be 
  * overwritten with `NULL` values during an update
  */
 export const upsert: UpsertSignatures = function
-  (table: Table, values: Insertable | Insertable[], uniqueCols: Column | Column[], noNullUpdateCols: Column | Column[] = []): SQLFragment<any> {
+  (table: Table, values: Insertable | Insertable[], conflictTarget: Column | Column[] | Constraint<Table>, noNullUpdateCols: Column | Column[] = []): SQLFragment<any> {
 
-  if (!Array.isArray(uniqueCols)) uniqueCols = [uniqueCols];
+  if (typeof conflictTarget === 'string') conflictTarget = [conflictTarget];  // now either Column[] or Constraint
   if (!Array.isArray(noNullUpdateCols)) noNullUpdateCols = [noNullUpdateCols];
 
   const
     completedValues = Array.isArray(values) ? completeKeysWithDefault(values) : values,
-    colsSQL = cols(Array.isArray(completedValues) ? completedValues[0] : completedValues),
+    firstRow = Array.isArray(completedValues) ? completedValues[0] : completedValues,
+    colsSQL = cols(firstRow),
     valuesSQL = Array.isArray(completedValues) ?
       mapWithSeparator(completedValues as Insertable[], sql`, `, v => sql`(${vals(v)})`) :
       sql`(${vals(completedValues)})`,
-    nonUniqueCols = (Object.keys(Array.isArray(completedValues) ? completedValues[0] : completedValues) as Column[])
-      .filter(v => !uniqueCols.includes(v)),
-    uniqueColsSQL = mapWithSeparator(uniqueCols.slice().sort(), sql`, `, c => c),
+    colNames = Object.keys(firstRow) as Column[],
+    nonUniqueCols = Array.isArray(conflictTarget) ?
+      colNames.filter(v => !(conflictTarget as Column[]).includes(v)) :
+      colNames,
+    uniqueColsSQL = Array.isArray(conflictTarget) ?
+      sql`(${mapWithSeparator(conflictTarget.slice().sort(), sql`, `, c => c)})` :
+      sql<string>`ON CONSTRAINT ${conflictTarget.value}`,
     updateColsSQL = mapWithSeparator(nonUniqueCols.slice().sort(), sql`, `, c => c),
     updateValuesSQL = mapWithSeparator(nonUniqueCols.slice().sort(), sql`, `, c =>
       noNullUpdateCols.includes(c) ? sql`CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END` : sql`EXCLUDED.${c}`);
@@ -118,7 +136,7 @@ export const upsert: UpsertSignatures = function
   // the added-on $action = 'INSERT' | 'UPDATE' key takes after SQL Server's approach to MERGE
   // (and on the use of xmax for this purpose, see: https://stackoverflow.com/questions/39058213/postgresql-upsert-differentiate-inserted-and-updated-rows-using-system-columns-x)
 
-  const query = sql<SQL>`INSERT INTO ${table} (${colsSQL}) VALUES ${valuesSQL} ON CONFLICT (${uniqueColsSQL}) DO UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL}) RETURNING to_jsonb(${table}.*) || jsonb_build_object('$action', CASE xmax WHEN 0 THEN 'INSERT' ELSE 'UPDATE' END) AS result`;
+  const query = sql<SQL>`INSERT INTO ${table} (${colsSQL}) VALUES ${valuesSQL} ON CONFLICT ${uniqueColsSQL} DO UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL}) RETURNING to_jsonb(${table}.*) || jsonb_build_object('$action', CASE xmax WHEN 0 THEN 'INSERT' ELSE 'UPDATE' END) AS result`;
 
   query.runResultTransform = Array.isArray(completedValues) ?
     (qr) => qr.rows.map(r => r.result) :

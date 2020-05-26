@@ -144,9 +144,16 @@ const definitionForTableInSchema = async (tableName: string, schemaName: string,
     insertables.push(`${column}${insertablyOptional}: ${type}${orDateString}${orNull}${orDefault} | SQLFragment;`);
   });
 
+  const uniqueIndexes = await db.sql<s.pg_indexes.SQL | s.pg_class.SQL | s.pg_index.SQL, { indexname: string }[]>`
+    SELECT i.${"indexname"}
+    FROM ${"pg_indexes"} i 
+    JOIN ${"pg_class"} c ON c.${"relname"} = i.${"indexname"} 
+    JOIN ${"pg_index"} idx ON idx.${"indexrelid"} = c.${"oid"} AND idx.${"indisunique"} 
+    WHERE i.${"tablename"} = ${db.param(tableName)}`.run(pool);
+
   return `
 export namespace ${tableName} {
-  export type Table = "${tableName}";
+  export type Table = '${tableName}';
   export interface Selectable {
     ${selectables.join('\n    ')}
   }
@@ -160,6 +167,9 @@ export namespace ${tableName} {
     Date[] extends Selectable[K] ? Exclude<Selectable[K], Date[]> | DateString[] :
     Selectable[K]
   };
+  export type UniqueIndex = ${uniqueIndexes.length > 0 ?
+      uniqueIndexes.map(ui => "'" + ui.indexname + "'").join(' | ') :
+      'never'};
   export type Column = keyof Selectable;
   export type OnlyCols<T extends readonly Column[]> = Pick<Selectable, T[number]>;
   export type SQLExpression = GenericSQLExpression | Table | Whereable | Column | ColumnNames<Updatable | (keyof Updatable)[]> | ColumnValues<Updatable>;
@@ -173,10 +183,11 @@ export type Selectable = ${tableNames.map(name => `${name}.Selectable`).join(' |
 export type Whereable = ${tableNames.map(name => `${name}.Whereable`).join(' | ')};
 export type Insertable = ${tableNames.map(name => `${name}.Insertable`).join(' | ')};
 export type Updatable = ${tableNames.map(name => `${name}.Updatable`).join(' | ')};
+export type UniqueIndex = ${tableNames.map(name => `${name}.UniqueIndex`).join(' | ')};
 export type Column = ${tableNames.map(name => `${name}.Column`).join(' | ')};
 export type AllTables = [${tableNames.map(name => `${name}.Table`).join(', ')}];
 
-${['Selectable', 'Whereable', 'Insertable', 'Updatable', 'Column', 'SQL'].map(thingable => `
+${['Selectable', 'Whereable', 'Insertable', 'Updatable', 'UniqueIndex', 'Column', 'SQL'].map(thingable => `
 export type ${thingable}ForTable<T extends Table> = {${tableNames.map(name => `
   ${name}: ${name}.${thingable},`).join('')}
 }[T];
