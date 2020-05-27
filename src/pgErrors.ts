@@ -7,8 +7,6 @@ Copyright (C) 2020 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
-/* tslint:disable */
-
 interface Error {
   code?: string;
 }

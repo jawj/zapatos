@@ -7,15 +7,13 @@ Copyright (C) 2020 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
-/* tslint:disable */
-
 export interface Config {
   transactionAttemptsMax: number;
-  transactionRetryDelay: { minMs: number, maxMs: number };
+  transactionRetryDelay: { minMs: number; maxMs: number };
   queryListener?(str: any): void;
   resultListener?(str: any): void;
   transactionListener?(str: any): void;
-};
+}
 export type NewConfig = Partial<Config>;
 
 let config: Config = {  // defaults

@@ -1,4 +1,7 @@
 {
+  "extends": [
+    "tslint-no-circular-imports"
+  ],
   "rules": {
     "no-floating-promises": true,
     "await-promise": true,
@@ -6,6 +9,11 @@
     "prefer-object-spread": true,
     "radix": true,
     "prefer-const": true,
-    "semicolon": [true, "always"]
+    "semicolon": [
+      true,
+      "always",
+      "ignore-interfaces",
+      "strict-bound-class-methods"
+    ]
   }
 }

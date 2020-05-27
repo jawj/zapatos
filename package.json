@@ -39,6 +39,7 @@
     "pg": "^8.0.3",
     "ts-node": "^8.10.1",
     "tslint": "^6.1.2",
+    "tslint-no-circular-imports": "^0.7.0",
     "typescript": ">=3.8.3"
   }
 }

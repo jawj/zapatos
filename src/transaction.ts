@@ -7,8 +7,6 @@ Copyright (C) 2020 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
-/* tslint:disable */
-
 import type * as pg from 'pg';
 import { isDatabaseError } from './pgErrors';
 import { wait } from './utils';

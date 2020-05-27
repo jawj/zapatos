@@ -189,7 +189,7 @@ export type AllTables = [${tableNames.map(name => `${name}.Table`).join(', ')}];
 
 ${['Selectable', 'Whereable', 'Insertable', 'Updatable', 'UniqueIndex', 'Column', 'SQL'].map(thingable => `
 export type ${thingable}ForTable<T extends Table> = {${tableNames.map(name => `
-  ${name}: ${name}.${thingable},`).join('')}
+  ${name}: ${name}.${thingable};`).join('')}
 }[T];
 `).join('')}
 `;

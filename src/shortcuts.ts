@@ -7,9 +7,7 @@ Copyright (C) 2020 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
-/* tslint:disable */
-
-import {
+import type {
   SelectableForTable,
   WhereableForTable,
   InsertableForTable,
@@ -90,7 +88,7 @@ export class Constraint<T extends Table> { constructor(public value: UniqueIndex
  */
 export function constraint<T extends Table>(x: UniqueIndexForTable<T>) { return new Constraint<T>(x); }
 
-export interface UpsertAction { $action: 'INSERT' | 'UPDATE'; }
+export interface UpsertAction { $action: 'INSERT' | 'UPDATE' }
 type UpsertReturnableForTable<T extends Table> = JSONSelectableForTable<T> & UpsertAction;
 type UpsertConflictTargetForTable<T extends Table> = Constraint<T> | ColumnForTable<T> | ColumnForTable<T>[];
 
@@ -239,7 +237,7 @@ export interface SelectOptionsForTable<T extends Table, C extends ColumnForTable
   alias?: string;
 }
 
-export interface SQLFragmentsMap { [k: string]: SQLFragment<any>; }
+export interface SQLFragmentsMap { [k: string]: SQLFragment<any> }
 export type PromisedType<P> = P extends Promise<infer U> ? U : never;
 export type PromisedSQLFragmentReturnType<R extends SQLFragment<any>> = PromisedType<ReturnType<R['run']>>;
 export type PromisedSQLFragmentReturnTypeMap<L extends SQLFragmentsMap> = { [K in keyof L]: PromisedSQLFragmentReturnType<L[K]> };
@@ -382,7 +380,7 @@ export interface CountSignatures {
   <T extends Table>(
     table: T,
     where: WhereableForTable<T> | SQLFragment | AllType,
-    options?: { columns?: ColumnForTable<T>[], alias?: string },
+    options?: { columns?: ColumnForTable<T>[]; alias?: string },
   ): SQLFragment<number>;
 }
 
