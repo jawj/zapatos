@@ -15,7 +15,7 @@
     "build": "tsc",
     "preversion": "npm run-script build",
     "postversion": "npm publish",
-    "postinstall": "echo '>>> \\033[1;33mZapatos was installed or upgraded. Please (re-)run \\033[1;32mnpx zapatos\\033[1;33m.\\033[0m <<<\\n'"
+    "postinstall": "node -e 'console.warn(`>>> \\033[1;33mZapatos was installed or upgraded. Please (re-)run \\033[1;32mnpx zapatos\\033[1;33m.\\033[0m <<<\\n`)'"
   },
   "files": [
     "/dist",
