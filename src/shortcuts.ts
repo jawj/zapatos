@@ -90,7 +90,7 @@ export class Constraint<T extends Table> { constructor(public value: UniqueIndex
  */
 export function constraint<T extends Table>(x: UniqueIndexForTable<T>) { return new Constraint<T>(x); }
 
-interface UpsertAction { $action: 'INSERT' | 'UPDATE'; }
+export interface UpsertAction { $action: 'INSERT' | 'UPDATE'; }
 type UpsertReturnableForTable<T extends Table> = JSONSelectableForTable<T> & UpsertAction;
 type UpsertConflictTargetForTable<T extends Table> = Constraint<T> | ColumnForTable<T> | ColumnForTable<T>[];
 
