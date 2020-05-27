@@ -7,7 +7,7 @@ Released under the MIT licence: see LICENCE file
 // this schema describes the system tables/views that we interrogate to generate the user's schema
 // it is NOT auto-generated, since data on system tables doesn't show up in system tables!
 
-import {
+import type {
   JSONValue,
   JSONArray,
   DateString,
