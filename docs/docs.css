@@ -45,7 +45,10 @@ pre {
   padding: 9px 12px;
   margin: 15px 0 20px;
   white-space: pre-wrap;
-  overflow-wrap: break-word;
+  
+  overflow-wrap: anywhere; /* Chrome */
+  word-break: break-word; /* Safari */
+
   counter-reset: line-no;
 }
 pre .indent-line {
@@ -168,7 +171,7 @@ pre > code {
   margin-left: 260px;
   padding-left: 50px;
 }
-#toc {
+#outer-toc {
   position: fixed;
   line-height: 1.1;
   overflow-y: auto;
@@ -204,13 +207,16 @@ p {
     margin: 0;
     padding: 0;
   }
-  #toc {
+  #outer-toc {
     display: none;
     background: rgba(255, 255, 255, 0.95);
     border-right: 1px solid #ccc;
     width: 290px;
     padding-right: 30px;
     z-index: 1000;
+  }
+  #outer-toc.toc-shown {
+    display: block;
   }
   #toc-toggle {
     display: block;

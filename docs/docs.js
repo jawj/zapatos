@@ -16,21 +16,21 @@ tocbot.init({
 });
 
 var
-  toc = document.getElementById('toc'),
+  outertoc = document.getElementById('outer-toc'),
   showTocMsg = 'Menu »',
   hideTocMsg = '« Menu';
 
-toc.insertAdjacentHTML('beforebegin', '<a href="#" id="toc-toggle">' + showTocMsg + '</a>')
+outertoc.insertAdjacentHTML('beforebegin', '<a href="#" id="toc-toggle">' + showTocMsg + '</a>')
 
 document.addEventListener('click', function (e) {
   var target = e.target;
   if (target.id === 'toc-toggle') {
     e.preventDefault();
-    if (toc.style.display === 'block') {
-      toc.style.display = 'none';
+    if (outertoc.className.match(/\btoc-shown\b/)) {
+      outertoc.className = outertoc.className.replace(/\btoc-shown\b/, '');
       target.innerText = showTocMsg;
     } else {
-      toc.style.display = 'block';
+      outertoc.className += ' toc-shown';
       target.innerText = hideTocMsg;
     }
   }
