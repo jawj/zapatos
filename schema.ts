@@ -147,71 +147,71 @@ export type AllTables = [pg_type.Table, pg_enum.Table, pg_namespace.Table, infor
 
 
 export type SelectableForTable<T extends Table> = {
-  pg_indexes: pg_indexes.Selectable,
-  pg_class: pg_class.Selectable,
-  pg_index: pg_index.Selectable,
-  pg_type: pg_type.Selectable,
-  pg_enum: pg_enum.Selectable,
-  pg_namespace: pg_namespace.Selectable,
-  '"information_schema"."columns"': information_schema.columns.Selectable,
+  pg_indexes: pg_indexes.Selectable;
+  pg_class: pg_class.Selectable;
+  pg_index: pg_index.Selectable;
+  pg_type: pg_type.Selectable;
+  pg_enum: pg_enum.Selectable;
+  pg_namespace: pg_namespace.Selectable;
+  '"information_schema"."columns"': information_schema.columns.Selectable;
 }[T];
 
 export type WhereableForTable<T extends Table> = {
-  pg_indexes: pg_indexes.Whereable,
-  pg_class: pg_class.Whereable,
-  pg_index: pg_index.Whereable,
-  pg_type: pg_type.Whereable,
-  pg_enum: pg_enum.Whereable,
-  pg_namespace: pg_namespace.Whereable,
-  '"information_schema"."columns"': information_schema.columns.Whereable,
+  pg_indexes: pg_indexes.Whereable;
+  pg_class: pg_class.Whereable;
+  pg_index: pg_index.Whereable;
+  pg_type: pg_type.Whereable;
+  pg_enum: pg_enum.Whereable;
+  pg_namespace: pg_namespace.Whereable;
+  '"information_schema"."columns"': information_schema.columns.Whereable;
 }[T];
 
 export type InsertableForTable<T extends Table> = {
-  pg_indexes: pg_indexes.Insertable,
-  pg_class: pg_class.Insertable,
-  pg_index: pg_index.Insertable,
-  pg_type: pg_type.Insertable,
-  pg_enum: pg_enum.Insertable,
-  pg_namespace: pg_namespace.Insertable,
-  '"information_schema"."columns"': information_schema.columns.Insertable,
+  pg_indexes: pg_indexes.Insertable;
+  pg_class: pg_class.Insertable;
+  pg_index: pg_index.Insertable;
+  pg_type: pg_type.Insertable;
+  pg_enum: pg_enum.Insertable;
+  pg_namespace: pg_namespace.Insertable;
+  '"information_schema"."columns"': information_schema.columns.Insertable;
 }[T];
 
 export type UpdatableForTable<T extends Table> = {
-  pg_indexes: pg_indexes.Updatable,
-  pg_class: pg_class.Updatable,
-  pg_index: pg_index.Updatable,
-  pg_type: pg_type.Updatable,
-  pg_enum: pg_enum.Updatable,
-  pg_namespace: pg_namespace.Updatable,
-  '"information_schema"."columns"': information_schema.columns.Updatable,
+  pg_indexes: pg_indexes.Updatable;
+  pg_class: pg_class.Updatable;
+  pg_index: pg_index.Updatable;
+  pg_type: pg_type.Updatable;
+  pg_enum: pg_enum.Updatable;
+  pg_namespace: pg_namespace.Updatable;
+  '"information_schema"."columns"': information_schema.columns.Updatable;
 }[T];
 
 export type UniqueIndexForTable<T extends Table> = {
-  pg_indexes: pg_indexes.UniqueIndex,
-  pg_class: pg_class.UniqueIndex,
-  pg_index: pg_index.UniqueIndex,
-  pg_type: pg_type.UniqueIndex,
-  pg_enum: pg_enum.UniqueIndex,
-  pg_namespace: pg_namespace.UniqueIndex,
-  '"information_schema"."columns"': information_schema.columns.UniqueIndex,
+  pg_indexes: pg_indexes.UniqueIndex;
+  pg_class: pg_class.UniqueIndex;
+  pg_index: pg_index.UniqueIndex;
+  pg_type: pg_type.UniqueIndex;
+  pg_enum: pg_enum.UniqueIndex;
+  pg_namespace: pg_namespace.UniqueIndex;
+  '"information_schema"."columns"': information_schema.columns.UniqueIndex;
 }[T];
 
 export type ColumnForTable<T extends Table> = {
-  pg_indexes: pg_indexes.Column,
-  pg_class: pg_class.Column,
-  pg_index: pg_index.Column,
-  pg_type: pg_type.Column,
-  pg_enum: pg_enum.Column,
-  pg_namespace: pg_namespace.Column,
-  '"information_schema"."columns"': information_schema.columns.Column,
+  pg_indexes: pg_indexes.Column;
+  pg_class: pg_class.Column;
+  pg_index: pg_index.Column;
+  pg_type: pg_type.Column;
+  pg_enum: pg_enum.Column;
+  pg_namespace: pg_namespace.Column;
+  '"information_schema"."columns"': information_schema.columns.Column;
 }[T];
 
 export type SQLForTable<T extends Table> = {
-  pg_indexes: pg_indexes.SQL,
-  pg_class: pg_class.SQL,
-  pg_index: pg_index.SQL,
-  pg_type: pg_type.SQL,
-  pg_enum: pg_enum.SQL,
-  pg_namespace: pg_namespace.SQL,
-  '"information_schema"."columns"': information_schema.columns.SQL,
+  pg_indexes: pg_indexes.SQL;
+  pg_class: pg_class.SQL;
+  pg_index: pg_index.SQL;
+  pg_type: pg_type.SQL;
+  pg_enum: pg_enum.SQL;
+  pg_namespace: pg_namespace.SQL;
+  '"information_schema"."columns"': information_schema.columns.SQL;
 }[T];
