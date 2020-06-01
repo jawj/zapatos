@@ -247,26 +247,31 @@ const tsForConfig = async (config: Config) => {
   const
     { schemas, db } = config,
     pool = new pg.Pool(db),
-    ts = header(config) +
-      (await Promise.all(
-        Object.keys(schemas).map(async schema => {
-          const
-            rules = schemas[schema],
-            tables = rules.exclude === '*' ? [] :  // exclude takes precedence
-              (rules.include === '*' ? await tablesInSchema(schema, pool) : rules.include)
-                .filter(table => rules.exclude.indexOf(table) < 0),
-            enums = await enumDataForSchema(schema, pool),
-            tableDefs = await Promise.all(tables.map(async table => definitionForTableInSchema(table, schema, enums, pool)));
-
-          return `\n/* === schema: ${schema} === */\n` +
+    schemaData = (await Promise.all(
+      Object.keys(schemas).map(async schema => {
+        const
+          rules = schemas[schema],
+          tables = rules.exclude === '*' ? [] :  // exclude takes precedence
+            (rules.include === '*' ? await tablesInSchema(schema, pool) : rules.include)
+              .filter(table => rules.exclude.indexOf(table) < 0),
+          enums = await enumDataForSchema(schema, pool),
+          tableDefs = await Promise.all(tables.map(async table => definitionForTableInSchema(table, schema, enums, pool))),
+          schemaDef = `\n/* === schema: ${schema} === */\n` +
             `\n/* --- enums --- */\n` +
             enumTypesForEnumData(enums) +
             `\n\n/* --- tables --- */\n` +
-            tableDefs.join('\n') +
-            `\n\n/* --- cross-table types --- */\n` +
-            crossTableTypesForTables(tables);
-        }))
-      ).join('\n\n');
+            tableDefs.join('\n');
+
+        return { schemaDef, tables };
+      }))
+    ),
+    schemaDefs = schemaData.map(r => r.schemaDef),
+    schemaTables = schemaData.map(r => r.tables),
+    allTables = ([] as string[]).concat(...schemaTables),
+    ts = header(config) +
+      schemaDefs.join('\n\n') +
+      `\n\n/* === cross-table types === */\n` +
+      crossTableTypesForTables(allTables);
 
   await pool.end();
   return ts;
