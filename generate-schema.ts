@@ -11,7 +11,7 @@ import * as pg from 'pg';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as db from './src';
-import * as s from './schema';
+import type * as s from './schema';
 
 type EnumData = { [k: string]: string[] };
 
@@ -101,7 +101,7 @@ const tsTypeForPgType = (pgType: string, enums: EnumData) => {
     case '_timestamptz':
       return 'Date[]';
     default:
-      if (enums.hasOwnProperty(pgType)) return pgType;
+      if (Object.prototype.hasOwnProperty.call(enums, pgType)) return pgType;
 
       console.log(`* Postgres type "${pgType}" was mapped to TypeScript type "any"`);
       return 'any';
@@ -198,7 +198,7 @@ const moduleRoot = () =>  // __dirname could be either module root (ts) or dist 
   fs.existsSync(path.join(__dirname, 'package.json')) ? __dirname : path.join(__dirname, '..');
 
 
-const header = (config: Config) => {
+const header = () => {
   const
     pkgPath = path.join(moduleRoot(), 'package.json'),
     pkg = JSON.parse(fs.readFileSync(pkgPath, { encoding: 'utf8' }));
@@ -268,7 +268,7 @@ const tsForConfig = async (config: Config) => {
     schemaDefs = schemaData.map(r => r.schemaDef),
     schemaTables = schemaData.map(r => r.tables),
     allTables = ([] as string[]).concat(...schemaTables),
-    ts = header(config) +
+    ts = header() +
       schemaDefs.join('\n\n') +
       `\n\n/* === cross-table types === */\n` +
       crossTableTypesForTables(allTables);

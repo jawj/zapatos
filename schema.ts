@@ -8,11 +8,6 @@ Released under the MIT licence: see LICENCE file
 // it is NOT auto-generated, since data on system tables doesn't show up in system tables!
 
 import type {
-  JSONValue,
-  JSONArray,
-  DateString,
-  SQLFragment,
-  SQL,
   GenericSQLExpression,
   ColumnNames,
   ColumnValues,

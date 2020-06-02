@@ -192,7 +192,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows']> {
       expression.compile(result, parentTable, currentColumn);
 
     } else if (typeof expression === 'string') {
-      // if it's a string, it should be a x.Table or x.Columns type, so just needs quoting
+      // if it's a string, it should be a x.Table or x.Column type, so just needs quoting
       result.text += expression.charAt(0) === '"' ? expression : `"${expression}"`;
 
     } else if (expression instanceof DangerousRawString) {
@@ -224,13 +224,13 @@ export class SQLFragment<RunResult = pg.QueryResult['rows']> {
 
     } else if (expression instanceof ColumnNames) {
       // a ColumnNames-wrapped object -> quoted names in a repeatable order
-      // or: a ColumnNames-wrapped array
+      // or: a ColumnNames-wrapped array -> quoted array values
       const columnNames = Array.isArray(expression.value) ? expression.value :
         Object.keys(expression.value).sort();
       result.text += columnNames.map(k => `"${k}"`).join(', ');
 
     } else if (expression instanceof ColumnValues) {
-      // a ColumnValues-wrapped object -> values (in above order) are punted as SQL fragments or parameters
+      // a ColumnValues-wrapped object -> values (in ColumnNames-matching order) punted as SQLFragments or Parameters
       const
         columnNames = <Column[]>Object.keys(expression.value).sort(),
         columnValues = columnNames.map(k => (<any>expression.value)[k]);
