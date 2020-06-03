@@ -18,6 +18,10 @@
   ],
   "noInlineConfig": true,
   "rules": {
+    "curly": [
+      "error",
+      "multi-line"
+    ],
     "no-template-curly-in-string": "error",
     "prefer-const": "error",
     "prefer-object-spread": "error",
