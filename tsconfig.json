@@ -4,5 +4,6 @@
     "target": "es2017",
     "module": "CommonJS",
     "strict": true,
+    "declaration": true,
   }
 }
