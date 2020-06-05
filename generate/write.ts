@@ -6,9 +6,9 @@ Released under the MIT licence: see LICENCE file
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { tsForConfig } from './tsOutput';
-import { moduleRoot } from './config';
+import { moduleRoot, finaliseConfig } from './config';
 import type { Config } from './config';
+import { tsForConfig } from './tsOutput';
 
 
 const recurseNodes = (node: string): string[] =>
@@ -16,8 +16,12 @@ const recurseNodes = (node: string): string[] =>
     fs.readdirSync(node).reduce<string[]>((memo, n) =>
       memo.concat(recurseNodes(path.join(node, n))), []);
 
-export const generate = async (config: Config) => {
+export const generate = async (suppliedConfig: Config) => {
   const
+    config = finaliseConfig(suppliedConfig),
+    log = config.progressListener === true ? console.log :
+      config.progressListener || (() => void 0),
+
     ts = await tsForConfig(config),
     folderName = 'zapatos',
     srcName = 'src',
@@ -45,9 +49,9 @@ export const generate = async (config: Config) => {
   if (config.srcMode === 'symlink') {
     if (fs.existsSync(srcTargetPath)) fs.unlinkSync(srcTargetPath);
 
-    console.log(`Creating symlink: ${srcTargetPath} -> ${srcOriginPathRelative}`);
+    log(`Creating symlink: ${srcTargetPath} -> ${srcOriginPathRelative}`);
     fs.symlinkSync(srcOriginPathRelative, srcTargetPath);
-    console.log(`Creating symlink: ${licenceTargetPath} -> ${licenceOriginPathRelative}`);
+    log(`Creating symlink: ${licenceTargetPath} -> ${licenceOriginPathRelative}`);
     fs.symlinkSync(licenceOriginPathRelative, licenceTargetPath);
 
   } else {
@@ -60,17 +64,17 @@ export const generate = async (config: Config) => {
         targetDirPath = path.join(srcTargetPath, path.dirname(f)),
         targetPath = path.join(srcTargetPath, f);
 
-      console.log(`Copying source file to ${targetPath}`);
+      log(`Copying source file to ${targetPath}`);
       fs.mkdirSync(targetDirPath, { recursive: true });
       fs.copyFileSync(srcPath, targetPath);
     }
-    console.log(`Copying licence file to ${licenceTargetPath}`);
+    log(`Copying licence file to ${licenceTargetPath}`);
     fs.copyFileSync(licenceOriginPath, licenceTargetPath);
   }
 
-  console.log(`Writing local ESLint config: ${eslintrcTargetPath}`);
+  log(`Writing local ESLint config: ${eslintrcTargetPath}`);
   fs.writeFileSync(eslintrcTargetPath, '{\n  "ignorePatterns": [\n    "*"\n  ]\n}', { flag: 'w' });
 
-  console.log(`Writing generated schema: ${schemaTargetPath}`);
+  log(`Writing generated schema: ${schemaTargetPath}`);
   fs.writeFileSync(schemaTargetPath, ts, { flag: 'w' });
 };

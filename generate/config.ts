@@ -16,12 +16,25 @@ interface SchemaRules {
   };
 }
 
-export interface Config {
+export interface RequiredConfig {
   db: pg.ClientConfig;
+}
+
+export interface OptionalConfig {
   outDir: string;
   srcMode: 'symlink' | 'copy';
   schemas: SchemaRules;
+  progressListener?: true | ((s: string) => void);
 }
+
+export type Config = RequiredConfig & Partial<OptionalConfig>;
+export type CompleteConfig = RequiredConfig & OptionalConfig;
+
+const defaultConfig: OptionalConfig = {
+  outDir: '.',
+  srcMode: 'copy',
+  schemas: { public: { include: '*', exclude: [] } },
+};
 
 export const moduleRoot = () => {
   // __dirname could be either ./generate (ts) or ./dist/generate (js)
@@ -31,49 +44,8 @@ export const moduleRoot = () => {
     path.join(parentDir, '..');
 };
 
-const recursivelyInterpolateEnvVars = (obj: any): any =>
-  typeof obj === 'string' ?
-    obj.replace(/\{\{\s*([^}\s]+)\s*\}\}/g, ($0, name) => {
-      const e = process.env[name];
-      if (e === undefined) throw new Error(`Environment variable '${name}' is not set`);
-      return e;
-    }) :
-    Array.isArray(obj) ?
-      obj.map(item => recursivelyInterpolateEnvVars(item)) :
-      typeof obj === 'object' ?
-        Object.keys(obj).reduce<any>((memo, key) => {
-          memo[key] = recursivelyInterpolateEnvVars(obj[key]);
-          return memo;
-        }, {}) : obj;
-
-export const getConfig = () => {
-  const
-    config: Config = {  // defaults
-      db: {},
-      outDir: '.',
-      srcMode: 'copy',
-      schemas: { public: { include: '*', exclude: [] } },
-    },
-    configFile = 'zapatosconfig.json',
-    configJSON = fs.existsSync(configFile) ? fs.readFileSync(configFile, { encoding: 'utf8' }) : '{}',
-    argsJSON = process.argv[2] ?? '{}';
-
-  try {
-    const fileConfig = JSON.parse(configJSON);
-    Object.assign(config, fileConfig);
-  } catch (err) {
-    throw new Error(`If present, zapatosconfig.ts must be a valid JSON file: ${err.message}`);
-  }
-
-  try {
-    const argsConfig = JSON.parse(argsJSON);
-    Object.assign(config, argsConfig);
-  } catch (err) {
-    throw new Error(`If present, zapatos arguments must be valid JSON: ${err.message}`);
-  }
-
-  if (Object.keys(config.db).length < 1) throw new Error(`Zapatos needs database connection details`);
-
-  const interpolatedConfig = recursivelyInterpolateEnvVars(config);
-  return interpolatedConfig;
+export const finaliseConfig = (config: Config) => {
+  const finalConfig = { ...defaultConfig, ...config };
+  if (!finalConfig.db || Object.keys(finalConfig.db).length < 1) throw new Error(`Zapatos needs database connection details`);
+  return finalConfig as CompleteConfig;
 };

@@ -10,7 +10,7 @@ import * as path from 'path';
 import { enumDataForSchema, enumTypesForEnumData } from './enums';
 import { tablesInSchema, definitionForTableInSchema, crossTableTypesForTables } from './tables';
 import { moduleRoot } from './config';
-import type { Config } from './config';
+import type { CompleteConfig } from './config';
 
 
 const header = () => {
@@ -43,7 +43,7 @@ import type {
 `;
 };
 
-export const tsForConfig = async (config: Config) => {
+export const tsForConfig = async (config: CompleteConfig) => {
   const
     { schemas, db } = config,
     pool = new pg.Pool(db),
