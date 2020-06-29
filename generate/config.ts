@@ -24,7 +24,8 @@ export interface OptionalConfig {
   outDir: string;
   srcMode: 'symlink' | 'copy';
   schemas: SchemaRules;
-  progressListener?: true | ((s: string) => void);
+  progressListener: boolean | ((s: string) => void);
+  warningListener: boolean | ((s: string) => void);
 }
 
 export type Config = RequiredConfig & Partial<OptionalConfig>;
@@ -34,6 +35,8 @@ const defaultConfig: OptionalConfig = {
   outDir: '.',
   srcMode: 'copy',
   schemas: { public: { include: '*', exclude: [] } },
+  progressListener: false,
+  warningListener: true,
 };
 
 export const moduleRoot = () => {

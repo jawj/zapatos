@@ -46,6 +46,8 @@ import type {
 export const tsForConfig = async (config: CompleteConfig) => {
   const
     { schemas, db } = config,
+    warn = config.warningListener === true ? console.warn :
+      config.warningListener || (() => void 0),
     pool = new pg.Pool(db),
     schemaData = (await Promise.all(
       Object.keys(schemas).map(async schema => {
@@ -56,7 +58,7 @@ export const tsForConfig = async (config: CompleteConfig) => {
               .filter(table => rules.exclude.indexOf(table) < 0),
           enums = await enumDataForSchema(schema, pool),
           tableDefs = await Promise.all(tables.map(async table =>
-            definitionForTableInSchema(table, schema, enums, pool))),
+            definitionForTableInSchema(table, schema, enums, pool, warn))),
           schemaDef = `\n/* === schema: ${schema} === */\n` +
             `\n/* --- enums --- */\n` +
             enumTypesForEnumData(enums) +

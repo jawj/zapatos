@@ -6,7 +6,7 @@ Released under the MIT licence: see LICENCE file
 
 import type { EnumData } from './enums';
 
-export const tsTypeForPgType = (pgType: string, enums: EnumData) => {
+export const tsTypeForPgType = (pgType: string, enums: EnumData, warn: (s: string) => void) => {
   switch (pgType) {
     case 'bpchar':
     case 'char':
@@ -63,7 +63,7 @@ export const tsTypeForPgType = (pgType: string, enums: EnumData) => {
     default:
       if (Object.prototype.hasOwnProperty.call(enums, pgType)) return pgType;
 
-      console.log(`* Postgres type "${pgType}" was mapped to TypeScript type "any"`);
-      return 'any';
+      warn(`* Postgres type "${pgType}" was mapped to TypeScript type "any"`);
+      return `/* pg: ${pgType} */ any`;
   }
 };

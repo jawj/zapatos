@@ -19,7 +19,14 @@ export const tablesInSchema = async (schemaName: string, pool: db.Queryable): Pr
   return rows.map(r => r.table_name);
 };
 
-export const definitionForTableInSchema = async (tableName: string, schemaName: string, enums: EnumData, pool: db.Queryable) => {
+export const definitionForTableInSchema = async (
+  tableName: string,
+  schemaName: string,
+  enums: EnumData,
+  pool: db.Queryable,
+  warn: (s: string) => void,
+) => {
+
   const
     rows = await db.sql<s.information_schema.columns.SQL>`
       SELECT
@@ -36,7 +43,7 @@ export const definitionForTableInSchema = async (tableName: string, schemaName: 
   rows.forEach(row => {
     const
       { column, nullable, hasDefault } = row,
-      type = tsTypeForPgType(row.pgType, enums),
+      type = tsTypeForPgType(row.pgType, enums, warn),
       insertablyOptional = nullable || hasDefault ? '?' : '',
       orNull = nullable ? ' | null' : '',
       orDateString = type === 'Date' ? ' | DateString' : type === 'Date[]' ? ' | DateString[]' : '',
