@@ -227,7 +227,12 @@ interface OrderSpecForTable<T extends Table> {
   nulls?: 'FIRST' | 'LAST';
 }
 
-export interface SelectOptionsForTable<T extends Table, C extends ColumnForTable<T>[], L extends SQLFragmentsMap, E extends SQLFragmentsMap> {
+export interface SelectOptionsForTable<
+  T extends Table,
+  C extends ColumnForTable<T>[] | undefined,
+  L extends SQLFragmentsMap | undefined,
+  E extends SQLFragmentsMap | undefined,
+  > {
   order?: OrderSpecForTable<T>[];
   limit?: number;
   offset?: number;
@@ -235,7 +240,7 @@ export interface SelectOptionsForTable<T extends Table, C extends ColumnForTable
   extras?: E;
   lateral?: L;
   alias?: string;
-}
+};
 
 export interface SQLFragmentsMap { [k: string]: SQLFragment<any> }
 export type PromisedType<P> = P extends Promise<infer U> ? U : never;
@@ -244,23 +249,39 @@ export type PromisedSQLFragmentReturnTypeMap<L extends SQLFragmentsMap> = { [K i
 
 export type JSONOnlyColsForTable<T extends Table, C extends any[] /* TS can't manage being more specific here */> = Pick<JSONSelectableForTable<T>, C[number]>;
 
-type BaseSelectReturnTypeForTable<T extends Table, C extends ColumnForTable<T>[]> = C extends undefined ? JSONSelectableForTable<T> : JSONOnlyColsForTable<T, C>;
+type BaseSelectReturnTypeForTable<T extends Table, C extends ColumnForTable<T>[] | undefined> = C extends ColumnForTable<T>[] ? JSONOnlyColsForTable<T, C> : JSONSelectableForTable<T>;
 
-type EnhancedSelectReturnTypeForTable<T extends Table, C extends ColumnForTable<T>[], L extends SQLFragmentsMap, E extends SQLFragmentsMap> =
-  L extends undefined ?
-  (E extends undefined ? BaseSelectReturnTypeForTable<T, C> : BaseSelectReturnTypeForTable<T, C> & PromisedSQLFragmentReturnTypeMap<E>) :
-  (E extends undefined ?
-    BaseSelectReturnTypeForTable<T, C> & PromisedSQLFragmentReturnTypeMap<L> :
-    BaseSelectReturnTypeForTable<T, C> & PromisedSQLFragmentReturnTypeMap<L> & PromisedSQLFragmentReturnTypeMap<E>);
+type EnhancedSelectReturnTypeForTable<
+  T extends Table,
+  C extends ColumnForTable<T>[] | undefined,
+  L extends SQLFragmentsMap | undefined,
+  E extends SQLFragmentsMap | undefined,
+  > =
+  L extends SQLFragmentsMap ?
+  (E extends SQLFragmentsMap ?
+    BaseSelectReturnTypeForTable<T, C> & PromisedSQLFragmentReturnTypeMap<L> & PromisedSQLFragmentReturnTypeMap<E> :
+    BaseSelectReturnTypeForTable<T, C> & PromisedSQLFragmentReturnTypeMap<L>) :
+  (E extends SQLFragmentsMap ? BaseSelectReturnTypeForTable<T, C> & PromisedSQLFragmentReturnTypeMap<E> : BaseSelectReturnTypeForTable<T, C>);
 
-export type FullSelectReturnTypeForTable<T extends Table, C extends ColumnForTable<T>[], L extends SQLFragmentsMap, E extends SQLFragmentsMap, M extends SelectResultMode> =
+export type FullSelectReturnTypeForTable<
+  T extends Table,
+  C extends ColumnForTable<T>[] | undefined,
+  L extends SQLFragmentsMap | undefined,
+  E extends SQLFragmentsMap | undefined,
+  M extends SelectResultMode | undefined,
+  > =
   M extends SelectResultMode.Many ? EnhancedSelectReturnTypeForTable<T, C, L, E>[] :
   M extends SelectResultMode.One ? EnhancedSelectReturnTypeForTable<T, C, L, E> | undefined : number;
 
 export enum SelectResultMode { Many, One, Count }
 
 export interface SelectSignatures {
-  <T extends Table, C extends ColumnForTable<T>[], L extends SQLFragmentsMap, E extends SQLFragmentsMap, M extends SelectResultMode = SelectResultMode.Many>(
+  <T extends Table,
+    C extends ColumnForTable<T>[] | undefined,
+    L extends SQLFragmentsMap | undefined,
+    E extends SQLFragmentsMap | undefined,
+    M extends SelectResultMode = SelectResultMode.Many
+    >(
     table: T,
     where: WhereableForTable<T> | SQLFragment | AllType,
     options?: SelectOptionsForTable<T, C, L, E>,
@@ -288,7 +309,7 @@ export interface SelectSignatures {
 export const select: SelectSignatures = function (
   table: Table,
   where: Whereable | SQLFragment | AllType = all,
-  options: SelectOptionsForTable<Table, ColumnForTable<Table>[], SQLFragmentsMap, SQLFragmentsMap> = {},
+  options: SelectOptionsForTable<Table, ColumnForTable<Table>[] | undefined, SQLFragmentsMap | undefined, SQLFragmentsMap | undefined> = {},
   mode: SelectResultMode = SelectResultMode.Many,
 ) {
 
