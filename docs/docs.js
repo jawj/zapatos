@@ -93,10 +93,7 @@ document.addEventListener('click', function (e) {
     var
       importsElement = target.nextElementSibling.nextElementSibling,
       codeElement = target.nextElementSibling.nextElementSibling.nextElementSibling,
-      code = importsElement.innerText.trim() + '\n\n' +
-        '(async () => {  // no support for top-level await in Monaco 0.20, TS 3.7\n' +
-        codeElement.innerText.trim().replace(/^/gm, '  ') +
-        '\n})();';
+      code = importsElement.innerText.trim() + '\n\n' + codeElement.innerText.trim() + '\n';
 
     if (!window.monaco) require(['vs/editor/editor.main'], function () {
       var
@@ -106,6 +103,7 @@ document.addEventListener('click', function (e) {
       tsDefs.setCompilerOptions({
         strict: true,
         target: ts.ScriptTarget.ES2017,
+        module: ts.ModuleKind.ESNext,
       });
       for (var file in zapatosBundle) tsDefs.addExtraLib(zapatosBundle[file], `file:///${file}`);
 
