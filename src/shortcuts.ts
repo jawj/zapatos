@@ -249,7 +249,10 @@ export type PromisedSQLFragmentReturnTypeMap<L extends SQLFragmentsMap> = { [K i
 
 export type JSONOnlyColsForTable<T extends Table, C extends any[] /* TS can't manage being more specific here */> = Pick<JSONSelectableForTable<T>, C[number]>;
 
-type BaseSelectReturnTypeForTable<T extends Table, C extends ColumnForTable<T>[] | undefined> = C extends ColumnForTable<T>[] ? JSONOnlyColsForTable<T, C> : JSONSelectableForTable<T>;
+type BaseSelectReturnTypeForTable<T extends Table, C extends ColumnForTable<T>[] | undefined> =
+  undefined extends C ? JSONSelectableForTable<T> :
+  C extends ColumnForTable<T>[] ? JSONOnlyColsForTable<T, C> :
+  never;
 
 type EnhancedSelectReturnTypeForTable<
   T extends Table,
@@ -257,11 +260,15 @@ type EnhancedSelectReturnTypeForTable<
   L extends SQLFragmentsMap | undefined,
   E extends SQLFragmentsMap | undefined,
   > =
+  undefined extends L ?
+  (undefined extends E ? BaseSelectReturnTypeForTable<T, C> :
+    E extends SQLFragmentsMap ? BaseSelectReturnTypeForTable<T, C> & PromisedSQLFragmentReturnTypeMap<E> :
+    never) :
   L extends SQLFragmentsMap ?
-  (E extends SQLFragmentsMap ?
-    BaseSelectReturnTypeForTable<T, C> & PromisedSQLFragmentReturnTypeMap<L> & PromisedSQLFragmentReturnTypeMap<E> :
-    BaseSelectReturnTypeForTable<T, C> & PromisedSQLFragmentReturnTypeMap<L>) :
-  (E extends SQLFragmentsMap ? BaseSelectReturnTypeForTable<T, C> & PromisedSQLFragmentReturnTypeMap<E> : BaseSelectReturnTypeForTable<T, C>);
+  (undefined extends E ? BaseSelectReturnTypeForTable<T, C> & PromisedSQLFragmentReturnTypeMap<L> :
+    E extends SQLFragmentsMap ? BaseSelectReturnTypeForTable<T, C> & PromisedSQLFragmentReturnTypeMap<L> & PromisedSQLFragmentReturnTypeMap<E> :
+    never) :
+  never;
 
 export type FullSelectReturnTypeForTable<
   T extends Table,
@@ -366,7 +373,12 @@ export const select: SelectSignatures = function (
 /* === selectOne === */
 
 export interface SelectOneSignatures {
-  <T extends Table, C extends ColumnForTable<T>[], L extends SQLFragmentsMap, E extends SQLFragmentsMap>(
+  <
+    T extends Table,
+    C extends ColumnForTable<T>[] | undefined,
+    L extends SQLFragmentsMap | undefined,
+    E extends SQLFragmentsMap | undefined
+    >(
     table: T,
     where: WhereableForTable<T> | SQLFragment | AllType,
     options?: SelectOptionsForTable<T, C, L, E>,
