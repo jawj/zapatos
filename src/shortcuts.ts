@@ -245,9 +245,12 @@ export interface SelectOptionsForTable<
 export interface SQLFragmentsMap { [k: string]: SQLFragment<any> }
 export type PromisedType<P> = P extends Promise<infer U> ? U : never;
 export type PromisedSQLFragmentReturnType<R extends SQLFragment<any>> = PromisedType<ReturnType<R['run']>>;
-export type PromisedSQLFragmentReturnTypeMap<L extends SQLFragmentsMap> = { [K in keyof L]: PromisedSQLFragmentReturnType<L[K]> };
 
-export type JSONOnlyColsForTable<T extends Table, C extends any[] /* TS can't manage being more specific here */> = Pick<JSONSelectableForTable<T>, C[number]>;
+// yes, the next two types are identical, but distinct names make complex inferred types more readable
+export type Lateral<L extends SQLFragmentsMap> = { [K in keyof L]: PromisedSQLFragmentReturnType<L[K]> };
+export type Extras<L extends SQLFragmentsMap> = { [K in keyof L]: PromisedSQLFragmentReturnType<L[K]> };
+
+export type JSONOnlyColsForTable<T extends Table, C extends any[] /* `ColumnForTable<T>[]` gives errors here for reasons I haven't got to the bottom of */> = Pick<JSONSelectableForTable<T>, C[number]>;
 
 type BaseSelectReturnTypeForTable<T extends Table, C extends ColumnForTable<T>[] | undefined> =
   undefined extends C ? JSONSelectableForTable<T> :
@@ -262,11 +265,11 @@ type EnhancedSelectReturnTypeForTable<
   > =
   undefined extends L ?
   (undefined extends E ? BaseSelectReturnTypeForTable<T, C> :
-    E extends SQLFragmentsMap ? BaseSelectReturnTypeForTable<T, C> & PromisedSQLFragmentReturnTypeMap<E> :
+    E extends SQLFragmentsMap ? BaseSelectReturnTypeForTable<T, C> & Extras<E> :
     never) :
   L extends SQLFragmentsMap ?
-  (undefined extends E ? BaseSelectReturnTypeForTable<T, C> & PromisedSQLFragmentReturnTypeMap<L> :
-    E extends SQLFragmentsMap ? BaseSelectReturnTypeForTable<T, C> & PromisedSQLFragmentReturnTypeMap<L> & PromisedSQLFragmentReturnTypeMap<E> :
+  (undefined extends E ? BaseSelectReturnTypeForTable<T, C> & Lateral<L> :
+    E extends SQLFragmentsMap ? BaseSelectReturnTypeForTable<T, C> & Lateral<L> & Extras<E> :
     never) :
   never;
 
