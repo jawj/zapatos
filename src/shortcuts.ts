@@ -242,6 +242,8 @@ export interface SelectOptionsForTable<
   alias?: string;
 };
 
+export enum SelectResultMode { Many, One, ExactlyOne, Count }
+
 export interface SQLFragmentsMap { [k: string]: SQLFragment<any> }
 export type PromisedType<P> = P extends Promise<infer U> ? U : never;
 export type PromisedSQLFragmentReturnType<R extends SQLFragment<any>> = PromisedType<ReturnType<R['run']>>;
@@ -278,12 +280,18 @@ export type FullSelectReturnTypeForTable<
   C extends ColumnForTable<T>[] | undefined,
   L extends SQLFragmentsMap | undefined,
   E extends SQLFragmentsMap | undefined,
-  M extends SelectResultMode | undefined,
+  M extends SelectResultMode,
   > =
   M extends SelectResultMode.Many ? EnhancedSelectReturnTypeForTable<T, C, L, E>[] :
-  M extends SelectResultMode.One ? EnhancedSelectReturnTypeForTable<T, C, L, E> | undefined : number;
-
-export enum SelectResultMode { Many, One, Count }
+  M extends SelectResultMode.One ? EnhancedSelectReturnTypeForTable<T, C, L, E> | undefined :
+  M extends SelectResultMode.ExactlyOne ? EnhancedSelectReturnTypeForTable<T, C, L, E> :
+  number;
+// {
+//   [SelectResultMode.Many]: EnhancedSelectReturnTypeForTable<T, C, L, E>[];
+//   [SelectResultMode.ExactlyOne]: EnhancedSelectReturnTypeForTable<T, C, L, E>;
+//   [SelectResultMode.One]: EnhancedSelectReturnTypeForTable<T, C, L, E> | undefined;
+//   [SelectResultMode.Count]: number;
+// }[M];
 
 export interface SelectSignatures {
   <T extends Table,
@@ -407,6 +415,43 @@ export const selectOne: SelectOneSignatures = function (
   // (see e.g. https://github.com/Microsoft/TypeScript/issues/13778)
 
   return select(table, where, options, SelectResultMode.One);
+};
+
+
+/* === selectExactlyOne === */
+
+export interface SelectExactlyOneSignatures {
+  <
+    T extends Table,
+    C extends ColumnForTable<T>[] | undefined,
+    L extends SQLFragmentsMap | undefined,
+    E extends SQLFragmentsMap | undefined
+    >(
+    table: T,
+    where: WhereableForTable<T> | SQLFragment | AllType,
+    options?: SelectOptionsForTable<T, C, L, E>,
+  ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, SelectResultMode.ExactlyOne>>;
+}
+
+/**
+ * Generate a `SELECT` query `SQLFragment` that returns only a single result (or 
+ * undefined). A `LIMIT 1` clause is added automatically. This can be nested with other 
+ * `select`/`selectOne`/`count` queries using the `lateral` option.
+ * @param table The table to select from
+ * @param where A `Whereable` or `SQLFragment` defining the rows to be selected, or `all`
+ * @param options Options object. See documentation for `select` for details.
+ */
+export const selectExactlyOne: SelectExactlyOneSignatures = function (
+  table: Table,
+  where: any,
+  options: any = {},
+) {
+  // you might argue that 'selectOne' offers little that you can't get with destructuring assignment 
+  // and plain 'select' -- e.g. let [x] = async select(...).run(pool); -- but a thing that is definitely worth 
+  // having is '| undefined' in the return signature, because the result of indexing never includes undefined
+  // (see e.g. https://github.com/Microsoft/TypeScript/issues/13778)
+
+  return select(table, where, options, SelectResultMode.ExactlyOne);
 };
 
 
