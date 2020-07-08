@@ -303,6 +303,17 @@ export interface SelectSignatures {
   ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, M>>;
 }
 
+export class NotExactlyOneError extends Error {
+  // see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error
+  query: SQLFragment;
+  constructor(query: SQLFragment, ...params: any[]) {
+    super(...params);
+    if (Error.captureStackTrace) Error.captureStackTrace(this, NotExactlyOneError);  // V8 only
+    this.name = 'NotExactlyOneError';
+    this.query = query;  // custom property
+  }
+}
+
 /**
  * Generate a `SELECT` query `SQLFragment`. This can be nested with other `select`/
  * `selectOne`/`count` queries using the `lateral` option.
@@ -378,10 +389,7 @@ export const select: SelectSignatures = function (
       mode === SelectResultMode.ExactlyOne ?
         (qr) => {
           const result = qr.rows[0]?.result;
-          if (result === undefined) {
-            const queryDetail = JSON.stringify(query.compile());
-            throw new Error(`Exactly one result expected, but none found. Query: ${queryDetail}).`);
-          }
+          if (result === undefined) throw new NotExactlyOneError(query, 'One result expected but none returned (hint: check `.query.compile()` on this Error)');
           return result;
         } :
 
