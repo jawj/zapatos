@@ -37,12 +37,12 @@
     "@types/pg": ">=7.14.3"
   },
   "devDependencies": {
-    "@types/pg": ">=7.14.3",
+    "@types/pg": "^7.14.4",
     "@typescript-eslint/eslint-plugin": "^3.5.0",
     "@typescript-eslint/parser": "^3.5.0",
     "eslint": "^7.3.1",
     "eslint-config-prettier": "^6.11.0",
-    "pg": "^8.2.1",
+    "pg": "^8.3.0",
     "ts-node": "^8.10.2",
     "typescript": "^3.9.6"
   },
