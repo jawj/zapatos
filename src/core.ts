@@ -100,12 +100,12 @@ export function vals<T>(x: T) { return new ColumnValues<T>(x); }
  * Compiles to the name of the column it wraps in the table of the parent query.
  * @param value The column name
  */
-export class ParentColumn { constructor(public value: Column) { } }
+export class ParentColumn<T extends Column> { constructor(public value: T) { } }
 /**
  * Returns a `ParentColumn` instance, wrapping a column name, which compiles to that 
  * column name of the table of the parent query.
  */
-export function parent(x: Column) { return new ParentColumn(x); }
+export function parent<T extends Column = Column>(x: T) { return new ParentColumn<T>(x); }
 
 export type GenericSQLExpression = SQLFragment<any> | Parameter | DefaultType | DangerousRawString | SelfType;
 export type SQLExpression = Table | ColumnNames<Updatable | (keyof Updatable)[]> | ColumnValues<Updatable> | Whereable | Column | GenericSQLExpression;
