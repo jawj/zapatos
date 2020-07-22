@@ -32,7 +32,8 @@ export const definitionForTableInSchema = async (
       SELECT
         ${"column_name"} AS "column"
       , ${"is_nullable"} = 'YES' AS "nullable"
-      , ${"column_default"} IS NOT NULL AS "hasDefault"
+      , ${"is_generated"} = 'ALWAYS' AS "generated"
+      , ${"column_default"} IS NOT NULL OR ${"is_identity"} = 'YES' AS "hasDefault"
       , ${"udt_name"} AS "pgType"
       FROM ${'"information_schema"."columns"'}
       WHERE ${{ table_name: tableName, table_schema: schemaName }}`.run(pool),
@@ -49,6 +50,7 @@ export const definitionForTableInSchema = async (
       orDateString = type === 'Date' ? ' | DateString' : type === 'Date[]' ? ' | DateString[]' : '',
       orDefault = nullable || hasDefault ? ' | DefaultType' : '';
 
+    // TODO: remove `is_generated` columns from Insertable (and Updatable, but not Selectable or Whereable)
     selectables.push(`${column}: ${type}${orNull};`);
     insertables.push(`${column}${insertablyOptional}: ${type}${orDateString}${orNull}${orDefault} | SQLFragment;`);
   });

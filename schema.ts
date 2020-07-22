@@ -120,6 +120,8 @@ export namespace information_schema.columns {
     udt_name: string;
     is_nullable: 'YES' | 'NO';
     column_default: string;
+    is_identity: 'YES' | 'NO';
+    is_generated: 'ALWAYS' | 'NEVER';
   }
   export interface Insertable extends Selectable { }
   export interface Updatable extends Partial<Insertable> { }

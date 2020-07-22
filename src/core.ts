@@ -100,7 +100,7 @@ export function vals<T>(x: T) { return new ColumnValues<T>(x); }
  * Compiles to the name of the column it wraps in the table of the parent query.
  * @param value The column name
  */
-export class ParentColumn<T extends Column> { constructor(public value: T) { } }
+export class ParentColumn<T extends Column = Column> { constructor(public value: T) { } }
 /**
  * Returns a `ParentColumn` instance, wrapping a column name, which compiles to that 
  * column name of the table of the parent query.
