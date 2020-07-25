@@ -27,6 +27,8 @@ Copyright (C) 2020 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
+declare module 'zapatos/schema' {
+
 import type {
   JSONValue,
   JSONArray,
@@ -38,8 +40,14 @@ import type {
   ColumnValues,
   ParentColumn,
   DefaultType,
-} from "./src/core";
+} from "zapatos";
 
+`;
+};
+
+const footer = () => {
+  return `
+} // end declare module 'zapatos/schema'
 `;
 };
 
@@ -74,7 +82,8 @@ export const tsForConfig = async (config: CompleteConfig) => {
     ts = header() +
       schemaDefs.join('\n\n') +
       `\n\n/* === cross-table types === */\n` +
-      crossTableTypesForTables(allTables);
+      crossTableTypesForTables(allTables) +
+      footer();
 
   await pool.end();
   return ts;

@@ -8,7 +8,8 @@
     "url": "https://github.com/jawj/zapatos"
   },
   "prepublish": "tsc",
-  "main": "dist/generate",
+  "main": "dist/src",
+  "types": "dist/src/index.d.ts",
   "bin": {
     "zapatos": "dist/generate-schema.js"
   },

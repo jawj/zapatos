@@ -13,7 +13,7 @@ import type {
   Whereable,
   Table,
   Column,
-} from '../schema';
+} from 'zapatos/schema';
 
 import { getConfig } from './config';
 

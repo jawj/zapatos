@@ -5,7 +5,7 @@ Released under the MIT licence: see LICENCE file
 */
 
 import * as db from '../src';
-import type * as s from '../schema';
+import type * as s from 'zapatos/schema';
 
 
 export type EnumData = { [k: string]: string[] };

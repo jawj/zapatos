@@ -13,7 +13,7 @@ import type {
   ColumnValues,
   ParentColumn,
   DefaultType,
-} from "./src";
+} from '../../src';
 
 export namespace pg_indexes {
   export type Table = "pg_indexes";
