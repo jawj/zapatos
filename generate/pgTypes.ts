@@ -6,7 +6,8 @@ Released under the MIT licence: see LICENCE file
 
 import type { EnumData } from './enums';
 
-export const tsTypeForPgType = (pgType: string, enums: EnumData, warn: (s: string) => void) => {
+const baseTsTypeForBasePgType = (pgType: string, enums: EnumData) => {
+  const hasOwnProp = Object.prototype.hasOwnProperty;
   switch (pgType) {
     case 'bpchar':
     case 'char':
@@ -39,31 +40,24 @@ export const tsTypeForPgType = (pgType: string, enums: EnumData, warn: (s: strin
     case 'timestamp':
     case 'timestamptz':
       return 'Date';
-    case '_int2':
-    case '_int4':
-    case '_int8':
-    case '_float4':
-    case '_float8':
-    case '_numeric':
-    case '_money':
-      return 'number[]';
-    case '_bool':
-      return 'boolean[]';
-    case '_varchar':
-    case '_text':
-    case '_citext':
-    case '_uuid':
-    case '_bytea':
-      return 'string[]';
-    case '_json':
-    case '_jsonb':
-      return 'JSONArray';
-    case '_timestamptz':
-      return 'Date[]';
     default:
-      if (Object.prototype.hasOwnProperty.call(enums, pgType)) return pgType;
-
-      warn(`* Postgres type "${pgType}" was mapped to TypeScript type "any"`);
-      return `/* pg: ${pgType} */ any`;
+      if (hasOwnProp.call(enums, pgType)) return pgType;
+      return null;
   }
+};
+
+export const tsTypeForPgType = (pgType: string, enums: EnumData, warn: (s: string) => void) => {
+  // basic and enum types (enum names can begin with an underscore even if not an array)
+  const baseTsType = baseTsTypeForBasePgType(pgType, enums);
+  if (baseTsType !== null) return baseTsType;
+
+  // arrays of basic and enum types: pg prefixes these with underscore (_)
+  // see https://www.postgresql.org/docs/current/sql-createtype.html#id-1.9.3.94.5.9
+  if (pgType.charAt(0) === '_') {
+    const arrayTsType = baseTsTypeForBasePgType(pgType.slice(1), enums);
+    if (arrayTsType !== null) return arrayTsType + '[]';
+  }
+
+  warn(`* Postgres type "${pgType}" was mapped to TypeScript type "any"`);
+  return `/* pg: ${pgType} */ any`;
 };
