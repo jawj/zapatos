@@ -227,6 +227,12 @@ interface OrderSpecForTable<T extends Table> {
   nulls?: 'FIRST' | 'LAST';
 }
 
+export interface SelectLockingOptions {
+  for: 'UPDATE' | 'NO KEY UPDATE' | 'SHARE' | 'KEY SHARE';
+  of?: Table | Table[];
+  wait?: 'NOWAIT' | 'SKIP LOCKED';
+}
+
 export interface SelectOptionsForTable<
   T extends Table,
   C extends ColumnForTable<T>[] | undefined,
@@ -240,6 +246,7 @@ export interface SelectOptionsForTable<
   extras?: E;
   lateral?: L;
   alias?: string;
+  lock?: SelectLockingOptions | SelectLockingOptions[];
 };
 
 export interface SQLFragmentsMap { [k: string]: SQLFragment<any> }
@@ -344,6 +351,7 @@ export const select: SelectSignatures = function (
     aliasedTable = allOptions.alias || table,
     lateralOpt = allOptions.lateral,
     extrasOpt = allOptions.extras,
+    lockOpt = allOptions.lock === undefined || Array.isArray(allOptions.lock) ? allOptions.lock : [allOptions.lock],
     tableAliasSQL = aliasedTable === table ? [] : sql<string>` AS ${aliasedTable}`,
     colsSQL = mode === SelectResultMode.Count ?
       (allOptions.columns ? sql`count(${cols(allOptions.columns)})` : sql<typeof aliasedTable>`count(${aliasedTable}.*)`) :
@@ -366,6 +374,12 @@ export const select: SelectSignatures = function (
       })}`,
     limitSQL = allOptions.limit === undefined ? [] : sql` LIMIT ${param(allOptions.limit)}`,
     offsetSQL = allOptions.offset === undefined ? [] : sql` OFFSET ${param(allOptions.offset)}`,
+    lockSQL = lockOpt === undefined ? [] : lockOpt.map(lock => {
+      const
+        ofTables = lock.of === undefined || Array.isArray(lock.of) ? lock.of : [lock.of],
+        ofClause = ofTables === undefined ? [] : sql` OF ${mapWithSeparator(ofTables, sql`, `, t => t)}`;
+      return sql<SQL>` FOR ${raw(lock.for)}${ofClause}${lock.wait ? sql` ${raw(lock.wait)}` : []}`;
+    }),
     lateralSQL = lateralOpt === undefined ? [] :
       Object.keys(lateralOpt).map((k, i) => {
         const subQ = lateralOpt[k];
@@ -374,7 +388,7 @@ export const select: SelectSignatures = function (
       });
 
   const
-    rowsQuery = sql<SQL, any>`SELECT ${allColsSQL} AS result FROM ${table}${tableAliasSQL}${lateralSQL}${whereSQL}${orderSQL}${limitSQL}${offsetSQL}`,
+    rowsQuery = sql<SQL, any>`SELECT ${allColsSQL} AS result FROM ${table}${tableAliasSQL}${lateralSQL}${whereSQL}${orderSQL}${limitSQL}${offsetSQL}${lockSQL}`,
     query = mode !== SelectResultMode.Many ? rowsQuery :
       // we need the aggregate to sit in a sub-SELECT in order to keep ORDER and LIMIT working as usual
       sql<SQL, any>`SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${raw(`"sq_${aliasedTable}"`)}`;
