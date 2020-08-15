@@ -15,8 +15,8 @@
   "scripts": {
     "lint": "eslint --ext .ts .",
     "build": "npm run lint && tsc",
-    "preversion": "npm run build",
-    "postversion": "npm publish",
+    "version": "npm run build",
+    "postversion": "git push && git push --tags && npm publish",
     "postinstall": "node -e \"console.warn('>>> \\u001b[1;33mZapatos was installed or upgraded. Please (re-)run \\u001b[1;32mnpx zapatos\\u001b[1;33m.\\u001b[0m <<<\\u000a')\""
   },
   "files": [
