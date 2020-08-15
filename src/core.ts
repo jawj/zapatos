@@ -70,10 +70,9 @@ export class DangerousRawString { constructor(public value: string) { } }
 export function raw(x: string) { return new DangerousRawString(x); }
 
 /**
- * Returns a `ColumnNames` instance, wrapping either an array or object. `ColumnNames` 
- * compiles to a quoted, comma-separated list of array values (for use in a `SELECT` 
- * query) or object keys (for use in an `INSERT`, `UDPATE` or `UPSERT` query, alongside 
- * `ColumnValues`).
+ * Wraps either an array or object, and compiles to a quoted, comma-separated list of 
+ * array values (for use in a `SELECT` query) or object keys (for use in an `INSERT`, 
+ * `UDPATE` or `UPSERT` query, alongside `ColumnValues`).
  */
 export class ColumnNames<T> { constructor(public value: T) { } }
 /**
@@ -108,7 +107,7 @@ export class ParentColumn<T extends Column = Column> { constructor(public value:
 export function parent<T extends Column = Column>(x: T) { return new ParentColumn<T>(x); }
 
 export type GenericSQLExpression = SQLFragment<any> | Parameter | DefaultType | DangerousRawString | SelfType;
-export type SQLExpression = Table | ColumnNames<Updatable | (keyof Updatable)[]> | ColumnValues<Updatable> | Whereable | Column | GenericSQLExpression;
+export type SQLExpression = Table | ColumnNames<Updatable | (keyof Updatable)[]> | ColumnValues<Updatable | any[]> | Whereable | Column | GenericSQLExpression;
 export type SQL = SQLExpression | SQLExpression[];
 
 export type Queryable = pg.ClientBase | pg.Pool;
@@ -224,24 +223,37 @@ export class SQLFragment<RunResult = pg.QueryResult['rows']> {
 
     } else if (expression instanceof ColumnNames) {
       // a ColumnNames-wrapped object -> quoted names in a repeatable order
-      // or: a ColumnNames-wrapped array -> quoted array values
+      // OR a ColumnNames-wrapped array -> quoted array values
       const columnNames = Array.isArray(expression.value) ? expression.value :
         Object.keys(expression.value).sort();
       result.text += columnNames.map(k => `"${k}"`).join(', ');
 
     } else if (expression instanceof ColumnValues) {
-      // a ColumnValues-wrapped object -> values (in ColumnNames-matching order) punted as SQLFragments or Parameters
-      const
-        columnNames = <Column[]>Object.keys(expression.value).sort(),
-        columnValues = columnNames.map(k => (<any>expression.value)[k]);
+      // a ColumnValues-wrapped object OR array 
+      // -> values (in ColumnNames-matching order, if applicable) punted as SQLFragments or Parameters
 
-      for (let i = 0, len = columnValues.length; i < len; i++) {
+      if (Array.isArray(expression.value)) {
+        const values: any[] = expression.value;
+        for (let i = 0, len = values.length; i < len; i++) {
+          const value = values[i];
+          if (i > 0) result.text += ', ';
+          if (value instanceof SQLFragment) this.compileExpression(value, result, parentTable);
+          else this.compileExpression(new Parameter(value), result, parentTable);
+        }
+
+      } else {
         const
-          columnName = columnNames[i],
-          columnValue = columnValues[i];
-        if (i > 0) result.text += ', ';
-        if (columnValue instanceof SQLFragment || columnValue === Default) this.compileExpression(columnValue, result, parentTable, columnName);
-        else this.compileExpression(new Parameter(columnValue), result, parentTable, columnName);
+          columnNames = <Column[]>Object.keys(expression.value).sort(),
+          columnValues = columnNames.map(k => (<any>expression.value)[k]);
+
+        for (let i = 0, len = columnValues.length; i < len; i++) {
+          const
+            columnName = columnNames[i],
+            columnValue = columnValues[i];
+          if (i > 0) result.text += ', ';
+          if (columnValue instanceof SQLFragment || columnValue === Default) this.compileExpression(columnValue, result, parentTable, columnName);
+          else this.compileExpression(new Parameter(columnValue), result, parentTable, columnName);
+        }
       }
 
     } else if (typeof expression === 'object') {
