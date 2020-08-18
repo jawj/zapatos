@@ -59,15 +59,24 @@ interface InsertSignatures {
 export const insert: InsertSignatures = function
   (table: Table, values: Insertable | Insertable[]): SQLFragment<any> {
 
-  const
-    completedValues = Array.isArray(values) ? completeKeysWithDefault(values) : values,
-    colsSQL = cols(Array.isArray(completedValues) ? completedValues[0] : completedValues),
-    valuesSQL = Array.isArray(completedValues) ?
-      mapWithSeparator(completedValues as Insertable[], sql<SQL>`, `, v => sql<SQL>`(${vals(v)})`) :
-      sql<SQL>`(${vals(completedValues)})`,
-    query = sql<SQL>`INSERT INTO ${table} (${colsSQL}) VALUES ${valuesSQL} RETURNING to_jsonb(${table}.*) AS result`;
+  let query;
+  if (Array.isArray(values) && values.length === 0) {
+    query = sql`INSERT INTO ${table} SELECT null WHERE false`;
+    query.noop = true;
+    query.noopResult = [];
 
-  query.runResultTransform = Array.isArray(completedValues) ?
+  } else {
+    const
+      completedValues = Array.isArray(values) ? completeKeysWithDefault(values) : values,
+      colsSQL = cols(Array.isArray(completedValues) ? completedValues[0] : completedValues),
+      valuesSQL = Array.isArray(completedValues) ?
+        mapWithSeparator(completedValues as Insertable[], sql<SQL>`, `, v => sql<SQL>`(${vals(v)})`) :
+        sql<SQL>`(${vals(completedValues)})`;
+
+    query = sql<SQL>`INSERT INTO ${table} (${colsSQL}) VALUES ${valuesSQL} RETURNING to_jsonb(${table}.*) AS result`;
+  }
+
+  query.runResultTransform = Array.isArray(values) ?
     (qr) => qr.rows.map(r => r.result) :
     (qr) => qr.rows[0].result;
 
@@ -109,6 +118,8 @@ interface UpsertSignatures {
  */
 export const upsert: UpsertSignatures = function
   (table: Table, values: Insertable | Insertable[], conflictTarget: Column | Column[] | Constraint<Table>, noNullUpdateCols: Column | Column[] = []): SQLFragment<any> {
+
+  if (Array.isArray(values) && values.length === 0) return insert(table, values);  // punt a no-op to plain insert
 
   if (typeof conflictTarget === 'string') conflictTarget = [conflictTarget];  // now either Column[] or Constraint
   if (!Array.isArray(noNullUpdateCols)) noNullUpdateCols = [noNullUpdateCols];
