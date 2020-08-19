@@ -215,8 +215,25 @@ export class SQLFragment<RunResult = pg.QueryResult['rows']> {
 
     } else if (expression instanceof Parameter) {
       // parameters become placeholders, and a corresponding entry in the values array
-      result.values.push(expression.value);
-      result.text += '$' + String(result.values.length);  // 1-based indexing
+      const
+        placeholder = '$' + String(result.values.length + 1),  // 1-based indexing
+        config = getConfig();
+
+      if (
+        (config.castArrayParamsToJson &&
+          Array.isArray(expression.value)) ||
+        (config.castObjectParamsToJson &&
+          typeof expression.value === 'object' &&
+          expression.value !== null &&
+          expression.value.constructor === Object)
+      ) {
+        result.values.push(JSON.stringify(expression.value));
+        result.text += `CAST(${placeholder} AS json)`;
+
+      } else {
+        result.values.push(expression.value);
+        result.text += placeholder;
+      }
 
     } else if (expression === Default) {
       // a column default

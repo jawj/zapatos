@@ -8,7 +8,7 @@ import * as db from '../src';
 import type * as s from '../schema';
 import { tsTypeForPgType } from './pgTypes';
 import type { EnumData } from './enums';
-
+import type { CustomTypes } from './tsOutput';
 
 export const tablesInSchema = async (schemaName: string, pool: db.Queryable): Promise<string[]> => {
   const rows = await db.sql<s.information_schema.columns.SQL>`
@@ -23,8 +23,8 @@ export const definitionForTableInSchema = async (
   tableName: string,
   schemaName: string,
   enums: EnumData,
+  customTypes: CustomTypes,  // an 'out' parameter
   pool: db.Queryable,
-  warn: (s: string) => void,
 ) => {
 
   const
@@ -34,7 +34,8 @@ export const definitionForTableInSchema = async (
       , ${"is_nullable"} = 'YES' AS "nullable"
       , ${"is_generated"} = 'ALWAYS' AS "generated"
       , ${"column_default"} IS NOT NULL OR ${"is_identity"} = 'YES' AS "hasDefault"
-      , ${"udt_name"} AS "pgType"
+      , ${"udt_name"} AS "udtName"
+      , ${"domain_name"} AS "domainName"
       FROM ${'"information_schema"."columns"'}
       WHERE ${{ table_name: tableName, table_schema: schemaName }}`.run(pool),
 
@@ -42,15 +43,29 @@ export const definitionForTableInSchema = async (
     insertables: string[] = [];
 
   rows.forEach(row => {
+    const { column, nullable, hasDefault, udtName, domainName } = row;
+    let type = tsTypeForPgType(udtName, enums);
+
     const
-      { column, nullable, hasDefault } = row,
-      type = tsTypeForPgType(row.pgType, enums, warn),
       insertablyOptional = nullable || hasDefault ? '?' : '',
       orNull = nullable ? ' | null' : '',
       orDateString = type === 'Date' ? ' | DateString' : type === 'Date[]' ? ' | DateString[]' : '',
       orDefault = nullable || hasDefault ? ' | DefaultType' : '';
 
     // TODO: remove `is_generated` columns from Insertable (and Updatable, but not Selectable or Whereable)
+
+    // Now, 4 cases: 
+    //   1. null domain, known udt        <-- standard case
+    //   2. null domain, unknown udt      <-- custom type:       create type file, with placeholder 'any'
+    //   3. non-null domain, known udt    <-- alias type:        create type file, with udt-based placeholder
+    //   4. non-null domain, unknown udt  <-- alias custom type: create type file, with placeholder 'any'
+
+    if (type === 'any' || domainName !== null) {  // cases 2, 3, 4
+      const customType = domainName ?? udtName;
+      customTypes[customType] = type;
+      type = customType;
+    }
+
     selectables.push(`${column}: ${type}${orNull};`);
     insertables.push(`${column}${insertablyOptional}: ${type}${orDateString}${orNull}${orDefault} | SQLFragment;`);
   });
@@ -62,7 +77,7 @@ export const definitionForTableInSchema = async (
     JOIN ${"pg_index"} idx ON idx.${"indexrelid"} = c.${"oid"} AND idx.${"indisunique"} 
     WHERE i.${"tablename"} = ${db.param(tableName)}`.run(pool);
 
-  return `
+  const tableDef = `
 export namespace ${tableName} {
   export type Table = '${tableName}';
   export interface Selectable {
@@ -86,6 +101,7 @@ export namespace ${tableName} {
   export type SQLExpression = GenericSQLExpression | Table | Whereable | Column | ColumnNames<Updatable | (keyof Updatable)[]> | ColumnValues<Updatable>;
   export type SQL = SQLExpression | SQLExpression[];
 }`;
+  return tableDef;
 };
 
 export const crossTableTypesForTables = (tableNames: string[]) => `
@@ -104,3 +120,4 @@ export type ${thingable}ForTable<T extends Table> = {${tableNames.map(name => `
 }[T];
 `).join('')}
 `;
+

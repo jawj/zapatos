@@ -46,7 +46,7 @@ const baseTsTypeForBasePgType = (pgType: string, enums: EnumData) => {
   }
 };
 
-export const tsTypeForPgType = (pgType: string, enums: EnumData, warn: (s: string) => void) => {
+export const tsTypeForPgType = (pgType: string, enums: EnumData) => {
   // basic and enum types (enum names can begin with an underscore even if not an array)
   const baseTsType = baseTsTypeForBasePgType(pgType, enums);
   if (baseTsType !== null) return baseTsType;
@@ -58,6 +58,5 @@ export const tsTypeForPgType = (pgType: string, enums: EnumData, warn: (s: strin
     if (arrayTsType !== null) return arrayTsType + '[]';
   }
 
-  warn(`* Postgres type "${pgType}" was mapped to TypeScript type "any"`);
-  return `/* pg: ${pgType} */ any`;
+  return 'any';
 };

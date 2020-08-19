@@ -118,6 +118,7 @@ export namespace information_schema.columns {
     table_schema: string;
     column_name: string;
     udt_name: string;
+    domain_name: string;
     is_nullable: 'YES' | 'NO';
     column_default: string;
     is_identity: 'YES' | 'NO';

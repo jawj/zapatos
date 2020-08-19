@@ -10,8 +10,13 @@ import * as path from 'path';
 import { enumDataForSchema, enumTypesForEnumData } from './enums';
 import { tablesInSchema, definitionForTableInSchema, crossTableTypesForTables } from './tables';
 import { moduleRoot } from './config';
+import { customFolderName } from './write';
 import type { CompleteConfig } from './config';
 
+
+export interface CustomTypes {
+  [name: string]: string;  // any, or TS type for domain's base type
+}
 
 const header = () => {
   const
@@ -38,17 +43,40 @@ import type {
   ColumnValues,
   ParentColumn,
   DefaultType,
-} from "./src/core";
+} from './src/core';
 
 `;
 };
 
+const customTypeHeader = `/*
+** Please do edit this file **
+It's a placeholder for a custom type definition
+*/
+`;
+
+const importsForCustomTypes = (customTypes: CustomTypes) =>
+  Object.keys(customTypes)
+    .sort()
+    .map(customType => `import type ${customType} from './${customFolderName}/${customType}';`)
+    .join('\n');
+
+const sourceFilesForCustomTypes = (customTypes: CustomTypes) =>
+  Object.fromEntries(Object.entries(customTypes)
+    .map(([name, baseType]) => [
+      `${name}.ts`,
+      `${customTypeHeader}${baseType === 'JSONValue' ? "\nimport type { JSONValue } from '../src/core';\n" : ""}
+type ${name} = ${baseType};  // replace with your custom type or interface;
+
+export default ${name};
+`,
+    ]));
+
+
 export const tsForConfig = async (config: CompleteConfig) => {
   const
     { schemas, db } = config,
-    warn = config.warningListener === true ? console.warn :
-      config.warningListener || (() => void 0),
     pool = new pg.Pool(db),
+    customTypes = {},
     schemaData = (await Promise.all(
       Object.keys(schemas).map(async schema => {
         const
@@ -58,7 +86,7 @@ export const tsForConfig = async (config: CompleteConfig) => {
               .filter(table => rules.exclude.indexOf(table) < 0),
           enums = await enumDataForSchema(schema, pool),
           tableDefs = await Promise.all(tables.map(async table =>
-            definitionForTableInSchema(table, schema, enums, pool, warn))),
+            definitionForTableInSchema(table, schema, enums, customTypes, pool))),
           schemaDef = `\n/* === schema: ${schema} === */\n` +
             `\n/* --- enums --- */\n` +
             enumTypesForEnumData(enums) +
@@ -72,10 +100,12 @@ export const tsForConfig = async (config: CompleteConfig) => {
     schemaTables = schemaData.map(r => r.tables),
     allTables = ([] as string[]).concat(...schemaTables),
     ts = header() +
+      importsForCustomTypes(customTypes) + '\n\n' +
       schemaDefs.join('\n\n') +
       `\n\n/* === cross-table types === */\n` +
-      crossTableTypesForTables(allTables);
+      crossTableTypesForTables(allTables),
+    customTypeSourceFiles = sourceFilesForCustomTypes(customTypes);
 
   await pool.end();
-  return ts;
+  return { ts, customTypeSourceFiles };
 };
