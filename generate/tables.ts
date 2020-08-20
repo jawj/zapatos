@@ -60,10 +60,16 @@ export const definitionForTableInSchema = async (
     //   3. non-null domain, known udt    <-- alias type:        create type file, with udt-based placeholder
     //   4. non-null domain, unknown udt  <-- alias custom type: create type file, with placeholder 'any'
 
+    // Note: arrays of domains or custom types are treated as their own custom types
+
     if (type === 'any' || domainName !== null) {  // cases 2, 3, 4
-      const customType = domainName ?? udtName;
-      customTypes[customType] = type;
-      type = customType;
+      const
+        customType = domainName ?? udtName,
+        legalCustomType = customType.replace(/\W+/g, '_'),
+        prefixedCustomType = 'Pg' + (domainName === null ? 'Type' : 'Domain') +
+          legalCustomType.charAt(0).toUpperCase() + legalCustomType.slice(1);
+      customTypes[prefixedCustomType] = type;
+      type = prefixedCustomType;
     }
 
     selectables.push(`${column}: ${type}${orNull};`);

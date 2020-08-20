@@ -49,7 +49,7 @@ import type {
 };
 
 const customTypeHeader = `/*
-** Please do edit this file **
+** Please do edit this file as needed **
 It's a placeholder for a custom type definition
 */
 `;
@@ -65,7 +65,7 @@ const sourceFilesForCustomTypes = (customTypes: CustomTypes) =>
     .map(([name, baseType]) => [
       `${name}.ts`,
       `${customTypeHeader}${baseType === 'JSONValue' ? "\nimport type { JSONValue } from '../src/core';\n" : ""}
-type ${name} = ${baseType};  // replace with your custom type or interface;
+type ${name} = ${baseType};  // replace with your custom type or interface as desired
 
 export default ${name};
 `,
@@ -91,14 +91,14 @@ export const tsForConfig = async (config: CompleteConfig) => {
             `\n/* --- enums --- */\n` +
             enumTypesForEnumData(enums) +
             `\n\n/* --- tables --- */\n` +
-            tableDefs.join('\n');
+            tableDefs.sort().join('\n');
 
         return { schemaDef, tables };
       }))
     ),
-    schemaDefs = schemaData.map(r => r.schemaDef),
+    schemaDefs = schemaData.map(r => r.schemaDef).sort(),
     schemaTables = schemaData.map(r => r.tables),
-    allTables = ([] as string[]).concat(...schemaTables),
+    allTables = ([] as string[]).concat(...schemaTables).sort(),
     ts = header() +
       importsForCustomTypes(customTypes) + '\n\n' +
       schemaDefs.join('\n\n') +
