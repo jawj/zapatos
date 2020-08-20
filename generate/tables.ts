@@ -68,12 +68,13 @@ export const definitionForTableInSchema = async (
         legalCustomType = customType.replace(/\W+/g, '_'),
         prefixedCustomType = 'Pg' + (domainName === null ? 'Type' : 'Domain') +
           legalCustomType.charAt(0).toUpperCase() + legalCustomType.slice(1);
+
       customTypes[prefixedCustomType] = type;
       type = prefixedCustomType;
     }
 
     selectables.push(`${column}: ${type}${orNull};`);
-    insertables.push(`${column}${insertablyOptional}: ${type}${orDateString}${orNull}${orDefault} | SQLFragment;`);
+    insertables.push(`${column}${insertablyOptional}: ${type} | Parameter<${type}>${orDateString}${orNull}${orDefault} | SQLFragment;`);
   });
 
   const uniqueIndexes = await db.sql<s.pg_indexes.SQL | s.pg_class.SQL | s.pg_index.SQL, { indexname: string }[]>`

@@ -51,13 +51,13 @@ export type DateString = string;
  * Compiles to a numbered query parameter (`$1`, `$2`, etc) and adds the wrapped value 
  * at the appropriate position of the values array passed to pg  
  */
-export class Parameter { constructor(public value: any) { } }
+export class Parameter<T = any> { constructor(public value: T, public cast?: boolean | string) { } }
 /**
  * Returns a `Parameter` instance, which compiles to a numbered query parameter (`$1`, 
  * `$2`, etc) and adds its wrapped value at the appropriate position of the values array 
  * passed to pg
  */
-export function param(x: any) { return new Parameter(x); }
+export function param<T = any>(x: T, cast?: boolean | string) { return new Parameter(x, cast); }
 
 /**
  * Compiles to the wrapped string value, as is. Dangerous: https://xkcd.com/327/.
@@ -220,15 +220,19 @@ export class SQLFragment<RunResult = pg.QueryResult['rows']> {
         config = getConfig();
 
       if (
-        (config.castArrayParamsToJson &&
+        ((expression.cast !== false && (expression.cast === true || config.castArrayParamsToJson)) &&
           Array.isArray(expression.value)) ||
-        (config.castObjectParamsToJson &&
+        ((expression.cast !== false && (expression.cast === true || config.castObjectParamsToJson)) &&
           typeof expression.value === 'object' &&
           expression.value !== null &&
           expression.value.constructor === Object)
       ) {
         result.values.push(JSON.stringify(expression.value));
-        result.text += `CAST(${placeholder} AS json)`;
+        result.text += `CAST(${placeholder} AS "json")`;
+
+      } else if (typeof expression.cast === 'string') {
+        result.values.push(expression.value);
+        result.text += `CAST(${placeholder} AS "${expression.cast}")`;
 
       } else {
         result.values.push(expression.value);
@@ -279,7 +283,9 @@ export class SQLFragment<RunResult = pg.QueryResult['rows']> {
             columnName = columnNames[i],
             columnValue = columnValues[i];
           if (i > 0) result.text += ', ';
-          if (columnValue instanceof SQLFragment || columnValue === Default) this.compileExpression(columnValue, result, parentTable, columnName);
+          if (columnValue instanceof SQLFragment ||
+            columnValue instanceof Parameter ||
+            columnValue === Default) this.compileExpression(columnValue, result, parentTable, columnName);
           else this.compileExpression(new Parameter(columnValue), result, parentTable, columnName);
         }
       }

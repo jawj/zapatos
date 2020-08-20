@@ -41,6 +41,7 @@ import type {
   GenericSQLExpression,
   ColumnNames,
   ColumnValues,
+  Parameter,
   ParentColumn,
   DefaultType,
 } from './src/core';
