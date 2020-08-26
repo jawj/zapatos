@@ -16,6 +16,7 @@ import type {
 } from '../schema';
 
 import { getConfig } from './config';
+import { isPOJO } from './utils';
 
 
 // === symbols, types, wrapper classes and shortcuts ===
@@ -223,9 +224,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows']> {
         ((expression.cast !== false && (expression.cast === true || config.castArrayParamsToJson)) &&
           Array.isArray(expression.value)) ||
         ((expression.cast !== false && (expression.cast === true || config.castObjectParamsToJson)) &&
-          typeof expression.value === 'object' &&
-          expression.value !== null &&
-          expression.value.constructor === Object)
+          isPOJO(expression.value))
       ) {
         result.values.push(JSON.stringify(expression.value));
         result.text += `CAST(${placeholder} AS "json")`;

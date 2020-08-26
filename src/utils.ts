@@ -48,3 +48,14 @@ export const completeKeysWithDefault = <T extends object>(objs: T[]): T[] => {
   for (const k in unionKeys) unionKeys[k] = Default;
   return objs.map(o => ({ ...unionKeys, ...o }));
 };
+
+/**
+ * Test that a value is a Plain Old JavaScript Object (such as one created by an object 
+ * literal {x: 1, y: 2})
+ * @param x The value to test 
+ */
+export const isPOJO = (x: any) =>
+  typeof x === 'object' &&
+  x !== null &&
+  x.constructor === Object &&
+  x.toString === '[object Object]';
