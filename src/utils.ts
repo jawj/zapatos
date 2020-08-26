@@ -51,7 +51,7 @@ export const completeKeysWithDefault = <T extends object>(objs: T[]): T[] => {
 
 /**
  * Test that a value is a Plain Old JavaScript Object (such as one created by an object 
- * literal {x: 1, y: 2})
+ * literal, e.g. `{x: 1, y: 2}`)
  * @param x The value to test 
  */
 export const isPOJO = (x: any) =>
