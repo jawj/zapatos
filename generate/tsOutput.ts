@@ -18,7 +18,7 @@ export interface CustomTypes {
   [name: string]: string;  // any, or TS type for domain's base type
 }
 
-const header = () => {
+export const header = () => {
   const
     pkgPath = path.join(moduleRoot(), 'package.json'),
     pkg = JSON.parse(fs.readFileSync(pkgPath, { encoding: 'utf8' }));
@@ -32,7 +32,10 @@ Copyright (C) 2020 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
-import type {
+`
+};
+
+const coreImports = `import type {
   JSONValue,
   JSONArray,
   DateString,
@@ -47,7 +50,6 @@ import type {
 } from './src/core';
 
 `;
-};
 
 const customTypeHeader = `/*
 ** Please do edit this file as needed **
@@ -98,9 +100,10 @@ export const tsForConfig = async (config: CompleteConfig) => {
     schemaDefs = schemaData.map(r => r.schemaDef).sort(),
     schemaTables = schemaData.map(r => r.tables),
     allTables = ([] as string[]).concat(...schemaTables).sort(),
+    hasCustomTypes = Object.keys(customTypes).length > 0,
     ts = header() +
-      (Object.keys(customTypes).length > 0 ? "import * as c from './custom';\n\n" : '') +
-      // importsForCustomTypes(customTypes) + '\n\n' +
+      coreImports +
+      (hasCustomTypes ? "import * as c from './custom';\n\n" : '') +
       schemaDefs.join('\n\n') +
       `\n\n/* === cross-table types === */\n` +
       crossTableTypesForTables(allTables),

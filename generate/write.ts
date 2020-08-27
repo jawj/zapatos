@@ -8,7 +8,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { moduleRoot, finaliseConfig } from './config';
 import type { Config } from './config';
-import { tsForConfig } from './tsOutput';
+import { tsForConfig, header } from './tsOutput';
 
 export const customFolderName = 'custom';
 
@@ -83,7 +83,7 @@ export const generate = async (suppliedConfig: Config) => {
   fs.writeFileSync(schemaTargetPath, ts, { flag: 'w' });
 
   if (Object.keys(customTypeSourceFiles).length > 0) {
-    let exportsFileContent = '';
+    let exportsFileContent = header();
     fs.mkdirSync(customFolderTargetPath, { recursive: true });
 
     for (const customTypeFileName in customTypeSourceFiles) {
