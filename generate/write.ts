@@ -82,15 +82,25 @@ export const generate = async (suppliedConfig: Config) => {
   log(`Writing generated schema: ${schemaTargetPath}`);
   fs.writeFileSync(schemaTargetPath, ts, { flag: 'w' });
 
-  for (const customTypeFileName in customTypeSourceFiles) {
-    fs.mkdirSync(customFolderTargetPath, { recursive: true });  // inefficient, but never mind
-    const customTypeFilePath = path.join(customFolderTargetPath, customTypeFileName);
-    if (fs.existsSync(customTypeFilePath)) {
-      log(`Custom type or domain placeholder already exists: ${customTypeFilePath}`);
-    } else {
-      warn(`Writing new custom type or domain placeholder: ${customTypeFilePath}`);
-      const customTypeFileContents = customTypeSourceFiles[customTypeFileName];
-      fs.writeFileSync(customTypeFilePath, customTypeFileContents, { flag: 'w' });
+  if (Object.keys(customTypeSourceFiles).length > 0) {
+    let exportsFileContent = '';
+    fs.mkdirSync(customFolderTargetPath, { recursive: true });
+
+    for (const customTypeFileName in customTypeSourceFiles) {
+      exportsFileContent += `export * from './${customTypeFileName}';\n`;
+
+      const customTypeFilePath = path.join(customFolderTargetPath, customTypeFileName + '.ts');
+      if (fs.existsSync(customTypeFilePath)) {
+        log(`Custom type or domain placeholder already exists: ${customTypeFilePath}`);
+
+      } else {
+        warn(`Writing new custom type or domain placeholder: ${customTypeFilePath}`);
+        const customTypeFileContent = customTypeSourceFiles[customTypeFileName];
+        fs.writeFileSync(customTypeFilePath, customTypeFileContent, { flag: 'w' });
+      }
     }
+
+    const exportsFilePath = path.join(customFolderTargetPath, 'index.ts');
+    fs.writeFileSync(exportsFilePath, exportsFileContent, { flag: 'w' });
   }
 };

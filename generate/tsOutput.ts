@@ -64,11 +64,9 @@ const importsForCustomTypes = (customTypes: CustomTypes) =>
 const sourceFilesForCustomTypes = (customTypes: CustomTypes) =>
   Object.fromEntries(Object.entries(customTypes)
     .map(([name, baseType]) => [
-      `${name}.ts`,
+      `${name}`,
       `${customTypeHeader}${baseType === 'JSONValue' ? "\nimport type { JSONValue } from '../src/core';\n" : ""}
-type ${name} = ${baseType};  // replace with your custom type or interface as desired
-
-export default ${name};
+export type ${name} = ${baseType};  // replace with your custom type or interface as desired
 `,
     ]));
 
@@ -101,7 +99,8 @@ export const tsForConfig = async (config: CompleteConfig) => {
     schemaTables = schemaData.map(r => r.tables),
     allTables = ([] as string[]).concat(...schemaTables).sort(),
     ts = header() +
-      importsForCustomTypes(customTypes) + '\n\n' +
+      (Object.keys(customTypes).length > 0 ? "import * as c from './custom';\n\n" : '') +
+      // importsForCustomTypes(customTypes) + '\n\n' +
       schemaDefs.join('\n\n') +
       `\n\n/* === cross-table types === */\n` +
       crossTableTypesForTables(allTables),

@@ -66,11 +66,12 @@ export const definitionForTableInSchema = async (
       const
         customType = domainName ?? udtName,
         legalCustomType = customType.replace(/\W+/g, '_'),
-        prefixedCustomType = 'Pg' + (domainName === null ? 'Type' : 'Domain') +
-          legalCustomType.charAt(0).toUpperCase() + legalCustomType.slice(1);
+        prefixedCustomType = 'Pg' +
+          legalCustomType.charAt(0).toUpperCase() +
+          legalCustomType.slice(1);
 
       customTypes[prefixedCustomType] = type;
-      type = prefixedCustomType;
+      type = 'c.' + prefixedCustomType;
     }
 
     selectables.push(`${column}: ${type}${orNull};`);

@@ -58,4 +58,4 @@ export const isPOJO = (x: any) =>
   typeof x === 'object' &&
   x !== null &&
   x.constructor === Object &&
-  x.toString === '[object Object]';
+  x.toString() === '[object Object]';
