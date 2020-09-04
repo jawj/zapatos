@@ -10,7 +10,6 @@ import * as path from 'path';
 import { enumDataForSchema, enumTypesForEnumData } from './enums';
 import { tablesInSchema, definitionForTableInSchema, crossTableTypesForTables } from './tables';
 import { moduleRoot } from './config';
-import { customFolderName } from './write';
 import type { CompleteConfig } from './config';
 
 
@@ -32,7 +31,7 @@ Copyright (C) 2020 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
-`
+`;
 };
 
 const coreImports = `import type {
@@ -57,11 +56,6 @@ It's a placeholder for a custom type definition
 */
 `;
 
-const importsForCustomTypes = (customTypes: CustomTypes) =>
-  Object.keys(customTypes)
-    .sort()
-    .map(customType => `import type ${customType} from './${customFolderName}/${customType}';`)
-    .join('\n');
 
 const sourceFilesForCustomTypes = (customTypes: CustomTypes) =>
   Object.fromEntries(Object.entries(customTypes)

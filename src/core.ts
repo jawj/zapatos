@@ -8,15 +8,15 @@ Released under the MIT licence: see LICENCE file
 */
 
 import type * as pg from 'pg';
+import { getConfig } from './config';
+import { isPOJO } from './utils';
+
 import type {
   Updatable,
   Whereable,
   Table,
   Column,
 } from '../schema';
-
-import { getConfig } from './config';
-import { isPOJO } from './utils';
 
 
 // === symbols, types, wrapper classes and shortcuts ===
@@ -39,24 +39,41 @@ export type SelfType = typeof self;
 export const all = Symbol('all');
 export type AllType = typeof all;
 
+/**
+ * JSON types
+ */
 export type JSONValue = null | boolean | number | string | JSONObject | JSONArray;
 export type JSONObject = { [k: string]: JSONValue };
 export type JSONArray = JSONValue[];
 
 /**
- * Date represented as an ISO8601 string in JSON.
+ * Date to be represented as an ISO8601 string, which is how Postgres casts them
  */
 export type DateString = string;
 
 /**
  * Compiles to a numbered query parameter (`$1`, `$2`, etc) and adds the wrapped value 
- * at the appropriate position of the values array passed to pg  
+ * at the appropriate position of the values array passed to `pg`.
+ * @param x The value to be wrapped
+ * @param cast Optional cast type. If a string, the parameter will be cast to this type
+ * within the query e.g. `CAST($1 AS type)` instead of plain `$1`. If `true`, the value
+ * will be JSON stringified and cast to `json` (irrespective of the configuration parameters
+ * `castArrayParamsToJson` and `castObjectParamsToJson`). If `false`, the value will **not**
+ * be JSON stringified or cast to `json` (again irrespective of the configuration parameters
+ * `castArrayParamsToJson` and `castObjectParamsToJson`).
  */
 export class Parameter<T = any> { constructor(public value: T, public cast?: boolean | string) { } }
 /**
  * Returns a `Parameter` instance, which compiles to a numbered query parameter (`$1`, 
  * `$2`, etc) and adds its wrapped value at the appropriate position of the values array 
- * passed to pg
+ * passed to `pg`.
+ * @param x The value to be wrapped
+ * @param cast Optional cast type. If a string, the parameter will be cast to this type 
+ * within the query e.g. `CAST($1 AS type)` instead of plain `$1`. If `true`, the value 
+ * will be JSON stringified and cast to `json` (irrespective of the configuration parameters 
+ * `castArrayParamsToJson` and `castObjectParamsToJson`). If `false`, the value will **not** 
+ * be JSON stringified or cast to `json` (again irrespective of the configuration parameters 
+ * `castArrayParamsToJson` and `castObjectParamsToJson`).
  */
 export function param<T = any>(x: T, cast?: boolean | string) { return new Parameter(x, cast); }
 
