@@ -250,11 +250,14 @@ export interface SelectOptionsForTable<
   L extends SQLFragmentsMap | undefined,
   E extends SQLFragmentsMap | undefined,
   > {
+  distinct?: boolean | ColumnForTable<T> | ColumnForTable<T>[] | SQLForTable<T>;
   order?: OrderSpecForTable<T>[];
   limit?: number;
   offset?: number;
   columns?: C;
   extras?: E;
+  groupBy?: ColumnForTable<T> | ColumnForTable<T>[] | SQLForTable<T>;
+  having?: WhereableForTable<T> | SQLForTable<T>;
   lateral?: L;
   alias?: string;
   lock?: SelectLockingOptions | SelectLockingOptions[];
@@ -360,10 +363,14 @@ export const select: SelectSignatures = function (
     limit1 = mode === SelectResultMode.One || mode === SelectResultMode.ExactlyOne,
     allOptions = limit1 ? { ...options, limit: 1 } : options,
     aliasedTable = allOptions.alias || table,
+    distinctOpt = allOptions.distinct,
     lateralOpt = allOptions.lateral,
     extrasOpt = allOptions.extras,
     lockOpt = allOptions.lock === undefined || Array.isArray(allOptions.lock) ? allOptions.lock : [allOptions.lock],
     tableAliasSQL = aliasedTable === table ? [] : sql<string>` AS ${aliasedTable}`,
+    distinctSQL = !distinctOpt ? [] : sql` DISTINCT${
+      distinctOpt instanceof SQLFragment || typeof distinctOpt === 'string' ? sql` ON (${distinctOpt})` :
+        Array.isArray(distinctOpt) ? sql` ON (${cols(distinctOpt)})` : []}`,
     colsSQL = mode === SelectResultMode.Count ?
       (allOptions.columns ? sql`count(${cols(allOptions.columns)})` : sql<typeof aliasedTable>`count(${aliasedTable}.*)`) :
       allOptions.columns ?
@@ -399,7 +406,7 @@ export const select: SelectSignatures = function (
       });
 
   const
-    rowsQuery = sql<SQL, any>`SELECT ${allColsSQL} AS result FROM ${table}${tableAliasSQL}${lateralSQL}${whereSQL}${orderSQL}${limitSQL}${offsetSQL}${lockSQL}`,
+    rowsQuery = sql<SQL, any>`SELECT${distinctSQL} ${allColsSQL} AS result FROM ${table}${tableAliasSQL}${lateralSQL}${whereSQL}${orderSQL}${limitSQL}${offsetSQL}${lockSQL}`,
     query = mode !== SelectResultMode.Many ? rowsQuery :
       // we need the aggregate to sit in a sub-SELECT in order to keep ORDER and LIMIT working as usual
       sql<SQL, any>`SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${raw(`"sq_${aliasedTable}"`)}`;
