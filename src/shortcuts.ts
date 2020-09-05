@@ -362,28 +362,29 @@ export const select: SelectSignatures = function (
   const
     limit1 = mode === SelectResultMode.One || mode === SelectResultMode.ExactlyOne,
     allOptions = limit1 ? { ...options, limit: 1 } : options,
-    aliasedTable = allOptions.alias || table,
-    distinctOpt = allOptions.distinct,
-    lateralOpt = allOptions.lateral,
-    extrasOpt = allOptions.extras,
-    lockOpt = allOptions.lock === undefined || Array.isArray(allOptions.lock) ? allOptions.lock : [allOptions.lock],
-    tableAliasSQL = aliasedTable === table ? [] : sql<string>` AS ${aliasedTable}`,
-    distinctSQL = !distinctOpt ? [] : sql` DISTINCT${
-      distinctOpt instanceof SQLFragment || typeof distinctOpt === 'string' ? sql` ON (${distinctOpt})` :
-        Array.isArray(distinctOpt) ? sql` ON (${cols(distinctOpt)})` : []}`,
+    alias = allOptions.alias || table,
+    { distinct, groupBy, having, lateral, extras } = allOptions,
+    lock = allOptions.lock === undefined || Array.isArray(allOptions.lock) ? allOptions.lock : [allOptions.lock],
+    tableAliasSQL = alias === table ? [] : sql<string>` AS ${alias}`,
+    distinctSQL = !distinct ? [] : sql` DISTINCT${
+      distinct instanceof SQLFragment || typeof distinct === 'string' ? sql` ON (${distinct})` :
+        Array.isArray(distinct) ? sql` ON (${cols(distinct)})` : []}`,
     colsSQL = mode === SelectResultMode.Count ?
-      (allOptions.columns ? sql`count(${cols(allOptions.columns)})` : sql<typeof aliasedTable>`count(${aliasedTable}.*)`) :
+      (allOptions.columns ? sql`count(${cols(allOptions.columns)})` : sql<typeof alias>`count(${alias}.*)`) :
       allOptions.columns ?
         sql`jsonb_build_object(${mapWithSeparator(allOptions.columns, sql`, `, c => sql<SQL>`${param(c)}::text, ${c}`)})` :
-        sql<typeof aliasedTable>`to_jsonb(${aliasedTable}.*)`,
-    colsLateralSQL = lateralOpt === undefined ? [] :
+        sql<typeof alias>`to_jsonb(${alias}.*)`,
+    colsLateralSQL = lateral === undefined ? [] :
       sql` || jsonb_build_object(${mapWithSeparator(
-        Object.keys(lateralOpt), sql`, `, (k, i) => sql<SQL>`${param(k)}::text, "ljoin_${raw(String(i))}".result`)})`,
-    colsExtraSQL = extrasOpt === undefined ? [] :
+        Object.keys(lateral), sql`, `, (k, i) => sql<SQL>`${param(k)}::text, "ljoin_${raw(String(i))}".result`)})`,
+    colsExtraSQL = extras === undefined ? [] :
       sql<any[]>` || jsonb_build_object(${mapWithSeparator(
-        Object.keys(extrasOpt), sql`, `, k => sql<SQL>`${param(k)}::text, ${extrasOpt![k]}`)})`,
+        Object.keys(extras), sql`, `, k => sql<SQL>`${param(k)}::text, ${extras![k]}`)})`,
     allColsSQL = sql`${colsSQL}${colsLateralSQL}${colsExtraSQL}`,
     whereSQL = where === all ? [] : sql` WHERE ${where}`,
+    groupBySQL = !groupBy ? [] : sql` GROUP BY ${
+      groupBy instanceof SQLFragment || typeof groupBy === 'string' ? groupBy : cols(groupBy)}`,
+    havingSQL = !having ? [] : sql` HAVING ${having}`,
     orderSQL = !allOptions.order ? [] :
       sql` ORDER BY ${mapWithSeparator(allOptions.order, sql`, `, o => {
         if (!['ASC', 'DESC'].includes(o.direction)) throw new Error(`Direction must be ASC/DESC, not '${o.direction}'`);
@@ -392,24 +393,24 @@ export const select: SelectSignatures = function (
       })}`,
     limitSQL = allOptions.limit === undefined ? [] : sql` LIMIT ${param(allOptions.limit)}`,
     offsetSQL = allOptions.offset === undefined ? [] : sql` OFFSET ${param(allOptions.offset)}`,
-    lockSQL = lockOpt === undefined ? [] : lockOpt.map(lock => {
+    lockSQL = lock === undefined ? [] : lock.map(lock => {
       const
         ofTables = lock.of === undefined || Array.isArray(lock.of) ? lock.of : [lock.of],
         ofClause = ofTables === undefined ? [] : sql` OF ${mapWithSeparator(ofTables, sql`, `, t => t)}`;
       return sql<SQL>` FOR ${raw(lock.for)}${ofClause}${lock.wait ? sql` ${raw(lock.wait)}` : []}`;
     }),
-    lateralSQL = lateralOpt === undefined ? [] :
-      Object.keys(lateralOpt).map((k, i) => {
-        const subQ = lateralOpt[k];
-        subQ.parentTable = aliasedTable;  // enables `parent('column')` in subquery's Wherables
+    lateralSQL = lateral === undefined ? [] :
+      Object.keys(lateral).map((k, i) => {
+        const subQ = lateral[k];
+        subQ.parentTable = alias;  // enables `parent('column')` in subquery's Wherables
         return sql<SQL>` LEFT JOIN LATERAL (${subQ}) AS "ljoin_${raw(String(i))}" ON true`;
       });
 
   const
-    rowsQuery = sql<SQL, any>`SELECT${distinctSQL} ${allColsSQL} AS result FROM ${table}${tableAliasSQL}${lateralSQL}${whereSQL}${orderSQL}${limitSQL}${offsetSQL}${lockSQL}`,
+    rowsQuery = sql<SQL, any>`SELECT${distinctSQL} ${allColsSQL} AS result FROM ${table}${tableAliasSQL}${lateralSQL}${whereSQL}${groupBySQL}${havingSQL}${orderSQL}${limitSQL}${offsetSQL}${lockSQL}`,
     query = mode !== SelectResultMode.Many ? rowsQuery :
       // we need the aggregate to sit in a sub-SELECT in order to keep ORDER and LIMIT working as usual
-      sql<SQL, any>`SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${raw(`"sq_${aliasedTable}"`)}`;
+      sql<SQL, any>`SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${raw(`"sq_${alias}"`)}`;
 
   query.runResultTransform =
 
