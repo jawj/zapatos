@@ -250,14 +250,14 @@ export interface SelectOptionsForTable<
   L extends SQLFragmentsMap | undefined,
   E extends SQLFragmentsMap | undefined,
   > {
-  distinct?: boolean | ColumnForTable<T> | ColumnForTable<T>[] | SQLForTable<T>;
+  distinct?: boolean | ColumnForTable<T> | ColumnForTable<T>[] | SQLFragment<any>;
   order?: OrderSpecForTable<T>[];
   limit?: number;
   offset?: number;
   columns?: C;
   extras?: E;
-  groupBy?: ColumnForTable<T> | ColumnForTable<T>[] | SQLForTable<T>;
-  having?: WhereableForTable<T> | SQLForTable<T>;
+  groupBy?: ColumnForTable<T> | ColumnForTable<T>[] | SQLFragment<any>;
+  having?: WhereableForTable<T> | SQLFragment<any>;
   lateral?: L;
   alias?: string;
   lock?: SelectLockingOptions | SelectLockingOptions[];
