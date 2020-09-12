@@ -13,6 +13,83 @@ body {
   padding-right: 10px;
 }
 
+.testimonials-window {
+  width: 100%;
+  overflow: hidden;
+}
+.testimonials {
+  width: 500%;
+  margin-top: 30px;
+  animation-name: carousel;
+  animation-duration: 35s;
+  animation-iteration-count: infinite;
+}
+.testimonials:hover {
+  animation-play-state: paused;
+}
+.testimonials:hover .testimonial {
+  border-top: 2px solid #555;
+}
+.testimonial {
+  background: #def;
+  border-top: 2px solid #36e;
+  padding: 2px 20px;
+  width: 20%;
+  float: left;
+  box-sizing: border-box;
+}
+.quote p {
+  margin-bottom: 0;
+  font-style: italic;
+}
+.quote p::before {
+  content: '“';
+}
+.quote p::after {
+  content: '”';
+}
+.attribution p {
+  margin-top: 0;
+}
+.attribution p::before {
+  content: "— ";
+}
+@keyframes carousel {
+  0% {
+    transform: translate(0, 0);
+  }
+  18% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-20%, 0);
+  }
+  38% {
+    transform: translate(-20%, 0);
+  }
+  40% {
+    transform: translate(-40%, 0);
+  }
+  58% {
+    transform: translate(-40%, 0);
+  }
+  60% {
+    transform: translate(-60%, 0);
+  }
+  78% {
+    transform: translate(-60%, 0);
+  }
+  80% {
+    transform: translate(-80%, 0);
+  }
+  98% {
+    transform: translate(-80%, 0);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
 h1 {
   margin: 0 0 60px;
 }
