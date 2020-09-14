@@ -33,7 +33,7 @@ export const enumTypesForEnumData = (enums: EnumData) => {
   const types = Object.keys(enums)
     .map(name => `
 export type ${name} = ${enums[name].map(v => `'${v}'`).join(' | ')};
-export namespace every {
+export declare namespace every {
   export type ${name} = [${enums[name].map(v => `'${v}'`).join(', ')}];
 }`)
     .join('');

@@ -26,7 +26,7 @@ export enum Isolation {
   SerializableRODeferrable = "SERIALIZABLE, READ ONLY, DEFERRABLE"
 }
 
-export namespace TxnSatisfying {
+export declare namespace TxnSatisfying {
   export type Serializable = Isolation.Serializable;
   export type RepeatableRead = Serializable | Isolation.RepeatableRead;
   export type ReadCommitted = RepeatableRead | Isolation.ReadCommitted;
