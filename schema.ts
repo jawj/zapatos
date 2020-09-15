@@ -15,7 +15,7 @@ import type {
   DefaultType,
 } from "./src";
 
-export namespace pg_indexes {
+export declare namespace pg_indexes {
   export type Table = "pg_indexes";
   export interface Selectable {
     indexname: string;
@@ -31,7 +31,7 @@ export namespace pg_indexes {
   export type SQL = SQLExpression | SQLExpression[];
 }
 
-export namespace pg_class {
+export declare namespace pg_class {
   export type Table = "pg_class";
   export interface Selectable {
     oid: number;
@@ -47,7 +47,7 @@ export namespace pg_class {
   export type SQL = SQLExpression | SQLExpression[];
 }
 
-export namespace pg_index {
+export declare namespace pg_index {
   export type Table = "pg_index";
   export interface Selectable {
     indexrelid: number;
@@ -63,7 +63,7 @@ export namespace pg_index {
   export type SQL = SQLExpression | SQLExpression[];
 }
 
-export namespace pg_type {
+export declare namespace pg_type {
   export type Table = "pg_type";
   export interface Selectable {
     typname: string;
@@ -79,7 +79,7 @@ export namespace pg_type {
   export type SQL = SQLExpression | SQLExpression[];
 }
 
-export namespace pg_enum {
+export declare namespace pg_enum {
   export type Table = "pg_enum";
   export interface Selectable {
     enumtypid: number;
@@ -95,7 +95,7 @@ export namespace pg_enum {
   export type SQL = SQLExpression | SQLExpression[];
 }
 
-export namespace pg_namespace {
+export declare namespace pg_namespace {
   export type Table = "pg_namespace";
   export interface Selectable {
     oid: number;
@@ -111,7 +111,7 @@ export namespace pg_namespace {
   export type SQL = SQLExpression | SQLExpression[];
 }
 
-export namespace information_schema.columns {
+export declare namespace information_schema.columns {
   export type Table = '"information_schema"."columns"';
   export interface Selectable {
     table_name: string;

@@ -86,7 +86,7 @@ export const definitionForTableInSchema = async (
     WHERE i.${"tablename"} = ${db.param(tableName)}`.run(pool);
 
   const tableDef = `
-export namespace ${tableName} {
+export declare namespace ${tableName} {
   export type Table = '${tableName}';
   export interface Selectable {
     ${selectables.join('\n    ')}
