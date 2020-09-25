@@ -251,7 +251,7 @@ export interface SelectOptionsForTable<
   E extends SQLFragmentsMap | undefined,
   > {
   distinct?: boolean | ColumnForTable<T> | ColumnForTable<T>[] | SQLFragment<any>;
-  order?: OrderSpecForTable<T>[];
+  order?: OrderSpecForTable<T> | OrderSpecForTable<T>[];
   limit?: number;
   offset?: number;
   withTies?: boolean;
@@ -366,6 +366,7 @@ export const select: SelectSignatures = function (
     alias = allOptions.alias || table,
     { distinct, groupBy, having, lateral, extras } = allOptions,
     lock = allOptions.lock === undefined || Array.isArray(allOptions.lock) ? allOptions.lock : [allOptions.lock],
+    order = allOptions.order === undefined || Array.isArray(allOptions.order) ? allOptions.order : [allOptions.order],
     tableAliasSQL = alias === table ? [] : sql<string>` AS ${alias}`,
     distinctSQL = !distinct ? [] : sql` DISTINCT${distinct instanceof SQLFragment || typeof distinct === 'string' ? sql` ON (${distinct})` :
       Array.isArray(distinct) ? sql` ON (${cols(distinct)})` : []}`,
@@ -384,8 +385,8 @@ export const select: SelectSignatures = function (
     whereSQL = where === all ? [] : sql` WHERE ${where}`,
     groupBySQL = !groupBy ? [] : sql` GROUP BY ${groupBy instanceof SQLFragment || typeof groupBy === 'string' ? groupBy : cols(groupBy)}`,
     havingSQL = !having ? [] : sql` HAVING ${having}`,
-    orderSQL = !allOptions.order ? [] :
-      sql` ORDER BY ${mapWithSeparator(allOptions.order, sql`, `, o => {
+    orderSQL = order === undefined ? [] :
+      sql` ORDER BY ${mapWithSeparator(order, sql`, `, o => {
         if (!['ASC', 'DESC'].includes(o.direction)) throw new Error(`Direction must be ASC/DESC, not '${o.direction}'`);
         if (o.nulls && !['FIRST', 'LAST'].includes(o.nulls)) throw new Error(`Nulls must be FIRST/LAST/undefined, not '${o.nulls}'`);
         return sql`${o.by} ${raw(o.direction)}${o.nulls ? sql` NULLS ${raw(o.nulls)}` : []}`;
