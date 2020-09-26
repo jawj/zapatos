@@ -124,6 +124,9 @@ export class ParentColumn<T extends Column = Column> { constructor(public value:
  */
 export function parent<T extends Column = Column>(x: T) { return new ParentColumn<T>(x); }
 
+export class Condition<T> { private _?: T; }
+export const isIn = <T>(a: T[]) => sql<SQL>`${self} IN (${vals(a)})` as Condition<T>;
+
 export type GenericSQLExpression = SQLFragment<any> | Parameter | DefaultType | DangerousRawString | SelfType;
 export type SQLExpression = Table | ColumnNames<Updatable | (keyof Updatable)[]> | ColumnValues<Updatable | any[]> | Whereable | Column | GenericSQLExpression;
 export type SQL = SQLExpression | SQLExpression[];

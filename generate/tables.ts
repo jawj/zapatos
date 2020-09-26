@@ -95,7 +95,7 @@ export declare namespace ${tableName} {
     ${insertables.join('\n    ')}
   }
   export interface Updatable extends Partial<Insertable> { }
-  export type Whereable = { [K in keyof Insertable]?: Exclude<Insertable[K] | ParentColumn, null | DefaultType> };
+  export interface Whereable extends WhereableFromInsertable<Insertable> { }
   export type JSONSelectable = { [K in keyof Selectable]:
     Date extends Selectable[K] ? Exclude<Selectable[K], Date> | DateString :
     Date[] extends Selectable[K] ? Exclude<Selectable[K], Date[]> | DateString[] :
