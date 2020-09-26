@@ -354,5 +354,5 @@ export const between = <T>(a: T, b: T) => sql<SQL>`${self} BETWEEN ${param(a)} A
 export const betweenSymmetric = <T>(a: T, b: T) => sql<SQL>`${self} BETWEEN SYMMETRIC ${param(a)} AND ${param(b)}` as Condition<T>;
 export const notBetween = <T>(a: T, b: T) => sql<SQL>`${self} NOT BETWEEN ${param(a)} AND ${param(b)}` as Condition<T>;
 export const notBetweenSymmetric = <T>(a: T, b: T) => sql<SQL>`${self} NOT BETWEEN SYMMETRIC ${param(a)} AND ${param(b)}` as Condition<T>;
-export const isNull = sql<SQL>`${self} IS NULL` as Condition<any>;
-export const isNotNull = sql<SQL>`${self} IS NOT NULL` as Condition<any>;
+export const isNull = sql`${self} IS NULL`;
+export const isNotNull = sql`${self} IS NOT NULL`;
