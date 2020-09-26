@@ -124,8 +124,6 @@ export class ParentColumn<T extends Column = Column> { constructor(public value:
  */
 export function parent<T extends Column = Column>(x: T) { return new ParentColumn<T>(x); }
 
-export class Condition<T> { private _?: T; }
-export const isIn = <T>(a: T[]) => sql<SQL>`${self} IN (${vals(a)})` as Condition<T>;
 
 export type GenericSQLExpression = SQLFragment<any> | Parameter | DefaultType | DangerousRawString | SelfType;
 export type SQLExpression = Table | ColumnNames<Updatable | (keyof Updatable)[]> | ColumnValues<Updatable | any[]> | Whereable | Column | GenericSQLExpression;
@@ -345,3 +343,16 @@ export class SQLFragment<RunResult = pg.QueryResult['rows']> {
 }
 
 
+export class Condition<T> { private _?: T; }  // yes, all the return types that follow are lies ... but they work
+export const isIn = <T>(a: T[]) => sql<SQL>`${self} IN (${vals(a)})` as Condition<T>;
+export const ne = <T>(a: T) => sql<SQL>`${self} != ${param(a)}` as Condition<T>;
+export const gt = <T>(a: T) => sql<SQL>`${self} > ${param(a)}` as Condition<T>;
+export const gte = <T>(a: T) => sql<SQL>`${self} >= ${param(a)}` as Condition<T>;
+export const lt = <T>(a: T) => sql<SQL>`${self} < ${param(a)}` as Condition<T>;
+export const lte = <T>(a: T) => sql<SQL>`${self} <= ${param(a)}` as Condition<T>;
+export const between = <T>(a: T, b: T) => sql<SQL>`${self} BETWEEN ${param(a)} AND ${param(b)}` as Condition<T>;
+export const betweenSymmetric = <T>(a: T, b: T) => sql<SQL>`${self} BETWEEN SYMMETRIC ${param(a)} AND ${param(b)}` as Condition<T>;
+export const notBetween = <T>(a: T, b: T) => sql<SQL>`${self} NOT BETWEEN ${param(a)} AND ${param(b)}` as Condition<T>;
+export const notBetweenSymmetric = <T>(a: T, b: T) => sql<SQL>`${self} NOT BETWEEN SYMMETRIC ${param(a)} AND ${param(b)}` as Condition<T>;
+export const isNull = sql<SQL>`${self} IS NULL` as Condition<any>;
+export const isNotNull = sql<SQL>`${self} IS NOT NULL` as Condition<any>;
