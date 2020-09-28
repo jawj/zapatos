@@ -367,14 +367,14 @@ export const gte = <T>(a: T) => sql<SQL, boolean | null, T>`${self} >= ${conditi
 export const lt = <T>(a: T) => sql<SQL, boolean | null, T>`${self} < ${conditionalParam(a)}`;
 export const lte = <T>(a: T) => sql<SQL, boolean | null, T>`${self} <= ${conditionalParam(a)}`;
 
-export const gtAndLt = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`${self} > ${conditionalParam(a)} AND ${self} < ${conditionalParam(b)}`;
-export const gtAndLte = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`${self} > ${conditionalParam(a)} AND ${self} <= ${conditionalParam(b)}`;
-export const gteAndLt = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`${self} >= ${conditionalParam(a)} AND ${self} < ${conditionalParam(b)}`;
-export const gteAndLte = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`${self} >= ${conditionalParam(a)} AND ${self} <= ${conditionalParam(b)}`;  // same as between
-export const ltOrGt = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`${self} < ${conditionalParam(a)} OR ${self} > ${conditionalParam(b)}`;
-export const lteOrGt = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`${self} <= ${conditionalParam(a)} OR ${self} > ${conditionalParam(b)}`;
-export const ltOrGte = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`${self} < ${conditionalParam(a)} OR ${self} >= ${conditionalParam(b)}`;
-export const lteOrGte = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`${self} <= ${conditionalParam(a)} OR ${self} >= ${conditionalParam(b)}`;  // same as notBetween
+export const gtAndLt = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`(${self} > ${conditionalParam(a)} AND ${self} < ${conditionalParam(b)})`;
+export const gtAndLte = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`(${self} > ${conditionalParam(a)} AND ${self} <= ${conditionalParam(b)})`;
+export const gteAndLt = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`(${self} >= ${conditionalParam(a)} AND ${self} < ${conditionalParam(b)})`;
+export const gteAndLte = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`(${self} >= ${conditionalParam(a)} AND ${self} <= ${conditionalParam(b)})`;  // same as between
+export const ltOrGt = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`(${self} < ${conditionalParam(a)} OR ${self} > ${conditionalParam(b)})`;
+export const lteOrGt = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`(${self} <= ${conditionalParam(a)} OR ${self} > ${conditionalParam(b)})`;
+export const ltOrGte = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`(${self} < ${conditionalParam(a)} OR ${self} >= ${conditionalParam(b)})`;
+export const lteOrGte = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`(${self} <= ${conditionalParam(a)} OR ${self} >= ${conditionalParam(b)})`;  // same as notBetween
 export const between = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`${self} BETWEEN (${conditionalParam(a)}) AND (${conditionalParam(b)})`;
 export const betweenSymmetric = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`${self} BETWEEN SYMMETRIC (${conditionalParam(a)}) AND (${conditionalParam(b)})`;
 export const notBetween = <T>(a: T, b: T) => sql<SQL, boolean | null, T>`${self} NOT BETWEEN (${conditionalParam(a)}) AND (${conditionalParam(b)})`;
@@ -383,6 +383,6 @@ export const notBetweenSymmetric = <T>(a: T, b: T) => sql<SQL, boolean | null, T
 export const isIn = <T>(a: T[]) => sql<SQL, boolean | null, T>`${self} IN (${vals(a)})`;
 export const isNotIn = <T>(a: T[]) => sql<SQL, boolean | null, T>`${self} NOT IN (${vals(a)})`;
 
-export const or = <T>(...conditions: SQLFragment<any, T>[]) => sql<SQL, boolean | null, T>`${mapWithSeparator(conditions, sql` OR `, c => sql`(${c})`)}`;
-export const and = <T>(...conditions: SQLFragment<any, T>[]) => sql<SQL, boolean | null, T>`${mapWithSeparator(conditions, sql` AND `, c => sql`(${c})`)}`;
-export const not = <T>(condition: SQLFragment<any, T>) => sql<SQL, boolean | null, T>`NOT ${condition}`;
+export const or = <T>(...conditions: SQLFragment<any, T>[]) => sql<SQL, boolean | null, T>`(${mapWithSeparator(conditions, sql` OR `, c => c)})`;
+export const and = <T>(...conditions: SQLFragment<any, T>[]) => sql<SQL, boolean | null, T>`(${mapWithSeparator(conditions, sql` AND `, c => c)})`;
+export const not = <T>(condition: SQLFragment<any, T>) => sql<SQL, boolean | null, T>`(NOT ${condition})`;
