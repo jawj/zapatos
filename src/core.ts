@@ -343,16 +343,31 @@ export class SQLFragment<RunResult = pg.QueryResult['rows']> {
 }
 
 
-const conditionalParam = (a: any) => a instanceof SQLFragment || a instanceof ParentColumn || a instanceof Parameter ? a : param(a);
-export class Condition<T> { private _?: T; }  // yes, all the return types that follow are lies ... but they work
+// === Whereable helpers ===
 
-export const isIn = <T>(a: T[]) => sql<SQL>`${self} IN (${vals(a)})` as Condition<T>;
-export const notIn = <T>(a: T[]) => sql<SQL>`${self} NOT IN (${vals(a)})` as Condition<T>;
+const conditionalParam = (a: any) => a instanceof SQLFragment || a instanceof ParentColumn || a instanceof Parameter ? a : param(a);
+export class Condition<T> { private _?: T; }
+
+export const isNull = sql`${self} IS NULL`;
+export const isNotNull = sql`${self} IS NOT NULL`;
+export const isTrue = sql`${self} IS TRUE`;
+export const isNotTrue = sql`${self} IS NOT TRUE`;
+export const isFalse = sql`${self} IS FALSE`;
+export const isNotFalse = sql`${self} IS NOT FALSE`;
+export const isUnknown = sql`${self} IS UNKNOWN`;
+export const isNotUnknown = sql`${self} IS NOT UNKNOWN`;
+
+// yes, all the return types that follow are flat-out lies, but they enable type restrictions on the arguments
+
+export const isDistinctFrom = <T>(a: T) => sql<SQL>`${self} IS DISTINCT FROM ${conditionalParam(a)}` as Condition<T>;
+export const isNotDistinctFrom = <T>(a: T) => sql<SQL>`${self} IS NOT DISTINCT FROM ${conditionalParam(a)}` as Condition<T>;
+
 export const ne = <T>(a: T) => sql<SQL>`${self} <> ${conditionalParam(a)}` as Condition<T>;
 export const gt = <T>(a: T) => sql<SQL>`${self} > ${conditionalParam(a)}` as Condition<T>;
 export const gte = <T>(a: T) => sql<SQL>`${self} >= ${conditionalParam(a)}` as Condition<T>;
 export const lt = <T>(a: T) => sql<SQL>`${self} < ${conditionalParam(a)}` as Condition<T>;
 export const lte = <T>(a: T) => sql<SQL>`${self} <= ${conditionalParam(a)}` as Condition<T>;
+
 export const gtAndLt = <T>(a: T, b: T) => sql<SQL>`${self} > ${conditionalParam(a)} AND ${self} < ${conditionalParam(b)}` as Condition<T>;
 export const gtAndLte = <T>(a: T, b: T) => sql<SQL>`${self} > ${conditionalParam(a)} AND ${self} <= ${conditionalParam(b)}` as Condition<T>;
 export const gteAndLt = <T>(a: T, b: T) => sql<SQL>`${self} >= ${conditionalParam(a)} AND ${self} < ${conditionalParam(b)}` as Condition<T>;
@@ -365,5 +380,7 @@ export const between = <T>(a: T, b: T) => sql<SQL>`${self} BETWEEN (${conditiona
 export const betweenSymmetric = <T>(a: T, b: T) => sql<SQL>`${self} BETWEEN SYMMETRIC (${conditionalParam(a)}) AND (${conditionalParam(b)})` as Condition<T>;
 export const notBetween = <T>(a: T, b: T) => sql<SQL>`${self} NOT BETWEEN (${conditionalParam(a)}) AND (${conditionalParam(b)})` as Condition<T>;
 export const notBetweenSymmetric = <T>(a: T, b: T) => sql<SQL>`${self} NOT BETWEEN SYMMETRIC (${conditionalParam(a)}) AND (${conditionalParam(b)})` as Condition<T>;
-export const isNull = sql`${self} IS NULL`;
-export const isNotNull = sql`${self} IS NOT NULL`;
+
+export const isIn = <T>(a: T[]) => sql<SQL>`${self} IN (${vals(a)})` as Condition<T>;
+export const isNotIn = <T>(a: T[]) => sql<SQL>`${self} NOT IN (${vals(a)})` as Condition<T>;
+
