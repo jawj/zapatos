@@ -40,6 +40,17 @@ export const notBetweenSymmetric = <T>(a: T, b: T) => sql<SQL, boolean | null, T
 export const isIn = <T>(a: T[]) => sql<SQL, boolean | null, T> `${self} IN (${vals(a)})`;
 export const isNotIn = <T>(a: T[]) => sql<SQL, boolean | null, T> `${self} NOT IN (${vals(a)})`;
 
+export const like = <T extends string>(a: T) => sql<SQL, boolean | null, T> `${self} LIKE ${conditionalParam(a)}`;
+export const notLike = <T extends string>(a: T) => sql<SQL, boolean | null, T> `${self} NOT LIKE ${conditionalParam(a)}`;
+export const ilike = <T extends string>(a: T) => sql<SQL, boolean | null, T> `${self} ILIKE ${conditionalParam(a)}`;
+export const notIlike = <T extends string>(a: T) => sql<SQL, boolean | null, T> `${self} NOT ILIKE ${conditionalParam(a)}`;
+export const similarTo = <T extends string>(a: T) => sql<SQL, boolean | null, T> `${self} SIMILAR TO ${conditionalParam(a)}`;
+export const notSimilarTo = <T extends string>(a: T) => sql<SQL, boolean | null, T> `${self} SIMILAR TO ${conditionalParam(a)}`;
+export const reMatch = <T extends string>(a: T) => sql<SQL, boolean | null, T> `${self} ~ ${conditionalParam(a)}`;
+export const reImatch = <T extends string>(a: T) => sql<SQL, boolean | null, T> `${self} ~* ${conditionalParam(a)}`;
+export const notReMatch = <T extends string>(a: T) => sql<SQL, boolean | null, T> `${self} !~ ${conditionalParam(a)}`;
+export const notReImatch = <T extends string>(a: T) => sql<SQL, boolean | null, T> `${self} !~* ${conditionalParam(a)}`;
+
 export const or = <T>(...conditions: SQLFragment<any, T>[]) => sql<SQL, boolean | null, T> `(${mapWithSeparator(conditions, sql` OR `, c => c)})`;
 export const and = <T>(...conditions: SQLFragment<any, T>[]) => sql<SQL, boolean | null, T> `(${mapWithSeparator(conditions, sql` AND `, c => c)})`;
 export const not = <T>(condition: SQLFragment<any, T>) => sql<SQL, boolean | null, T> `(NOT ${condition})`;
