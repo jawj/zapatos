@@ -9,7 +9,7 @@ Released under the MIT licence: see LICENCE file
 
 import type * as pg from 'pg';
 import { getConfig } from './config';
-import { isPOJO } from './utils';
+import { isPOJO, NoInfer } from './utils';
 
 import type {
   Updatable,
@@ -149,8 +149,7 @@ export function sql<
   Interpolations = SQL,
   RunResult = pg.QueryResult['rows'],
   Constraint = never,
-  InferredInterpolations extends Interpolations = Interpolations
->(literals: TemplateStringsArray, ...expressions: InferredInterpolations[]) {
+  >(literals: TemplateStringsArray, ...expressions: NoInfer<Interpolations>[]) {
   return new SQLFragment<RunResult, Constraint>(Array.prototype.slice.apply(literals), expressions);
 }
 
@@ -170,7 +169,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
   noop = false;  // if true, bypass actually running the query unless forced to e.g. for empty INSERTs
   noopResult: any;  // if noop is true and DB is bypassed, what should be returned?
 
-  constructor(private literals: string[], private expressions: SQLExpression[]) { }
+  constructor(private literals: string[], private expressions: SQL[]) { }
 
   /**
    * Compile and run this query using the provided database connection. What's returned 
