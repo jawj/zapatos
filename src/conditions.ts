@@ -45,7 +45,7 @@ export const notLike = <T extends string>(a: T) => sql<SQL, boolean | null, T> `
 export const ilike = <T extends string>(a: T) => sql<SQL, boolean | null, T> `${self} ILIKE ${conditionalParam(a)}`;
 export const notIlike = <T extends string>(a: T) => sql<SQL, boolean | null, T> `${self} NOT ILIKE ${conditionalParam(a)}`;
 export const similarTo = <T extends string>(a: T) => sql<SQL, boolean | null, T> `${self} SIMILAR TO ${conditionalParam(a)}`;
-export const notSimilarTo = <T extends string>(a: T) => sql<SQL, boolean | null, T> `${self} SIMILAR TO ${conditionalParam(a)}`;
+export const notSimilarTo = <T extends string>(a: T) => sql<SQL, boolean | null, T> `${self} NOT SIMILAR TO ${conditionalParam(a)}`;
 export const reMatch = <T extends string>(a: T) => sql<SQL, boolean | null, T> `${self} ~ ${conditionalParam(a)}`;
 export const reImatch = <T extends string>(a: T) => sql<SQL, boolean | null, T> `${self} ~* ${conditionalParam(a)}`;
 export const notReMatch = <T extends string>(a: T) => sql<SQL, boolean | null, T> `${self} !~ ${conditionalParam(a)}`;
