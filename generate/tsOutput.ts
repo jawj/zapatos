@@ -30,6 +30,7 @@ Zapatos: https://jawj.github.io/zapatos/
 Copyright (C) 2020 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
+// @ts-nocheck
 
 `;
 };
