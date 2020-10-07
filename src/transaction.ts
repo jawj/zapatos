@@ -36,6 +36,7 @@ export declare namespace TxnSatisfying {
   export type SerializableRODeferrable = SerializableRO | Isolation.SerializableRODeferrable;
 }
 
+// @ts-ignore
 export interface TxnClient<T extends Isolation> extends pg.PoolClient { }
 
 let txnSeq = 0;
