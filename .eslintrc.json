@@ -17,7 +17,6 @@
   "plugins": [
     "@typescript-eslint"
   ],
-  "noInlineConfig": true,
   "rules": {
     "curly": [
       "error",

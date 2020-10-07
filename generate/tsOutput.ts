@@ -34,24 +34,12 @@ Released under the MIT licence: see LICENCE file
 `;
 };
 
-const coreImports = `import type {
-  JSONValue,
-  JSONArray,
-  DateString,
-  SQLFragment,
-  SQL,
-  GenericSQLExpression,
-  ColumnNames,
-  ColumnValues,
-  Parameter,
-  ParentColumn,
-  DefaultType,
-} from './src/core';
+const coreImports = `import * as db from './src/core';`;
 
-type BasicWhereableFromInsertable<T> = { [K in keyof T]: Exclude<T[K] | ParentColumn, null | DefaultType> };
-type WhereableFromBasicWhereable<T> = { [K in keyof T]?: T[K] | SQLFragment<any, T[K]> };
+const coreDefs = `
+type BasicWhereableFromInsertable<T> = { [K in keyof T]: Exclude<T[K] | db.ParentColumn, null | db.DefaultType> };
+type WhereableFromBasicWhereable<T> = { [K in keyof T]?: T[K] | db.SQLFragment<any, T[K]> };
 type WhereableFromInsertable<T> = WhereableFromBasicWhereable<BasicWhereableFromInsertable<T>>;
-
 `;
 
 const customTypeHeader = `/*
@@ -59,7 +47,6 @@ const customTypeHeader = `/*
 It's a placeholder for a custom type definition
 */
 `;
-
 
 const sourceFilesForCustomTypes = (customTypes: CustomTypes) =>
   Object.fromEntries(Object.entries(customTypes)
@@ -100,8 +87,9 @@ export const tsForConfig = async (config: CompleteConfig) => {
     allTables = ([] as string[]).concat(...schemaTables).sort(),
     hasCustomTypes = Object.keys(customTypes).length > 0,
     ts = header() +
-      coreImports +
-      (hasCustomTypes ? "import * as c from './custom';\n\n" : '') +
+      coreImports + '\n' +
+      (hasCustomTypes ? "import * as c from './custom';\n" : '') +
+      coreDefs +
       schemaDefs.join('\n\n') +
       `\n\n/* === cross-table types === */\n` +
       crossTableTypesForTables(allTables),

@@ -154,7 +154,7 @@ export function sql<
 }
 
 export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never> {
-  private constraint?: Constraint;
+  protected constraint?: Constraint;
 
   /**
    * When calling `run`, this function is applied to the object returned by `pg` to 

@@ -35,7 +35,7 @@ const baseTsTypeForBasePgType = (pgType: string, enums: EnumData) => {
       return 'boolean';
     case 'json':
     case 'jsonb':
-      return 'JSONValue';
+      return 'db.JSONValue';
     case 'date':
     case 'timestamp':
     case 'timestamptz':

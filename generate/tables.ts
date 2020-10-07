@@ -49,8 +49,8 @@ export const definitionForTableInSchema = async (
     const
       insertablyOptional = nullable || hasDefault ? '?' : '',
       orNull = nullable ? ' | null' : '',
-      orDateString = type === 'Date' ? ' | DateString' : type === 'Date[]' ? ' | DateString[]' : '',
-      orDefault = nullable || hasDefault ? ' | DefaultType' : '';
+      orDateString = type === 'Date' ? ' | db.DateString' : type === 'Date[]' ? ' | db.DateString[]' : '',
+      orDefault = nullable || hasDefault ? ' | db.DefaultType' : '';
 
     // TODO: remove `is_generated` columns from Insertable (and Updatable, but not Selectable or Whereable)
 
@@ -75,7 +75,7 @@ export const definitionForTableInSchema = async (
     }
 
     selectables.push(`${column}: ${type}${orNull};`);
-    insertables.push(`${column}${insertablyOptional}: ${type} | Parameter<${type}>${orDateString}${orNull}${orDefault} | SQLFragment;`);
+    insertables.push(`${column}${insertablyOptional}: ${type} | db.Parameter<${type}>${orDateString}${orNull}${orDefault} | db.SQLFragment;`);
   });
 
   const uniqueIndexes = await db.sql<s.pg_indexes.SQL | s.pg_class.SQL | s.pg_index.SQL, { indexname: string }[]>`
@@ -97,8 +97,8 @@ export declare namespace ${tableName} {
   export interface Updatable extends Partial<Insertable> { }
   export interface Whereable extends WhereableFromInsertable<Insertable> { }
   export type JSONSelectable = { [K in keyof Selectable]:
-    Date extends Selectable[K] ? Exclude<Selectable[K], Date> | DateString :
-    Date[] extends Selectable[K] ? Exclude<Selectable[K], Date[]> | DateString[] :
+    Date extends Selectable[K] ? Exclude<Selectable[K], Date> | db.DateString :
+    Date[] extends Selectable[K] ? Exclude<Selectable[K], Date[]> | db.DateString[] :
     Selectable[K]
   };
   export type UniqueIndex = ${uniqueIndexes.length > 0 ?
@@ -106,7 +106,7 @@ export declare namespace ${tableName} {
       'never'};
   export type Column = keyof Selectable;
   export type OnlyCols<T extends readonly Column[]> = Pick<Selectable, T[number]>;
-  export type SQLExpression = GenericSQLExpression | Table | Whereable | Column | ColumnNames<Updatable | (keyof Updatable)[]> | ColumnValues<Updatable>;
+  export type SQLExpression = db.GenericSQLExpression | db.ColumnNames<Updatable | (keyof Updatable)[]> | db.ColumnValues<Updatable> | Table | Whereable | Column;
   export type SQL = SQLExpression | SQLExpression[];
 }`;
   return tableDef;

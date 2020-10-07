@@ -111,7 +111,7 @@ export declare namespace pg_namespace {
   export type SQL = SQLExpression | SQLExpression[];
 }
 
-export declare namespace information_schema.columns {
+export declare namespace information_schema.columns {  // eslint-disable-line @typescript-eslint/no-unused-vars
   export type Table = '"information_schema"."columns"';
   export interface Selectable {
     table_name: string;
