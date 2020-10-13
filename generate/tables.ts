@@ -112,20 +112,22 @@ export declare namespace ${tableName} {
   return tableDef;
 };
 
+const mappedUnion = (arr: string[], fn: (name: string) => string) =>
+  arr.length === 0 ? 'never' : arr.map(name => fn(name)).join(' | ');
+
 export const crossTableTypesForTables = (tableNames: string[]) => `
-export type Table = ${tableNames.map(name => `${name}.Table`).join(' | ')};
-export type Selectable = ${tableNames.map(name => `${name}.Selectable`).join(' | ')};
-export type Whereable = ${tableNames.map(name => `${name}.Whereable`).join(' | ')};
-export type Insertable = ${tableNames.map(name => `${name}.Insertable`).join(' | ')};
-export type Updatable = ${tableNames.map(name => `${name}.Updatable`).join(' | ')};
-export type UniqueIndex = ${tableNames.map(name => `${name}.UniqueIndex`).join(' | ')};
-export type Column = ${tableNames.map(name => `${name}.Column`).join(' | ')};
+export type Table = ${mappedUnion(tableNames, name => `${name}.Table`)};
+export type Selectable = ${mappedUnion(tableNames, name => `${name}.Selectable`)};
+export type Whereable = ${mappedUnion(tableNames, name => `${name}.Whereable`)};
+export type Insertable = ${mappedUnion(tableNames, name => `${name}.Insertable`)};
+export type Updatable = ${mappedUnion(tableNames, name => `${name}.Updatable`)};
+export type UniqueIndex = ${mappedUnion(tableNames, name => `${name}.UniqueIndex`)};
+export type Column = ${mappedUnion(tableNames, name => `${name}.Column`)};
 export type AllTables = [${tableNames.map(name => `${name}.Table`).join(', ')}];
 
 ${['Selectable', 'Whereable', 'Insertable', 'Updatable', 'UniqueIndex', 'Column', 'SQL'].map(thingable => `
-export type ${thingable}ForTable<T extends Table> = {${tableNames.map(name => `
+export type ${thingable}ForTable<T extends Table> = ${tableNames.length === 0 ? 'never' : `{${tableNames.map(name => `
   ${name}: ${name}.${thingable};`).join('')}
-}[T];
+}[T]`};
 `).join('')}
 `;
-
