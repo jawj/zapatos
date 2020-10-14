@@ -113,9 +113,11 @@ export declare namespace ${tableName} {
 };
 
 const mappedUnion = (arr: string[], fn: (name: string) => string) =>
-  arr.length === 0 ? 'never' : arr.map(name => fn(name)).join(' | ');
+  arr.length === 0 ? 'any' : arr.map(name => fn(name)).join(' | ');
 
-export const crossTableTypesForTables = (tableNames: string[]) => `
+export const crossTableTypesForTables = (tableNames: string[]) => `${tableNames.length === 0 ?
+  '\n// `never` rather than `any` types would be more accurate in this no-tables case, but they stop `shortcuts.ts` compiling\n' : ''
+  }
 export type Table = ${mappedUnion(tableNames, name => `${name}.Table`)};
 export type Selectable = ${mappedUnion(tableNames, name => `${name}.Selectable`)};
 export type Whereable = ${mappedUnion(tableNames, name => `${name}.Whereable`)};
@@ -126,7 +128,7 @@ export type Column = ${mappedUnion(tableNames, name => `${name}.Column`)};
 export type AllTables = [${tableNames.map(name => `${name}.Table`).join(', ')}];
 
 ${['Selectable', 'Whereable', 'Insertable', 'Updatable', 'UniqueIndex', 'Column', 'SQL'].map(thingable => `
-export type ${thingable}ForTable<T extends Table> = ${tableNames.length === 0 ? 'never' : `{${tableNames.map(name => `
+export type ${thingable}ForTable<T extends Table> = ${tableNames.length === 0 ? 'any' : `{${tableNames.map(name => `
   ${name}: ${name}.${thingable};`).join('')}
 }[T]`};
 `).join('')}
