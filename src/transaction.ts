@@ -37,13 +37,13 @@ export declare namespace TxnSatisfyingIsolation {
 }
 
 export type TxnSatisfying<T extends Isolation> = {
-  [Isolation.Serializable]: TxnSatisfyingIsolation.Serializable,
-  [Isolation.RepeatableRead]: TxnSatisfyingIsolation.RepeatableRead,
-  [Isolation.ReadCommitted]: TxnSatisfyingIsolation.ReadCommitted,
-  [Isolation.SerializableRO]: TxnSatisfyingIsolation.SerializableRO,
-  [Isolation.RepeatableReadRO]: TxnSatisfyingIsolation.RepeatableReadRO,
-  [Isolation.ReadCommittedRO]: TxnSatisfyingIsolation.ReadCommittedRO,
-  [Isolation.SerializableRODeferrable]: TxnSatisfyingIsolation.SerializableRODeferrable,
+  [Isolation.Serializable]: TxnSatisfyingIsolation.Serializable;
+  [Isolation.RepeatableRead]: TxnSatisfyingIsolation.RepeatableRead;
+  [Isolation.ReadCommitted]: TxnSatisfyingIsolation.ReadCommitted;
+  [Isolation.SerializableRO]: TxnSatisfyingIsolation.SerializableRO;
+  [Isolation.RepeatableReadRO]: TxnSatisfyingIsolation.RepeatableReadRO;
+  [Isolation.ReadCommittedRO]: TxnSatisfyingIsolation.ReadCommittedRO;
+  [Isolation.SerializableRODeferrable]: TxnSatisfyingIsolation.SerializableRODeferrable;
 }[T];
 
 export interface TxnClient<_T extends Isolation> extends pg.PoolClient { }  // eslint-disable-line @typescript-eslint/no-unused-vars
