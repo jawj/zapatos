@@ -65,7 +65,9 @@ export async function transaction<T, M extends IsolationLevel>(
   callback: (client: TxnClient<IsolationSatisfying<M>>) => Promise<T>
 ): Promise<T> {
 
-  if (!(txnClientOrPool instanceof pg.Pool)) return callback(txnClientOrPool);  // not a Pool? must be a TxnClient already
+  if (Object.prototype.hasOwnProperty.call(txnClientOrPool, 'zapatosIsolationLevel')) {
+    return callback(txnClientOrPool as TxnClient<IsolationSatisfying<M>>);
+  }
 
   const
     txnId = txnSeq++,
@@ -75,7 +77,7 @@ export async function transaction<T, M extends IsolationLevel>(
     maxAttempts = config.transactionAttemptsMax,
     { minMs, maxMs } = config.transactionRetryDelay;
 
-  txnClient.zapatosIsolationLevel = isolationLevel;  // we declared it, so let's populate it, _but_ we rely on type checking to enforce it
+  txnClient.zapatosIsolationLevel = isolationLevel;
 
   try {
     for (let attempt = 1; ; attempt++) {
