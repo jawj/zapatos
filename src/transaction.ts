@@ -37,7 +37,10 @@ export type IsolationSatisfying<T extends IsolationLevel> = {
 }[T];
 
 export interface TxnClient<T extends IsolationLevel> extends pg.PoolClient {
-  zapatosIsolationLevel: T;
+  _zapatos?: {
+    isolationLevel: T;
+    txnId: number;
+  };
 }
 
 export type TxnClientForSerializable = TxnClient<IsolationSatisfying<IsolationLevel.Serializable>>;
@@ -65,7 +68,7 @@ export async function transaction<T, M extends IsolationLevel>(
   callback: (client: TxnClient<IsolationSatisfying<M>>) => Promise<T>
 ): Promise<T> {
 
-  if (Object.prototype.hasOwnProperty.call(txnClientOrPool, 'zapatosIsolationLevel')) {
+  if (Object.prototype.hasOwnProperty.call(txnClientOrPool, '_zapatos')) {
     return callback(txnClientOrPool as TxnClient<IsolationSatisfying<M>>);
   }
 
@@ -77,12 +80,12 @@ export async function transaction<T, M extends IsolationLevel>(
     maxAttempts = config.transactionAttemptsMax,
     { minMs, maxMs } = config.transactionRetryDelay;
 
-  txnClient.zapatosIsolationLevel = isolationLevel;
+  txnClient._zapatos = { isolationLevel, txnId };
 
   try {
     for (let attempt = 1; ; attempt++) {
       try {
-        if (attempt > 1 && transactionListener) transactionListener(`Retrying transaction #${txnId}, attempt ${attempt} of ${maxAttempts}`);
+        if (attempt > 1 && transactionListener) transactionListener(`Retrying transaction, attempt ${attempt} of ${maxAttempts}`, txnId);
 
         await sql`START TRANSACTION ISOLATION LEVEL ${raw(isolationLevel)}`.run(txnClient);
         const result = await callback(txnClient as TxnClient<IsolationSatisfying<M>>);
@@ -101,11 +104,11 @@ export async function transaction<T, M extends IsolationLevel>(
         if (isDatabaseError(err, "TransactionRollback_SerializationFailure", "TransactionRollback_DeadlockDetected")) {
           if (attempt < maxAttempts) {
             const delayBeforeRetry = Math.round(minMs + (maxMs - minMs) * Math.random());
-            if (transactionListener) transactionListener(`Transaction #${txnId} rollback (code ${err.code}) on attempt ${attempt} of ${maxAttempts}, retrying in ${delayBeforeRetry}ms`);
+            if (transactionListener) transactionListener(`Transaction rollback (code ${err.code}) on attempt ${attempt} of ${maxAttempts}, retrying in ${delayBeforeRetry}ms`, txnId);
             await wait(delayBeforeRetry);
 
           } else {
-            if (transactionListener) transactionListener(`Transaction #${txnId} rollback (code ${err.code}) on attempt ${attempt} of ${maxAttempts}, giving up`);
+            if (transactionListener) transactionListener(`Transaction rollback (code ${err.code}) on attempt ${attempt} of ${maxAttempts}, giving up`, txnId);
             throw err;
           }
 
@@ -116,6 +119,7 @@ export async function transaction<T, M extends IsolationLevel>(
     }
 
   } finally {
+    delete txnClient._zapatos;
     txnClient.release();
   }
 }

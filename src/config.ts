@@ -12,9 +12,9 @@ export interface Config {
   transactionRetryDelay: { minMs: number; maxMs: number };
   castArrayParamsToJson: boolean;   // see https://github.com/brianc/node-postgres/issues/2012
   castObjectParamsToJson: boolean;  // useful if json will be cast onward differently from text
-  queryListener?(str: any): void;
-  resultListener?(str: any): void;
-  transactionListener?(str: any): void;
+  queryListener?(str: any, tnxId?: number): void;
+  resultListener?(str: any, tnxId?: number): void;
+  transactionListener?(str: any, tnxId?: number): void;
 }
 export type NewConfig = Partial<Config>;
 
