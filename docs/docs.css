@@ -222,10 +222,12 @@ pre code {
 }
 .sqlresult {
   background: #ffeedd;
-  margin: 15px 0 20px;
 }
 .sqlresult::before {
   content: '⟶ result';
+}
+.sqltext + .sqlresult, .sqlvalues + .sqlresult {
+  margin: 15px 0 20px;
 }
 .transactionlog::before {
   content: 'Transactions';
@@ -235,6 +237,15 @@ pre code {
 }
 .console::before {
   content: 'Console';
+}
+.transactionid {
+  color: #aaa;
+  margin-bottom: 0;
+  padding: 0 0 0 12px;
+  background: none;
+}
+.transactionid code {
+  font-size: 9pt;
 }
 code {
   display: inline-block;

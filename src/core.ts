@@ -180,9 +180,10 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
   run = async (queryable: Queryable, force = false): Promise<RunResult> => {
     const
       query = this.compile(),
-      config = getConfig();
+      config = getConfig(),
+      txnId = (queryable as any)._zapatos?.txnId;
 
-    if (config.queryListener) config.queryListener(query);
+    if (config.queryListener) config.queryListener(query, txnId);
 
     let result;
     if (!this.noop || force) {
@@ -193,7 +194,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
       result = this.noopResult;
     }
 
-    if (config.resultListener) config.resultListener(result);
+    if (config.resultListener) config.resultListener(result, txnId);
     return result;
   };
 

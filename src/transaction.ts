@@ -7,14 +7,14 @@ Copyright (C) 2020 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
-import type * as pg from 'pg';
+import * as pg from 'pg';
 import { isDatabaseError } from './pgErrors';
 import { wait } from './utils';
 import { sql, raw } from './core';
 import { getConfig } from "./config";
 
 
-export enum Isolation {
+export enum IsolationLevel {
   // these are the only meaningful values in Postgres: 
   // see https://www.postgresql.org/docs/11/sql-set-transaction.html
   Serializable = "SERIALIZABLE",
@@ -26,17 +26,30 @@ export enum Isolation {
   SerializableRODeferrable = "SERIALIZABLE, READ ONLY, DEFERRABLE"
 }
 
-export declare namespace TxnSatisfying {
-  export type Serializable = Isolation.Serializable;
-  export type RepeatableRead = Serializable | Isolation.RepeatableRead;
-  export type ReadCommitted = RepeatableRead | Isolation.ReadCommitted;
-  export type SerializableRO = Serializable | Isolation.SerializableRO;
-  export type RepeatableReadRO = SerializableRO | RepeatableRead | Isolation.RepeatableReadRO;
-  export type ReadCommittedRO = RepeatableReadRO | ReadCommitted | Isolation.ReadCommittedRO;
-  export type SerializableRODeferrable = SerializableRO | Isolation.SerializableRODeferrable;
+export type IsolationSatisfying<T extends IsolationLevel> = {
+  [IsolationLevel.Serializable]: IsolationLevel.Serializable;
+  [IsolationLevel.RepeatableRead]: IsolationSatisfying<IsolationLevel.Serializable> | IsolationLevel.RepeatableRead;
+  [IsolationLevel.ReadCommitted]: IsolationSatisfying<IsolationLevel.RepeatableRead> | IsolationLevel.ReadCommitted;
+  [IsolationLevel.SerializableRO]: IsolationSatisfying<IsolationLevel.Serializable> | IsolationLevel.SerializableRO;
+  [IsolationLevel.RepeatableReadRO]: IsolationSatisfying<IsolationLevel.SerializableRO> | IsolationSatisfying<IsolationLevel.RepeatableRead> | IsolationLevel.RepeatableReadRO;
+  [IsolationLevel.ReadCommittedRO]: IsolationSatisfying<IsolationLevel.RepeatableReadRO> | IsolationSatisfying<IsolationLevel.ReadCommitted> | IsolationLevel.ReadCommittedRO;
+  [IsolationLevel.SerializableRODeferrable]: IsolationSatisfying<IsolationLevel.SerializableRO> | IsolationLevel.SerializableRODeferrable;
+}[T];
+
+export interface TxnClient<T extends IsolationLevel> extends pg.PoolClient {
+  _zapatos?: {
+    isolationLevel: T;
+    txnId: number;
+  };
 }
 
-export interface TxnClient<_T extends Isolation> extends pg.PoolClient { }  // eslint-disable-line @typescript-eslint/no-unused-vars
+export type TxnClientForSerializable = TxnClient<IsolationSatisfying<IsolationLevel.Serializable>>;
+export type TxnClientForRepeatableRead = TxnClient<IsolationSatisfying<IsolationLevel.RepeatableRead>>;
+export type TxnClientForReadCommitted = TxnClient<IsolationSatisfying<IsolationLevel.ReadCommitted>>;
+export type TxnClientForSerializableRO = TxnClient<IsolationSatisfying<IsolationLevel.SerializableRO>>;
+export type TxnClientForRepeatableReadRO = TxnClient<IsolationSatisfying<IsolationLevel.RepeatableReadRO>>;
+export type TxnClientForReadCommittedRO = TxnClient<IsolationSatisfying<IsolationLevel.ReadCommittedRO>>;
+export type TxnClientForSerializableRODeferrable = TxnClient<IsolationSatisfying<IsolationLevel.SerializableRODeferrable>>;
 
 let txnSeq = 0;
 
@@ -44,31 +57,38 @@ let txnSeq = 0;
  * Provide a database client to the callback, whose queries are then wrapped in a 
  * database transaction. The transaction is committed, retried, or rolled back as 
  * appropriate. 
- * @param pool The `pg.Pool` from which to check out the database client
- * @param isolationMode The `Isolation` mode (e.g `Serializable`) 
- * @param callback The callback function that runs queries on the provided client
+ * @param txnClientOrPool The `pg.Pool` from which to check out the database client
+ * or an appropriate client to be passed through
+ * @param isolationLevel The desired `IsolationLevel` (e.g `Serializable`) 
+ * @param callback A callback function that runs queries on the client provided to it
  */
-export async function transaction<T, M extends Isolation>(
-  pool: pg.Pool,
-  isolationMode: M,
-  callback: (client: TxnClient<M>) => Promise<T>
+export async function transaction<T, M extends IsolationLevel>(
+  txnClientOrPool: pg.Pool | TxnClient<IsolationSatisfying<M>>,
+  isolationLevel: M,
+  callback: (client: TxnClient<IsolationSatisfying<M>>) => Promise<T>
 ): Promise<T> {
+
+  if (Object.prototype.hasOwnProperty.call(txnClientOrPool, '_zapatos')) {
+    return callback(txnClientOrPool as TxnClient<IsolationSatisfying<M>>);
+  }
 
   const
     txnId = txnSeq++,
-    txnClient = await pool.connect() as TxnClient<typeof isolationMode>,
+    txnClient = await txnClientOrPool.connect() as TxnClient<M>,
     config = getConfig(),
     { transactionListener } = config,
     maxAttempts = config.transactionAttemptsMax,
     { minMs, maxMs } = config.transactionRetryDelay;
 
+  txnClient._zapatos = { isolationLevel, txnId };
+
   try {
     for (let attempt = 1; ; attempt++) {
       try {
-        if (attempt > 1 && transactionListener) transactionListener(`Retrying transaction #${txnId}, attempt ${attempt} of ${maxAttempts}`);
+        if (attempt > 1 && transactionListener) transactionListener(`Retrying transaction, attempt ${attempt} of ${maxAttempts}`, txnId);
 
-        await sql`START TRANSACTION ISOLATION LEVEL ${raw(isolationMode)}`.run(txnClient);
-        const result = await callback(txnClient);
+        await sql`START TRANSACTION ISOLATION LEVEL ${raw(isolationLevel)}`.run(txnClient);
+        const result = await callback(txnClient as TxnClient<IsolationSatisfying<M>>);
         await sql`COMMIT`.run(txnClient);
 
         return result;
@@ -84,11 +104,11 @@ export async function transaction<T, M extends Isolation>(
         if (isDatabaseError(err, "TransactionRollback_SerializationFailure", "TransactionRollback_DeadlockDetected")) {
           if (attempt < maxAttempts) {
             const delayBeforeRetry = Math.round(minMs + (maxMs - minMs) * Math.random());
-            if (transactionListener) transactionListener(`Transaction #${txnId} rollback (code ${err.code}) on attempt ${attempt} of ${maxAttempts}, retrying in ${delayBeforeRetry}ms`);
+            if (transactionListener) transactionListener(`Transaction rollback (code ${err.code}) on attempt ${attempt} of ${maxAttempts}, retrying in ${delayBeforeRetry}ms`, txnId);
             await wait(delayBeforeRetry);
 
           } else {
-            if (transactionListener) transactionListener(`Transaction #${txnId} rollback (code ${err.code}) on attempt ${attempt} of ${maxAttempts}, giving up`);
+            if (transactionListener) transactionListener(`Transaction rollback (code ${err.code}) on attempt ${attempt} of ${maxAttempts}, giving up`, txnId);
             throw err;
           }
 
@@ -99,63 +119,70 @@ export async function transaction<T, M extends Isolation>(
     }
 
   } finally {
+    delete txnClient._zapatos;
     txnClient.release();
   }
 }
 
 /**
- * Shortcut for `transaction` with isolation mode Serializable.
- * @param pool The `pg.Pool` from which to check out the database client
- * @param callback The callback function that runs queries on the provided client
+ * Shortcut for `transaction` with isolation level `Serializable`.
+ * @param txnClientOrPool The `pg.Pool` from which to check out the database client
+ * @param callback A callback function that runs queries on the client provided to it
  */
-export async function serializable<T>(pool: pg.Pool, callback: (client: TxnClient<Isolation.Serializable>) => Promise<T>) {
-  return transaction(pool, Isolation.Serializable, callback);
+export async function serializable<T>(txnClientOrPool: pg.Pool | TxnClientForSerializable, callback: (client: TxnClientForSerializable) => Promise<T>) {
+  return transaction(txnClientOrPool, IsolationLevel.Serializable, callback);
 }
 /**
- * Shortcut for `transaction` with isolation mode RepeatableRead.
- * @param pool The `pg.Pool` from which to check out the database client
- * @param callback The callback function that runs queries on the provided client
+ * Shortcut for `transaction` with isolation level `RepeatableRead`.
+ * @param txnClientOrPool The `pg.Pool` from which to check out the database client
+ * or an appropriate client to be passed through
+ * @param callback A callback function that runs queries on the client provided to it
  */
-export async function repeatableRead<T>(pool: pg.Pool, callback: (client: TxnClient<Isolation.RepeatableRead>) => Promise<T>) {
-  return transaction(pool, Isolation.RepeatableRead, callback);
+export async function repeatableRead<T>(txnClientOrPool: pg.Pool | TxnClientForRepeatableRead, callback: (client: TxnClientForRepeatableRead) => Promise<T>) {
+  return transaction(txnClientOrPool, IsolationLevel.RepeatableRead, callback);
 }
 /**
- * Shortcut for `transaction` with isolation mode ReadCommitted.
- * @param pool The `pg.Pool` from which to check out the database client
- * @param callback The callback function that runs queries on the provided client
+ * Shortcut for `transaction` with isolation level `ReadCommitted`.
+ * @param txnClientOrPool The `pg.Pool` from which to check out the database client
+ * or an appropriate client to be passed through
+ * @param callback A callback function that runs queries on the client provided to it
  */
-export async function readCommitted<T>(pool: pg.Pool, callback: (client: TxnClient<Isolation.ReadCommitted>) => Promise<T>) {
-  return transaction(pool, Isolation.ReadCommitted, callback);
+export async function readCommitted<T>(txnClientOrPool: pg.Pool | TxnClientForReadCommitted, callback: (client: TxnClientForReadCommitted) => Promise<T>) {
+  return transaction(txnClientOrPool, IsolationLevel.ReadCommitted, callback);
 }
 /**
- * Shortcut for `transaction` with isolation mode SerializableRO.
- * @param pool The `pg.Pool` from which to check out the database client
- * @param callback The callback function that runs queries on the provided client
+ * Shortcut for `transaction` with isolation level `SerializableRO`.
+ * @param txnClientOrPool The `pg.Pool` from which to check out the database client
+ * or an appropriate client to be passed through
+ * @param callback A callback function that runs queries on the client provided to it
  */
-export async function serializableRO<T>(pool: pg.Pool, callback: (client: TxnClient<Isolation.SerializableRO>) => Promise<T>) {
-  return transaction(pool, Isolation.SerializableRO, callback);
+export async function serializableRO<T>(txnClientOrPool: pg.Pool | TxnClientForSerializableRO, callback: (client: TxnClientForSerializableRO) => Promise<T>) {
+  return transaction(txnClientOrPool, IsolationLevel.SerializableRO, callback);
 }
 /**
- * Shortcut for `transaction` with isolation mode RepeatableReadRO.
- * @param pool The `pg.Pool` from which to check out the database client
- * @param callback The callback function that runs queries on the provided client
+ * Shortcut for `transaction` with isolation level `RepeatableReadRO`.
+ * @param txnClientOrPool The `pg.Pool` from which to check out the database client
+ * or an appropriate client to be passed through
+ * @param callback A callback function that runs queries on the client provided to it
  */
-export async function repeatableReadRO<T>(pool: pg.Pool, callback: (client: TxnClient<Isolation.RepeatableReadRO>) => Promise<T>) {
-  return transaction(pool, Isolation.RepeatableReadRO, callback);
+export async function repeatableReadRO<T>(txnClientOrPool: pg.Pool | TxnClientForRepeatableReadRO, callback: (client: TxnClientForRepeatableReadRO) => Promise<T>) {
+  return transaction(txnClientOrPool, IsolationLevel.RepeatableReadRO, callback);
 }
 /**
- * Shortcut for `transaction` with isolation mode ReadCommittedRO.
- * @param pool The `pg.Pool` from which to check out the database client
- * @param callback The callback function that runs queries on the provided client
+ * Shortcut for `transaction` with isolation level `ReadCommittedRO`.
+ * @param txnClientOrPool The `pg.Pool` from which to check out the database client
+ * or an appropriate client to be passed through
+ * @param callback A callback function that runs queries on the client provided to it
  */
-export async function readCommittedRO<T>(pool: pg.Pool, callback: (client: TxnClient<Isolation.ReadCommittedRO>) => Promise<T>) {
-  return transaction(pool, Isolation.ReadCommittedRO, callback);
+export async function readCommittedRO<T>(txnClientOrPool: pg.Pool | TxnClientForReadCommittedRO, callback: (client: TxnClientForReadCommittedRO) => Promise<T>) {
+  return transaction(txnClientOrPool, IsolationLevel.ReadCommittedRO, callback);
 }
 /**
- * Shortcut for `transaction` with isolation mode SerializableRODeferrable.
- * @param pool The `pg.Pool` from which to check out the database client
- * @param callback The callback function that runs queries on the provided client
+ * Shortcut for `transaction` with isolation level `SerializableRODeferrable`.
+ * @param txnClientOrPool The `pg.Pool` from which to check out the database client
+ * or an appropriate client to be passed through
+ * @param callback A callback function that runs queries on the client provided to it
  */
-export async function serializableRODeferrable<T>(pool: pg.Pool, callback: (client: TxnClient<Isolation.SerializableRODeferrable>) => Promise<T>) {
-  return transaction(pool, Isolation.SerializableRODeferrable, callback);
+export async function serializableRODeferrable<T>(txnClientOrPool: pg.Pool | TxnClientForSerializableRODeferrable, callback: (client: TxnClientForSerializableRODeferrable) => Promise<T>) {
+  return transaction(txnClientOrPool, IsolationLevel.SerializableRODeferrable, callback);
 }
