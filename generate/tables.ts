@@ -94,13 +94,9 @@ export declare namespace ${tableName} {
   export interface Insertable {
     ${insertables.join('\n    ')}
   }
-  export interface Updatable extends Partial<Insertable> { }
+  export interface Updatable extends UpdatableFromInsertable<Insertable> { }
   export interface Whereable extends WhereableFromInsertable<Insertable> { }
-  export type JSONSelectable = { [K in keyof Selectable]:
-    Date extends Selectable[K] ? Exclude<Selectable[K], Date> | db.DateString :
-    Date[] extends Selectable[K] ? Exclude<Selectable[K], Date[]> | db.DateString[] :
-    Selectable[K]
-  };
+  export interface JSONSelectable extends JSONSelectableFromSelectable<Selectable> { }
   export type UniqueIndex = ${uniqueIndexes.length > 0 ?
       uniqueIndexes.map(ui => "'" + ui.indexname + "'").join(' | ') :
       'never'};

@@ -37,18 +37,40 @@ import {
 
 import { completeKeysWithDefault, mapWithSeparator } from './utils';
 
+
 type JSONSelectableForTable<T extends Table> = { [K in keyof SelectableForTable<T>]:
   Date extends SelectableForTable<T>[K] ? Exclude<SelectableForTable<T>[K], Date> | DateString :
   Date[] extends SelectableForTable<T>[K] ? Exclude<SelectableForTable<T>[K], Date[]> | DateString[] :
   SelectableForTable<T>[K]
 };
 
+export interface ReturningOptionForTable<
+  T extends Table,
+  C extends ColumnForTable<T>[] | undefined,
+  > {
+  returning?: C;
+};
+
+type ReturningTypeForTable<T extends Table, C extends ColumnForTable<T>[] | undefined> =
+  undefined extends C ? JSONSelectableForTable<T> :
+  C extends ColumnForTable<T>[] ? JSONOnlyColsForTable<T, C> :
+  never;
+
 
 /* === insert === */
 
 interface InsertSignatures {
-  <T extends Table>(table: T, values: InsertableForTable<T>): SQLFragment<JSONSelectableForTable<T>>;
-  <T extends Table>(table: T, values: InsertableForTable<T>[]): SQLFragment<JSONSelectableForTable<T>[]>;
+  <T extends Table, C extends ColumnForTable<T>[] | undefined>(
+    table: T,
+    values: InsertableForTable<T>,
+    options?: ReturningOptionForTable<T, C>
+  ): SQLFragment<ReturningTypeForTable<T, C>>;
+
+  <T extends Table, C extends ColumnForTable<T>[] | undefined>(
+    table: T,
+    values: InsertableForTable<T>[],
+    options?: ReturningOptionForTable<T, C>
+  ): SQLFragment<ReturningTypeForTable<T, C>[]>;
 }
 
 /**
@@ -56,8 +78,11 @@ interface InsertSignatures {
  * @param table The table into which to insert
  * @param values The `Insertable` values (or array thereof) to be inserted
  */
-export const insert: InsertSignatures = function
-  (table: Table, values: Insertable | Insertable[]): SQLFragment<any> {
+export const insert: InsertSignatures = function (
+  table: Table,
+  values: Insertable | Insertable[],
+  options?: ReturningOptionForTable<Table, Column[]>
+): SQLFragment<any> {
 
   let query;
   if (Array.isArray(values) && values.length === 0) {
@@ -71,9 +96,12 @@ export const insert: InsertSignatures = function
       colsSQL = cols(Array.isArray(completedValues) ? completedValues[0] : completedValues),
       valuesSQL = Array.isArray(completedValues) ?
         mapWithSeparator(completedValues as Insertable[], sql<SQL>`, `, v => sql<SQL>`(${vals(v)})`) :
-        sql<SQL>`(${vals(completedValues)})`;
+        sql<SQL>`(${vals(completedValues)})`,
+      returningSQL = options?.returning ?
+        sql`jsonb_build_object(${mapWithSeparator(options.returning, sql`, `, c => sql<SQL>`${param(c)}::text, ${c}`)})` :
+        sql<typeof table>`to_jsonb(${table}.*)`;
 
-    query = sql<SQL>`INSERT INTO ${table} (${colsSQL}) VALUES ${valuesSQL} RETURNING to_jsonb(${table}.*) AS result`;
+    query = sql<SQL>`INSERT INTO ${table} (${colsSQL}) VALUES ${valuesSQL} RETURNING ${returningSQL} AS result`;
   }
 
   query.runResultTransform = Array.isArray(values) ?

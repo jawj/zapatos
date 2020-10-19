@@ -40,6 +40,14 @@ const coreDefs = `
 type BasicWhereableFromInsertable<T> = { [K in keyof T]: Exclude<T[K] | db.ParentColumn, null | db.DefaultType> };
 type WhereableFromBasicWhereable<T> = { [K in keyof T]?: T[K] | db.SQLFragment<any, T[K]> };
 type WhereableFromInsertable<T> = WhereableFromBasicWhereable<BasicWhereableFromInsertable<T>>;
+
+type UpdatableFromInsertable<T> = { [K in keyof T]?: T[K] | db.SQLFragment<any, T[K]> };
+
+type JSONSelectableFromSelectable<T> = { [K in keyof T]:
+  Date extends T[K] ? Exclude<T[K], Date> | db.DateString :
+  Date[] extends T[K] ? Exclude<T[K], Date[]> | db.DateString[] :
+  T[K]
+};
 `;
 
 const customTypeHeader = `/*
