@@ -44,10 +44,7 @@ type JSONSelectableForTable<T extends Table> = { [K in keyof SelectableForTable<
   SelectableForTable<T>[K]
 };
 
-export interface ReturningOptionForTable<
-  T extends Table,
-  C extends ColumnForTable<T>[] | undefined,
-  > {
+export interface ReturningOptionForTable<T extends Table, C extends ColumnForTable<T>[] | undefined> {
   returning?: C;
 };
 
@@ -126,12 +123,27 @@ export class Constraint<T extends Table> { constructor(public value: UniqueIndex
 export function constraint<T extends Table>(x: UniqueIndexForTable<T>) { return new Constraint<T>(x); }
 
 export interface UpsertAction { $action: 'INSERT' | 'UPDATE' }
-type UpsertReturnableForTable<T extends Table> = JSONSelectableForTable<T> & UpsertAction;
+type UpsertReturnableForTable<T extends Table, C extends ColumnForTable<T>[] | undefined> = ReturningTypeForTable<T, C> & UpsertAction;
 type UpsertConflictTargetForTable<T extends Table> = Constraint<T> | ColumnForTable<T> | ColumnForTable<T>[];
 
+interface UpsertOptions<T extends Table, C extends ColumnForTable<T>[] | undefined> extends ReturningOptionForTable<T, C> {
+  noNullUpdateColumns?: ColumnForTable<T> | ColumnForTable<T>[];
+}
+
 interface UpsertSignatures {
-  <T extends Table>(table: T, values: InsertableForTable<T>, conflictTarget: UpsertConflictTargetForTable<T>, noNullUpdateCols?: ColumnForTable<T> | ColumnForTable<T>[]): SQLFragment<UpsertReturnableForTable<T>>;
-  <T extends Table>(table: T, values: InsertableForTable<T>[], conflictTarget: UpsertConflictTargetForTable<T>, noNullUpdateCols?: ColumnForTable<T> | ColumnForTable<T>[]): SQLFragment<UpsertReturnableForTable<T>[]>;
+  <T extends Table, C extends ColumnForTable<T>[] | undefined>(
+    table: T,
+    values: InsertableForTable<T>,
+    conflictTarget: UpsertConflictTargetForTable<T>,
+    options?: UpsertOptions<T, C>
+  ): SQLFragment<UpsertReturnableForTable<T, C>>;
+
+  <T extends Table, C extends ColumnForTable<T>[] | undefined>(
+    table: T,
+    values: InsertableForTable<T>[],
+    conflictTarget: UpsertConflictTargetForTable<T>,
+    options?: UpsertOptions<T, C>
+  ): SQLFragment<UpsertReturnableForTable<T, C>[]>;
 }
 
 /**
@@ -144,13 +156,17 @@ interface UpsertSignatures {
  * @param noNullUpdateCols Optionally, a column (or array thereof) that should not be 
  * overwritten with `NULL` values during an update
  */
-export const upsert: UpsertSignatures = function
-  (table: Table, values: Insertable | Insertable[], conflictTarget: Column | Column[] | Constraint<Table>, noNullUpdateCols: Column | Column[] = []): SQLFragment<any> {
+export const upsert: UpsertSignatures = function (
+  table: Table,
+  values: Insertable | Insertable[],
+  conflictTarget: Column | Column[] | Constraint<Table>,
+  options?: UpsertOptions<Table, Column[] | undefined>): SQLFragment<any> {
 
   if (Array.isArray(values) && values.length === 0) return insert(table, values);  // punt a no-op to plain insert
 
   if (typeof conflictTarget === 'string') conflictTarget = [conflictTarget];  // now either Column[] or Constraint
-  if (!Array.isArray(noNullUpdateCols)) noNullUpdateCols = [noNullUpdateCols];
+  let noNullUpdateColumns = options?.noNullUpdateColumns ?? [];
+  if (!Array.isArray(noNullUpdateColumns)) noNullUpdateColumns = [noNullUpdateColumns];
 
   const
     completedValues = Array.isArray(values) ? completeKeysWithDefault(values) : values,
@@ -168,12 +184,15 @@ export const upsert: UpsertSignatures = function
       sql<string>`ON CONSTRAINT ${conflictTarget.value}`,
     updateColsSQL = mapWithSeparator(nonUniqueCols.slice().sort(), sql`, `, c => c),
     updateValuesSQL = mapWithSeparator(nonUniqueCols.slice().sort(), sql`, `, c =>
-      noNullUpdateCols.includes(c) ? sql`CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END` : sql`EXCLUDED.${c}`);
+      noNullUpdateColumns.includes(c) ? sql`CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END` : sql`EXCLUDED.${c}`),
+    returningSQL = options?.returning ?
+      sql`jsonb_build_object(${mapWithSeparator(options.returning, sql`, `, c => sql<SQL>`${param(c)}::text, ${c}`)})` :
+      sql<typeof table>`to_jsonb(${table}.*)`;;
 
   // the added-on $action = 'INSERT' | 'UPDATE' key takes after SQL Server's approach to MERGE
   // (and on the use of xmax for this purpose, see: https://stackoverflow.com/questions/39058213/postgresql-upsert-differentiate-inserted-and-updated-rows-using-system-columns-x)
 
-  const query = sql<SQL>`INSERT INTO ${table} (${colsSQL}) VALUES ${valuesSQL} ON CONFLICT ${uniqueColsSQL} DO UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL}) RETURNING to_jsonb(${table}.*) || jsonb_build_object('$action', CASE xmax WHEN 0 THEN 'INSERT' ELSE 'UPDATE' END) AS result`;
+  const query = sql<SQL>`INSERT INTO ${table} (${colsSQL}) VALUES ${valuesSQL} ON CONFLICT ${uniqueColsSQL} DO UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL}) RETURNING ${returningSQL} || jsonb_build_object('$action', CASE xmax WHEN 0 THEN 'INSERT' ELSE 'UPDATE' END) AS result`;
 
   query.runResultTransform = Array.isArray(completedValues) ?
     (qr) => qr.rows.map(r => r.result) :
