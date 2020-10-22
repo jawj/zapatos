@@ -35,7 +35,11 @@ import {
   param,
 } from './core';
 
-import { completeKeysWithDefault, mapWithSeparator } from './utils';
+import {
+  completeKeysWithDefault,
+  mapWithSeparator,
+  PromisedType,
+} from './utils';
 
 
 type JSONSelectableForTable<T extends Table> = { [K in keyof SelectableForTable<T>]:
@@ -44,30 +48,55 @@ type JSONSelectableForTable<T extends Table> = { [K in keyof SelectableForTable<
   SelectableForTable<T>[K]
 };
 
-export interface ReturningOptionForTable<T extends Table, C extends ColumnForTable<T>[] | undefined> {
+export type JSONOnlyColsForTable<T extends Table, C extends any[] /* `ColumnForTable<T>[]` gives errors here for reasons I haven't got to the bottom of */> = Pick<JSONSelectableForTable<T>, C[number]>;
+
+export interface SQLFragmentsMap { [k: string]: SQLFragment<any> }
+export type PromisedSQLFragmentReturnType<R extends SQLFragment<any>> = PromisedType<ReturnType<R['run']>>;
+
+// yes, the next two types are identical, but distinct names make complex inferred types more readable
+export type Lateral<L extends SQLFragmentsMap> = { [K in keyof L]: PromisedSQLFragmentReturnType<L[K]> };
+export type Extras<L extends SQLFragmentsMap> = { [K in keyof L]: PromisedSQLFragmentReturnType<L[K]> };
+
+export interface ReturningOptionsForTable<T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined> {
   returning?: C;
+  extras?: E;
 };
 
-type ReturningTypeForTable<T extends Table, C extends ColumnForTable<T>[] | undefined> =
-  undefined extends C ? JSONSelectableForTable<T> :
-  C extends ColumnForTable<T>[] ? JSONOnlyColsForTable<T, C> :
-  never;
+type ReturningTypeForTable<T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined> =
+  (undefined extends C ? JSONSelectableForTable<T> :
+    C extends ColumnForTable<T>[] ? JSONOnlyColsForTable<T, C> :
+    never) &
+  (undefined extends E ? {} :
+    E extends SQLFragmentsMap ? Extras<E> :
+    never);
+
+
+function SQLForColumnsOfTable(columns: Column[] | undefined, table: Table) {
+  return columns === undefined ? sql`to_jsonb(${table}.*)` :
+    sql`jsonb_build_object(${mapWithSeparator(columns, sql`, `, c => sql`${param(c)}::text, ${c}`)})`;
+}
+
+function SQLForExtras(extras: SQLFragmentsMap | undefined) {
+  return extras === undefined ? [] :
+    sql` || jsonb_build_object(${mapWithSeparator(
+      Object.keys(extras), sql`, `, k => sql`${param(k)}::text, ${extras[k]}`)})`;
+}
 
 
 /* === insert === */
 
 interface InsertSignatures {
-  <T extends Table, C extends ColumnForTable<T>[] | undefined>(
+  <T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined>(
     table: T,
     values: InsertableForTable<T>,
-    options?: ReturningOptionForTable<T, C>
-  ): SQLFragment<ReturningTypeForTable<T, C>>;
+    options?: ReturningOptionsForTable<T, C, E>
+  ): SQLFragment<ReturningTypeForTable<T, C, E>>;
 
-  <T extends Table, C extends ColumnForTable<T>[] | undefined>(
+  <T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined>(
     table: T,
     values: InsertableForTable<T>[],
-    options?: ReturningOptionForTable<T, C>
-  ): SQLFragment<ReturningTypeForTable<T, C>[]>;
+    options?: ReturningOptionsForTable<T, C, E>
+  ): SQLFragment<ReturningTypeForTable<T, C, E>[]>;
 }
 
 /**
@@ -78,7 +107,7 @@ interface InsertSignatures {
 export const insert: InsertSignatures = function (
   table: Table,
   values: Insertable | Insertable[],
-  options?: ReturningOptionForTable<Table, Column[]>
+  options?: ReturningOptionsForTable<Table, Column[] | undefined, SQLFragmentsMap | undefined>
 ): SQLFragment<any> {
 
   let query;
@@ -92,13 +121,12 @@ export const insert: InsertSignatures = function (
       completedValues = Array.isArray(values) ? completeKeysWithDefault(values) : values,
       colsSQL = cols(Array.isArray(completedValues) ? completedValues[0] : completedValues),
       valuesSQL = Array.isArray(completedValues) ?
-        mapWithSeparator(completedValues as Insertable[], sql<SQL>`, `, v => sql<SQL>`(${vals(v)})`) :
-        sql<SQL>`(${vals(completedValues)})`,
-      returningSQL = options?.returning ?
-        sql`jsonb_build_object(${mapWithSeparator(options.returning, sql`, `, c => sql<SQL>`${param(c)}::text, ${c}`)})` :
-        sql<typeof table>`to_jsonb(${table}.*)`;
+        mapWithSeparator(completedValues as Insertable[], sql`, `, v => sql`(${vals(v)})`) :
+        sql`(${vals(completedValues)})`,
+      returningSQL = SQLForColumnsOfTable(options?.returning, table),
+      extrasSQL = SQLForExtras(options?.extras);
 
-    query = sql<SQL>`INSERT INTO ${table} (${colsSQL}) VALUES ${valuesSQL} RETURNING ${returningSQL} AS result`;
+    query = sql`INSERT INTO ${table} (${colsSQL}) VALUES ${valuesSQL} RETURNING ${returningSQL}${extrasSQL} AS result`;
   }
 
   query.runResultTransform = Array.isArray(values) ?
@@ -123,27 +151,27 @@ export class Constraint<T extends Table> { constructor(public value: UniqueIndex
 export function constraint<T extends Table>(x: UniqueIndexForTable<T>) { return new Constraint<T>(x); }
 
 export interface UpsertAction { $action: 'INSERT' | 'UPDATE' }
-type UpsertReturnableForTable<T extends Table, C extends ColumnForTable<T>[] | undefined> = ReturningTypeForTable<T, C> & UpsertAction;
+type UpsertReturnableForTable<T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined> = ReturningTypeForTable<T, C, E> & UpsertAction;
 type UpsertConflictTargetForTable<T extends Table> = Constraint<T> | ColumnForTable<T> | ColumnForTable<T>[];
 
-interface UpsertOptions<T extends Table, C extends ColumnForTable<T>[] | undefined> extends ReturningOptionForTable<T, C> {
+interface UpsertOptions<T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined> extends ReturningOptionsForTable<T, C, E> {
   noNullUpdateColumns?: ColumnForTable<T> | ColumnForTable<T>[];
 }
 
 interface UpsertSignatures {
-  <T extends Table, C extends ColumnForTable<T>[] | undefined>(
+  <T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined>(
     table: T,
     values: InsertableForTable<T>,
     conflictTarget: UpsertConflictTargetForTable<T>,
-    options?: UpsertOptions<T, C>
-  ): SQLFragment<UpsertReturnableForTable<T, C>>;
+    options?: UpsertOptions<T, C, E>
+  ): SQLFragment<UpsertReturnableForTable<T, C, E>>;
 
-  <T extends Table, C extends ColumnForTable<T>[] | undefined>(
+  <T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined>(
     table: T,
     values: InsertableForTable<T>[],
     conflictTarget: UpsertConflictTargetForTable<T>,
-    options?: UpsertOptions<T, C>
-  ): SQLFragment<UpsertReturnableForTable<T, C>[]>;
+    options?: UpsertOptions<T, C, E>
+  ): SQLFragment<UpsertReturnableForTable<T, C, E>[]>;
 }
 
 /**
@@ -160,7 +188,8 @@ export const upsert: UpsertSignatures = function (
   table: Table,
   values: Insertable | Insertable[],
   conflictTarget: Column | Column[] | Constraint<Table>,
-  options?: UpsertOptions<Table, Column[] | undefined>): SQLFragment<any> {
+  options?: UpsertOptions<Table, Column[] | undefined, SQLFragmentsMap | undefined>
+): SQLFragment<any> {
 
   if (Array.isArray(values) && values.length === 0) return insert(table, values);  // punt a no-op to plain insert
 
@@ -185,14 +214,13 @@ export const upsert: UpsertSignatures = function (
     updateColsSQL = mapWithSeparator(nonUniqueCols.slice().sort(), sql`, `, c => c),
     updateValuesSQL = mapWithSeparator(nonUniqueCols.slice().sort(), sql`, `, c =>
       noNullUpdateColumns.includes(c) ? sql`CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END` : sql`EXCLUDED.${c}`),
-    returningSQL = options?.returning ?
-      sql`jsonb_build_object(${mapWithSeparator(options.returning, sql`, `, c => sql<SQL>`${param(c)}::text, ${c}`)})` :
-      sql<typeof table>`to_jsonb(${table}.*)`;;
+    returningSQL = SQLForColumnsOfTable(options?.returning, table),
+    extrasSQL = SQLForExtras(options?.extras);
 
   // the added-on $action = 'INSERT' | 'UPDATE' key takes after SQL Server's approach to MERGE
   // (and on the use of xmax for this purpose, see: https://stackoverflow.com/questions/39058213/postgresql-upsert-differentiate-inserted-and-updated-rows-using-system-columns-x)
 
-  const query = sql<SQL>`INSERT INTO ${table} (${colsSQL}) VALUES ${valuesSQL} ON CONFLICT ${uniqueColsSQL} DO UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL}) RETURNING ${returningSQL} || jsonb_build_object('$action', CASE xmax WHEN 0 THEN 'INSERT' ELSE 'UPDATE' END) AS result`;
+  const query = sql`INSERT INTO ${table} (${colsSQL}) VALUES ${valuesSQL} ON CONFLICT ${uniqueColsSQL} DO UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL}) RETURNING ${returningSQL}${extrasSQL} || jsonb_build_object('$action', CASE xmax WHEN 0 THEN 'INSERT' ELSE 'UPDATE' END) AS result`;
 
   query.runResultTransform = Array.isArray(completedValues) ?
     (qr) => qr.rows.map(r => r.result) :
@@ -205,7 +233,12 @@ export const upsert: UpsertSignatures = function (
 /* === update === */
 
 interface UpdateSignatures {
-  <T extends Table>(table: T, values: UpdatableForTable<T>, where: WhereableForTable<T> | SQLFragment): SQLFragment<JSONSelectableForTable<T>[]>;
+  <T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined>(
+    table: T,
+    values: UpdatableForTable<T>,
+    where: WhereableForTable<T> | SQLFragment,
+    options?: ReturningOptionsForTable<T, C, E>
+  ): SQLFragment<ReturningTypeForTable<T, C, E>[]>;
 }
 
 /**
@@ -217,12 +250,18 @@ interface UpdateSignatures {
 export const update: UpdateSignatures = function (
   table: Table,
   values: Updatable,
-  where: Whereable | SQLFragment): SQLFragment {
+  where: Whereable | SQLFragment,
+  options?: ReturningOptionsForTable<Table, Column[] | undefined, SQLFragmentsMap | undefined>
+): SQLFragment {
 
   // note: the ROW() constructor below is required in Postgres 10+ if we're updating a single column
   // more info: https://www.postgresql-archive.org/Possible-regression-in-UPDATE-SET-lt-column-list-gt-lt-row-expression-gt-with-just-one-single-column0-td5989074.html
 
-  const query = sql<SQL>`UPDATE ${table} SET (${cols(values)}) = ROW(${vals(values)}) WHERE ${where} RETURNING to_jsonb(${table}.*) AS result`;
+  const
+    returningSQL = SQLForColumnsOfTable(options?.returning, table),
+    extrasSQL = SQLForExtras(options?.extras),
+    query = sql`UPDATE ${table} SET (${cols(values)}) = ROW(${vals(values)}) WHERE ${where} RETURNING ${returningSQL}${extrasSQL} AS result`;
+
   query.runResultTransform = (qr) => qr.rows.map(r => r.result);
   return query;
 };
@@ -231,7 +270,11 @@ export const update: UpdateSignatures = function (
 /* === delete === */
 
 export interface DeleteSignatures {
-  <T extends Table>(table: T, where: WhereableForTable<T> | SQLFragment): SQLFragment<JSONSelectableForTable<T>[]>;
+  <T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined>(
+    table: T,
+    where: WhereableForTable<T> | SQLFragment,
+    options?: ReturningOptionsForTable<T, C, E>
+  ): SQLFragment<ReturningTypeForTable<T, C, E>[]>;
 }
 
 /**
@@ -239,10 +282,17 @@ export interface DeleteSignatures {
  * @param table The table to delete from
  * @param where A `Whereable` (or `SQLFragment`) defining which rows to delete
  */
-export const deletes: DeleteSignatures = function
-  (table: Table, where: Whereable | SQLFragment): SQLFragment {
+export const deletes: DeleteSignatures = function (
+  table: Table,
+  where: Whereable | SQLFragment,
+  options?: ReturningOptionsForTable<Table, Column[] | undefined, SQLFragmentsMap | undefined>
+): SQLFragment {
 
-  const query = sql<SQL>`DELETE FROM ${table} WHERE ${where} RETURNING to_jsonb(${table}.*) AS result`;
+  const
+    returningSQL = SQLForColumnsOfTable(options?.returning, table),
+    extrasSQL = SQLForExtras(options?.extras),
+    query = sql`DELETE FROM ${table} WHERE ${where} RETURNING ${returningSQL}${extrasSQL} AS result`;
+
   query.runResultTransform = (qr) => qr.rows.map(r => r.result);
   return query;
 };
@@ -265,8 +315,10 @@ interface TruncateSignatures {
  * @param table The table (or array thereof) to truncate
  * @param opts Options: 'CONTINUE IDENTITY'/'RESTART IDENTITY' and/or 'RESTRICT'/'CASCADE'
  */
-export const truncate: TruncateSignatures = function
-  (table: Table | Table[], ...opts: string[]): SQLFragment<undefined> {
+export const truncate: TruncateSignatures = function (
+  table: Table | Table[],
+  ...opts: string[]
+): SQLFragment<undefined> {
 
   if (!Array.isArray(table)) table = [table];
   const
@@ -310,16 +362,6 @@ export interface SelectOptionsForTable<
   alias?: string;
   lock?: SelectLockingOptions | SelectLockingOptions[];
 };
-
-export interface SQLFragmentsMap { [k: string]: SQLFragment<any> }
-export type PromisedType<P> = P extends Promise<infer U> ? U : never;
-export type PromisedSQLFragmentReturnType<R extends SQLFragment<any>> = PromisedType<ReturnType<R['run']>>;
-
-// yes, the next two types are identical, but distinct names make complex inferred types more readable
-export type Lateral<L extends SQLFragmentsMap> = { [K in keyof L]: PromisedSQLFragmentReturnType<L[K]> };
-export type Extras<L extends SQLFragmentsMap> = { [K in keyof L]: PromisedSQLFragmentReturnType<L[K]> };
-
-export type JSONOnlyColsForTable<T extends Table, C extends any[] /* `ColumnForTable<T>[]` gives errors here for reasons I haven't got to the bottom of */> = Pick<JSONSelectableForTable<T>, C[number]>;
 
 type BaseSelectReturnTypeForTable<T extends Table, C extends ColumnForTable<T>[] | undefined> =
   undefined extends C ? JSONSelectableForTable<T> :
@@ -411,24 +453,20 @@ export const select: SelectSignatures = function (
     limit1 = mode === SelectResultMode.One || mode === SelectResultMode.ExactlyOne,
     allOptions = limit1 ? { ...options, limit: 1 } : options,
     alias = allOptions.alias || table,
-    { distinct, groupBy, having, lateral, extras } = allOptions,
+    { distinct, groupBy, having, lateral, columns, extras } = allOptions,
     lock = allOptions.lock === undefined || Array.isArray(allOptions.lock) ? allOptions.lock : [allOptions.lock],
     order = allOptions.order === undefined || Array.isArray(allOptions.order) ? allOptions.order : [allOptions.order],
     tableAliasSQL = alias === table ? [] : sql<string>` AS ${alias}`,
     distinctSQL = !distinct ? [] : sql` DISTINCT${distinct instanceof SQLFragment || typeof distinct === 'string' ? sql` ON (${distinct})` :
       Array.isArray(distinct) ? sql` ON (${cols(distinct)})` : []}`,
     colsSQL = mode === SelectResultMode.Count ?
-      (allOptions.columns ? sql`count(${cols(allOptions.columns)})` : sql<typeof alias>`count(${alias}.*)`) :
-      allOptions.columns ?
-        sql`jsonb_build_object(${mapWithSeparator(allOptions.columns, sql`, `, c => sql<SQL>`${param(c)}::text, ${c}`)})` :
-        sql<typeof alias>`to_jsonb(${alias}.*)`,
+      (columns ? sql`count(${cols(columns)})` : sql<typeof alias>`count(${alias}.*)`) :
+      SQLForColumnsOfTable(columns, alias as Table),
+    colsExtraSQL = SQLForExtras(extras),
     colsLateralSQL = lateral === undefined ? [] :
       sql` || jsonb_build_object(${mapWithSeparator(
         Object.keys(lateral), sql`, `, (k, i) => sql<SQL>`${param(k)}::text, "ljoin_${raw(String(i))}".result`)})`,
-    colsExtraSQL = extras === undefined ? [] :
-      sql<any[]>` || jsonb_build_object(${mapWithSeparator(
-        Object.keys(extras), sql`, `, k => sql<SQL>`${param(k)}::text, ${extras![k]}`)})`,
-    allColsSQL = sql`${colsSQL}${colsLateralSQL}${colsExtraSQL}`,
+    allColsSQL = sql`${colsSQL}${colsExtraSQL}${colsLateralSQL}`,
     whereSQL = where === all ? [] : sql` WHERE ${where}`,
     groupBySQL = !groupBy ? [] : sql` GROUP BY ${groupBy instanceof SQLFragment || typeof groupBy === 'string' ? groupBy : cols(groupBy)}`,
     havingSQL = !having ? [] : sql` HAVING ${having}`,
@@ -472,9 +510,7 @@ export const select: SelectSignatures = function (
           const result = qr.rows[0]?.result;
           if (result === undefined) throw new NotExactlyOneError(query, 'One result expected but none returned (hint: check `.query.compile()` on this Error)');
           return result;
-        } :
-
-        // SelectResultMode.One or SelectResultMode.Many
+        } : // SelectResultMode.One or SelectResultMode.Many
         (qr) => qr.rows[0]?.result;
 
   return query;
