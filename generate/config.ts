@@ -26,7 +26,6 @@ export interface OptionalConfig {
   schemas: SchemaRules;
   progressListener: boolean | ((s: string) => void);
   warningListener: boolean | ((s: string) => void);
-  legacyCustomTypeNames: boolean | undefined;
 }
 
 export type Config = RequiredConfig & Partial<OptionalConfig>;
@@ -38,7 +37,6 @@ const defaultConfig: OptionalConfig = {
   schemas: { public: { include: '*', exclude: [] } },
   progressListener: false,
   warningListener: true,
-  legacyCustomTypeNames: undefined,
 };
 
 export const moduleRoot = () => {

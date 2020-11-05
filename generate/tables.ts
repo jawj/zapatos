@@ -10,7 +10,6 @@ import { tsTypeForPgType } from './pgTypes';
 import type { EnumData } from './enums';
 import type { CustomTypes } from './tsOutput';
 
-
 export const tablesInSchema = async (schemaName: string, pool: db.Queryable): Promise<string[]> => {
   const rows = await db.sql<s.information_schema.columns.SQL>`
     SELECT ${"table_name"} FROM ${'"information_schema"."columns"'} 
@@ -25,7 +24,6 @@ export const definitionForTableInSchema = async (
   schemaName: string,
   enums: EnumData,
   customTypes: CustomTypes,  // an 'out' parameter
-  useLegacyFileNames: boolean,
   pool: db.Queryable,
 ) => {
 
@@ -67,7 +65,10 @@ export const definitionForTableInSchema = async (
     if (type === 'any' || domainName !== null) {  // cases 2, 3, 4
       const
         customType = domainName ?? udtName,
-        prefixedCustomType = getPrefixedCustomType(customType, useLegacyFileNames);
+        legalCustomType = customType.replace(/\W+/g, '_'),
+        prefixedCustomType = 'Pg' +
+          legalCustomType.charAt(0).toUpperCase() +
+          legalCustomType.slice(1);
 
       customTypes[prefixedCustomType] = type;
       type = 'c.' + prefixedCustomType;
@@ -105,27 +106,6 @@ export declare namespace ${tableName} {
   export type SQL = SQLExpression | SQLExpression[];
 }`;
   return tableDef;
-};
-
-const getPrefixedCustomType = (customType: string, useLegacyFileNames: boolean) => {
-  if (useLegacyFileNames) {
-    const
-      legalCustomType = customType.replace(/\W+/g, '_'),
-      prefixedCustomType = 'Pg' +
-        legalCustomType.charAt(0).toUpperCase() +
-        legalCustomType.slice(1);
-
-    return prefixedCustomType;
-
-  } else {
-    const
-      legalCustomType = customType.replace(/\W+/g, ''),
-      prefixedCustomType = 'Pg' +
-        legalCustomType.charAt(0).toUpperCase() +  // important to retain _ prefixed (array) types as distinct
-        legalCustomType.slice(1).replace(/_+[^_]/g, match => match.slice(match.length - 1).toUpperCase());
-
-    return prefixedCustomType;
-  }
 };
 
 const mappedUnion = (arr: string[], fn: (name: string) => string) =>

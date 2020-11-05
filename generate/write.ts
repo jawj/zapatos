@@ -25,6 +25,7 @@ export const generate = async (suppliedConfig: Config) => {
     warn = config.warningListener === true ? console.log :
       config.warningListener || (() => void 0),
 
+    { ts, customTypeSourceFiles } = await tsForConfig(config),
     folderName = 'zapatos',
     srcName = 'src',
     licenceName = 'LICENCE',
@@ -43,15 +44,7 @@ export const generate = async (suppliedConfig: Config) => {
 
     eslintrcTargetPath = path.join(folderTargetPath, eslintrcName),
     schemaTargetPath = path.join(folderTargetPath, schemaName),
-    customFolderTargetPath = path.join(folderTargetPath, customFolderName),
-    existingCustomFileNames = fs.existsSync(customFolderTargetPath) ?
-      recurseNodes(customFolderTargetPath).map(p => path.relative(customFolderTargetPath, p)) : [],
-
-    // below, .slice(3) removes 'Pg' and any leading _, which is retained in new (as well as legacy) names
-    hasLegacyFileNames = existingCustomFileNames.some(fileName =>
-      fileName.match(/^Pg.*[.]ts$/) && fileName.slice(3).match(/_[^_]/)),
-
-    { ts, customTypeSourceFiles } = await tsForConfig(config, hasLegacyFileNames);
+    customFolderTargetPath = path.join(folderTargetPath, customFolderName);
 
   if (!fs.existsSync(folderTargetPath)) fs.mkdirSync(folderTargetPath);
 

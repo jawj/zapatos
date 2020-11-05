@@ -1,2 +1,0 @@
-
-* Fix behaviour of db.param's cast argument so that native types are not erroneously quoted
