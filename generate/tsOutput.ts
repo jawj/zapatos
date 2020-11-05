@@ -59,7 +59,7 @@ It's a placeholder for a custom type definition
 const sourceFilesForCustomTypes = (customTypes: CustomTypes) =>
   Object.fromEntries(Object.entries(customTypes)
     .map(([name, baseType]) => [
-      `${name}`,
+      name,
       `${customTypeHeader}${baseType === 'db.JSONValue' ? "\nimport type * as db from '../src/core';\n" : ""}
 export type ${name} = ${baseType};  // replace with your custom type or interface as desired
 `,
