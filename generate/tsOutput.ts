@@ -60,7 +60,7 @@ const sourceFilesForCustomTypes = (customTypes: CustomTypes) =>
   Object.fromEntries(Object.entries(customTypes)
     .map(([name, baseType]) => [
       `${name}`,
-      `${customTypeHeader}${baseType === 'JSONValue' ? "\nimport type { JSONValue } from '../src/core';\n" : ""}
+      `${customTypeHeader}${baseType === 'db.JSONValue' ? "\nimport type * as db from '../src/core';\n" : ""}
 export type ${name} = ${baseType};  // replace with your custom type or interface as desired
 `,
     ]));
