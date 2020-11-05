@@ -66,11 +66,12 @@ export type ${name} = ${baseType};  // replace with your custom type or interfac
     ]));
 
 
-export const tsForConfig = async (config: CompleteConfig) => {
+export const tsForConfig = async (config: CompleteConfig, hasLegacyFileNames: boolean) => {
   const
     { schemas, db } = config,
     pool = new pg.Pool(db),
     customTypes = {},
+    useLegacyFileNames = config.legacyCustomTypeNames ?? hasLegacyFileNames,
     schemaData = (await Promise.all(
       Object.keys(schemas).map(async schema => {
         const
@@ -80,7 +81,7 @@ export const tsForConfig = async (config: CompleteConfig) => {
               .filter(table => rules.exclude.indexOf(table) < 0),
           enums = await enumDataForSchema(schema, pool),
           tableDefs = await Promise.all(tables.map(async table =>
-            definitionForTableInSchema(table, schema, enums, customTypes, pool))),
+            definitionForTableInSchema(table, schema, enums, customTypes, useLegacyFileNames, pool))),
           schemaDef = `\n/* === schema: ${schema} === */\n` +
             `\n/* --- enums --- */\n` +
             enumTypesForEnumData(enums) +
