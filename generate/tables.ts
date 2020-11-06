@@ -9,6 +9,7 @@ import type * as s from '../schema';
 import { tsTypeForPgType } from './pgTypes';
 import type { EnumData } from './enums';
 import type { CustomTypes } from './tsOutput';
+import { CompleteConfig } from './config';
 
 export const tablesInSchema = async (schemaName: string, pool: db.Queryable): Promise<string[]> => {
   const rows = await db.sql<s.information_schema.columns.SQL>`
@@ -24,6 +25,7 @@ export const definitionForTableInSchema = async (
   schemaName: string,
   enums: EnumData,
   customTypes: CustomTypes,  // an 'out' parameter
+  config: CompleteConfig,
   pool: db.Queryable,
 ) => {
 
@@ -64,11 +66,8 @@ export const definitionForTableInSchema = async (
 
     if (type === 'any' || domainName !== null) {  // cases 2, 3, 4
       const
-        customType = domainName ?? udtName,
-        legalCustomType = customType.replace(/\W+/g, '_'),
-        prefixedCustomType = 'Pg' +
-          legalCustomType.charAt(0).toUpperCase() +
-          legalCustomType.slice(1);
+        customType: string = domainName ?? udtName,
+        prefixedCustomType = transformCustomType(customType, config);
 
       customTypes[prefixedCustomType] = type;
       type = 'c.' + prefixedCustomType;
@@ -106,6 +105,18 @@ export declare namespace ${tableName} {
   export type SQL = SQLExpression | SQLExpression[];
 }`;
   return tableDef;
+};
+
+const transformCustomType = (customType: string, config: CompleteConfig) => {
+  const
+    ctt = config.customTypesTransform,
+    underscoredType = customType.replace(/\W+/g, '_'),
+    legalisedType = customType.replace(/\W+/g, '');
+
+  return ctt === 'minimal' ? legalisedType :
+    ctt === 'camel' ? ('Pg_' + legalisedType).replace(/_[^_]/g, m => m.charAt(1).toUpperCase()) :
+      ctt === 'default' ? 'Pg' + underscoredType.charAt(0).toUpperCase() + underscoredType.slice(1) :
+        ctt(customType);
 };
 
 const mappedUnion = (arr: string[], fn: (name: string) => string) =>

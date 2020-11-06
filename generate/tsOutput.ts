@@ -80,7 +80,7 @@ export const tsForConfig = async (config: CompleteConfig) => {
               .filter(table => rules.exclude.indexOf(table) < 0),
           enums = await enumDataForSchema(schema, pool),
           tableDefs = await Promise.all(tables.map(async table =>
-            definitionForTableInSchema(table, schema, enums, customTypes, pool))),
+            definitionForTableInSchema(table, schema, enums, customTypes, config, pool))),
           schemaDef = `\n/* === schema: ${schema} === */\n` +
             `\n/* --- enums --- */\n` +
             enumTypesForEnumData(enums) +
