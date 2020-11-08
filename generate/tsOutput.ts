@@ -34,7 +34,7 @@ Released under the MIT licence: see LICENCE file
 `;
 };
 
-const coreImports = `import * as db from './src/core';`;
+const coreImports = `import * as db from 'zapatos';`;
 
 const coreDefs = `
 type BasicWhereableFromInsertable<T> = { [K in keyof T]: Exclude<T[K] | db.ParentColumn, null | db.DefaultType> };
@@ -60,7 +60,7 @@ const sourceFilesForCustomTypes = (customTypes: CustomTypes) =>
   Object.fromEntries(Object.entries(customTypes)
     .map(([name, baseType]) => [
       name,
-      `${customTypeHeader}${baseType === 'db.JSONValue' ? "\nimport type * as db from '../src/core';\n" : ""}
+      `${customTypeHeader}${baseType === 'db.JSONValue' ? "\nimport type * as db from 'zapatos';\n" : ""}
 export type ${name} = ${baseType};  // replace with your custom type or interface as desired
 `,
     ]));

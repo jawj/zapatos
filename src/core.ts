@@ -16,7 +16,7 @@ import type {
   Whereable,
   Table,
   Column,
-} from '../schema';
+} from 'zapatos/schema';
 
 
 // === symbols, types, wrapper classes and shortcuts ===

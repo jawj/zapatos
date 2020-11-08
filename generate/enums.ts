@@ -5,7 +5,7 @@ Released under the MIT licence: see LICENCE file
 */
 
 import * as db from '../src';
-import type * as s from '../schema';
+import type * as s from '../typings/zapatos/schema';
 
 
 export type EnumData = { [k: string]: string[] };
@@ -33,7 +33,7 @@ export const enumTypesForEnumData = (enums: EnumData) => {
   const types = Object.keys(enums)
     .map(name => `
 export type ${name} = ${enums[name].map(v => `'${v}'`).join(' | ')};
-export declare namespace every {
+export namespace every {
   export type ${name} = [${enums[name].map(v => `'${v}'`).join(', ')}];
 }`)
     .join('');
