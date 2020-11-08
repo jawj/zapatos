@@ -26,7 +26,7 @@ export interface OptionalConfig {
   schemas: SchemaRules;
   progressListener: boolean | ((s: string) => void);
   warningListener: boolean | ((s: string) => void);
-  customTypesTransform: 'default' | 'minimal' | 'camel' | ((s: string) => string);
+  customTypesTransform: 'PgMy_type' | 'my_type' | 'PgMyType' | ((s: string) => string);
 }
 
 export type Config = RequiredConfig & Partial<OptionalConfig>;
@@ -38,7 +38,7 @@ const defaultConfig: OptionalConfig = {
   schemas: { public: { include: '*', exclude: [] } },
   progressListener: false,
   warningListener: true,
-  customTypesTransform: 'default',
+  customTypesTransform: 'PgMy_type',
 };
 
 export const moduleRoot = () => {

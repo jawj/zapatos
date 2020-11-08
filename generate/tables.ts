@@ -113,9 +113,9 @@ const transformCustomType = (customType: string, config: CompleteConfig) => {
     underscoredType = customType.replace(/\W+/g, '_'),
     legalisedType = customType.replace(/\W+/g, '');
 
-  return ctt === 'minimal' ? legalisedType :
-    ctt === 'camel' ? ('Pg_' + legalisedType).replace(/_[^_]/g, m => m.charAt(1).toUpperCase()) :
-      ctt === 'default' ? 'Pg' + underscoredType.charAt(0).toUpperCase() + underscoredType.slice(1) :
+  return ctt === 'my_type' ? legalisedType :
+    ctt === 'PgMyType' ? ('Pg_' + legalisedType).replace(/_[^_]/g, m => m.charAt(1).toUpperCase()) :
+      ctt === 'PgMy_type' ? 'Pg' + underscoredType.charAt(0).toUpperCase() + underscoredType.slice(1) :
         ctt(customType);
 };
 
