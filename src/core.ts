@@ -9,7 +9,7 @@ Released under the MIT licence: see LICENCE file
 
 import type * as pg from 'pg';
 import { getConfig } from './config';
-import { isPOJO, NoInfer } from './utils';
+import { Default, isPOJO, NoInfer } from './utils';
 
 import type {
   Updatable,
@@ -21,10 +21,6 @@ import type {
 
 // === symbols, types, wrapper classes and shortcuts ===
 
-/**
- * Compiles to `DEFAULT` for use in `INSERT`/`UPDATE` queries.
- */
-export const Default = Symbol('DEFAULT');
 export type DefaultType = typeof Default;
 
 /**

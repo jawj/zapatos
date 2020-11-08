@@ -7,8 +7,6 @@ Copyright (C) 2020 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
-import { Default } from './core';
-
 export type NoInfer<T> = [T][T extends any ? 0 : never];  // https://github.com/Microsoft/TypeScript/issues/14829
 export type PromisedType<P> = P extends PromiseLike<infer U> ? U : never;
 
@@ -38,6 +36,11 @@ export const mapWithSeparator = <TIn, TSep, TOut>(
   }
   return result;
 };
+
+/**
+ * Compiles to `DEFAULT` for use in `INSERT`/`UPDATE` queries.
+ */
+export const Default = Symbol('DEFAULT');
 
 /**
  * Map an array of objects to an output array by taking the union of all objects' keys
