@@ -5,7 +5,7 @@ Released under the MIT licence: see LICENCE file
 */
 
 import * as db from '../src';
-import type * as s from '../schema';
+import type * as s from '../typings/zapatos/schema';
 import { tsTypeForPgType } from './pgTypes';
 import type { EnumData } from './enums';
 import type { CustomTypes } from './tsOutput';
@@ -85,7 +85,7 @@ export const definitionForTableInSchema = async (
     WHERE i.${"tablename"} = ${db.param(tableName)}`.run(pool);
 
   const tableDef = `
-export declare namespace ${tableName} {
+export namespace ${tableName} {
   export type Table = '${tableName}';
   export interface Selectable {
     ${selectables.join('\n    ')}
