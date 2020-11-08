@@ -87,7 +87,6 @@ export const definitionForTableInSchema = async (
   const tableDef = `
 export namespace ${tableName} {
   export type Table = '${tableName}';
-  export type Schema = '${schemaName}';
   export interface Selectable {
     ${selectables.join('\n    ')}
   }
