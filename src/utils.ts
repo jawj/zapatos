@@ -7,8 +7,6 @@ Copyright (C) 2020 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
-import { Default } from './core';
-
 export type NoInfer<T> = [T][T extends any ? 0 : never];  // https://github.com/Microsoft/TypeScript/issues/14829
 export type PromisedType<P> = P extends PromiseLike<infer U> ? U : never;
 
@@ -41,14 +39,14 @@ export const mapWithSeparator = <TIn, TSep, TOut>(
 
 /**
  * Map an array of objects to an output array by taking the union of all objects' keys
- * and ensuring that any key not present on any object gets the value Default. 
+ * and ensuring that any key not present on any object gets a default value. 
  * 
- * `e.g. [{ x: 1 }, { y: 2 }] => [{ x: 1, y: Default }, { x: Default, y: 2}]`
+ * `e.g. [{ x: 1 }, { y: 2 }] => [{ x: 1, y: defaultValue }, { x: defaultValue, y: 2}]`
  * @param objs The array of objects
  */
-export const completeKeysWithDefault = <T extends object>(objs: T[]): T[] => {
+export const completeKeysWithDefaultValue = <T extends object>(objs: T[], defaultValue: any): T[] => {
   const unionKeys = Object.assign({}, ...objs);
-  for (const k in unionKeys) unionKeys[k] = Default;
+  for (const k in unionKeys) unionKeys[k] = defaultValue;
   return objs.map(o => ({ ...unionKeys, ...o }));
 };
 

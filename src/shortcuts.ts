@@ -33,10 +33,11 @@ import {
   vals,
   raw,
   param,
+  Default,
 } from './core';
 
 import {
-  completeKeysWithDefault,
+  completeKeysWithDefaultValue,
   mapWithSeparator,
   PromisedType,
 } from './utils';
@@ -118,7 +119,7 @@ export const insert: InsertSignatures = function (
 
   } else {
     const
-      completedValues = Array.isArray(values) ? completeKeysWithDefault(values) : values,
+      completedValues = Array.isArray(values) ? completeKeysWithDefaultValue(values, Default) : values,
       colsSQL = cols(Array.isArray(completedValues) ? completedValues[0] : completedValues),
       valuesSQL = Array.isArray(completedValues) ?
         mapWithSeparator(completedValues as Insertable[], sql`, `, v => sql`(${vals(v)})`) :
@@ -198,7 +199,7 @@ export const upsert: UpsertSignatures = function (
   if (!Array.isArray(noNullUpdateColumns)) noNullUpdateColumns = [noNullUpdateColumns];
 
   const
-    completedValues = Array.isArray(values) ? completeKeysWithDefault(values) : values,
+    completedValues = Array.isArray(values) ? completeKeysWithDefaultValue(values, Default) : values,
     firstRow = Array.isArray(completedValues) ? completedValues[0] : completedValues,
     colsSQL = cols(firstRow),
     valuesSQL = Array.isArray(completedValues) ?
