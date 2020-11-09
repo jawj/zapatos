@@ -25,7 +25,7 @@ export const generate = async (suppliedConfig: Config) => {
     warn = config.warningListener === true ? console.log :
       config.warningListener || (() => void 0),
 
-    { ts, customTypeSourceFiles } = await tsForConfig(config),
+    { ts, customTypeSourceFiles, hasTables } = await tsForConfig(config),
     folderName = 'zapatos',
     srcName = 'src',
     licenceName = 'LICENCE',
@@ -45,6 +45,13 @@ export const generate = async (suppliedConfig: Config) => {
     eslintrcTargetPath = path.join(folderTargetPath, eslintrcName),
     schemaTargetPath = path.join(folderTargetPath, schemaName),
     customFolderTargetPath = path.join(folderTargetPath, customFolderName);
+	
+  if (config.skipGenerateIfNoTables && !hasTables) {
+    warn(
+      `Generation of zapatos files skipped because 'skipGenerateIfNoTables' is set to 'true' and there are no tables in all configured schemas!`
+    );
+    return;
+  }
 
   if (!fs.existsSync(folderTargetPath)) fs.mkdirSync(folderTargetPath);
 

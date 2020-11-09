@@ -93,6 +93,7 @@ export const tsForConfig = async (config: CompleteConfig) => {
     schemaDefs = schemaData.map(r => r.schemaDef).sort(),
     schemaTables = schemaData.map(r => r.tables),
     allTables = ([] as string[]).concat(...schemaTables).sort(),
+    hasTables = allTables.length > 0,
     hasCustomTypes = Object.keys(customTypes).length > 0,
     ts = header() +
       coreImports + '\n' +
@@ -104,5 +105,5 @@ export const tsForConfig = async (config: CompleteConfig) => {
     customTypeSourceFiles = sourceFilesForCustomTypes(customTypes);
 
   await pool.end();
-  return { ts, customTypeSourceFiles };
+  return { ts, customTypeSourceFiles, hasTables };
 };
