@@ -6,7 +6,8 @@
   "extends": [
     "eslint:recommended",
     "prettier",
-    "prettier/@typescript-eslint"
+    "prettier/@typescript-eslint",
+    "plugin:import/typescript"
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
@@ -15,9 +16,12 @@
   },
   "ignorePatterns": "**/*.d.ts",
   "plugins": [
-    "@typescript-eslint"
+    "@typescript-eslint",
+    "import"
   ],
   "rules": {
+    "import/no-self-import": "warn",
+    "import/no-cycle": "warn",
     "curly": [
       "error",
       "multi-line"
