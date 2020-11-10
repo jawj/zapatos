@@ -138,5 +138,4 @@ ${['Selectable', 'Whereable', 'Insertable', 'Updatable', 'UniqueIndex', 'Column'
 export type ${thingable}ForTable<T extends Table> = ${tableNames.length === 0 ? 'any' : `{${tableNames.map(name => `
   ${name}: ${name}.${thingable};`).join('')}
 }[T]`};
-`).join('')}
-`;
+`).join('')}`;

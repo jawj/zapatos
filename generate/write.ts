@@ -6,9 +6,8 @@ Released under the MIT licence: see LICENCE file
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { finaliseConfig } from './config';
-import type { Config } from './config';
-import { tsForConfig, header, footer, declaration } from './tsOutput';
+import { finaliseConfig, Config } from './config';
+import { tsForConfig } from './tsOutput';
 
 export const customFolderName = 'custom';
 
@@ -34,13 +33,10 @@ export const generate = async (suppliedConfig: Config) => {
   fs.writeFileSync(schemaTargetPath, ts, { flag: 'w' });
 
   if (Object.keys(customTypeSourceFiles).length > 0) {
-    let exportsFileContent = header();
     fs.mkdirSync(customFolderTargetPath, { recursive: true });
 
     for (const customTypeFileName in customTypeSourceFiles) {
-      exportsFileContent += `export * from './${customTypeFileName}';\n`;
-
-      const customTypeFilePath = path.join(customFolderTargetPath, customTypeFileName + '.ts');
+      const customTypeFilePath = path.join(customFolderTargetPath, customTypeFileName + '.d.ts');
       if (fs.existsSync(customTypeFilePath)) {
         log(`Custom type or domain placeholder already exists: ${customTypeFilePath}`);
 
@@ -51,10 +47,5 @@ export const generate = async (suppliedConfig: Config) => {
       }
     }
 
-    exportsFileContent += declaration('zapatos/custom');
-    exportsFileContent += footer();
-
-    const exportsFilePath = path.join(customFolderTargetPath, 'index.ts');
-    fs.writeFileSync(exportsFilePath, exportsFileContent, { flag: 'w' });
   }
 };

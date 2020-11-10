@@ -33,19 +33,11 @@ Released under the MIT licence: see LICENCE file
 `;
 };
 
-export const declaration = (module: string) => {
-  return `
+export const declareModule = (module: string, declarations: string) => `
 declare module '${module}' {
-  `;
+${declarations.replace(/^(?=[ \t]*\S)/gm, '  ')}
 }
-
-export const footer = () => {
-    return `
-} // end declare module
-  `;
-};
-
-const coreImports = `import * as db from 'zapatos';`;
+`;
 
 const coreDefs = `
 type BasicWhereableFromInsertable<T> = { [K in keyof T]: Exclude<T[K] | db.ParentColumn, null | db.DefaultType> };
@@ -71,9 +63,10 @@ const sourceFilesForCustomTypes = (customTypes: CustomTypes) =>
   Object.fromEntries(Object.entries(customTypes)
     .map(([name, baseType]) => [
       name,
-      `${customTypeHeader}${baseType === 'db.JSONValue' ? "\nimport type * as db from 'zapatos';\n" : ""}
-export type ${name} = ${baseType};  // replace with your custom type or interface as desired
-`,
+      customTypeHeader + declareModule('zapatos/custom',
+        (baseType === 'db.JSONValue' ? `import type * as db from 'zapatos';\n` : ``) +
+        `export type ${name} = ${baseType};  // replace with your custom type or interface as desired`
+      )
     ]));
 
 
@@ -105,15 +98,14 @@ export const tsForConfig = async (config: CompleteConfig) => {
     schemaTables = schemaData.map(r => r.tables),
     allTables = ([] as string[]).concat(...schemaTables).sort(),
     hasCustomTypes = Object.keys(customTypes).length > 0,
-    ts = header() +
-      declaration('zapatos/schema') +
-      coreImports + '\n' +
-      (hasCustomTypes ? "import * as c from 'zapatos/custom';\n" : '') +
+    ts = header() + declareModule('zapatos/schema',
+      `\nimport type * as db from 'zapatos';\n` +
+      (hasCustomTypes ? `import type * as c from 'zapatos/custom';\n` : ``) +
       coreDefs +
       schemaDefs.join('\n\n') +
       `\n\n/* === cross-table types === */\n` +
-      crossTableTypesForTables(allTables) + 
-      footer(),
+      crossTableTypesForTables(allTables)
+    ),
     customTypeSourceFiles = sourceFilesForCustomTypes(customTypes);
 
   await pool.end();
