@@ -30,8 +30,19 @@ Zapatos: https://jawj.github.io/zapatos/
 Copyright (C) 2020 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
-
 `;
+};
+
+export const declaration = (module: string) => {
+  return `
+declare module '${module}' {
+  `;
+}
+
+export const footer = () => {
+    return `
+} // end declare module
+  `;
 };
 
 const coreImports = `import * as db from 'zapatos';`;
@@ -95,12 +106,14 @@ export const tsForConfig = async (config: CompleteConfig) => {
     allTables = ([] as string[]).concat(...schemaTables).sort(),
     hasCustomTypes = Object.keys(customTypes).length > 0,
     ts = header() +
+      declaration('zapatos/schema') +
       coreImports + '\n' +
-      (hasCustomTypes ? "import * as c from './custom';\n" : '') +
+      (hasCustomTypes ? "import * as c from 'zapatos/custom';\n" : '') +
       coreDefs +
       schemaDefs.join('\n\n') +
       `\n\n/* === cross-table types === */\n` +
-      crossTableTypesForTables(allTables),
+      crossTableTypesForTables(allTables) + 
+      footer(),
     customTypeSourceFiles = sourceFilesForCustomTypes(customTypes);
 
   await pool.end();

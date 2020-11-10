@@ -8,14 +8,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { finaliseConfig } from './config';
 import type { Config } from './config';
-import { tsForConfig, header } from './tsOutput';
+import { tsForConfig, header, footer, declaration } from './tsOutput';
 
 export const customFolderName = 'custom';
-
-const recurseNodes = (node: string): string[] =>
-  fs.statSync(node).isFile() ? [node] :
-    fs.readdirSync(node).reduce<string[]>((memo, n) =>
-      memo.concat(recurseNodes(path.join(node, n))), []);
 
 export const generate = async (suppliedConfig: Config) => {
   const
@@ -55,6 +50,9 @@ export const generate = async (suppliedConfig: Config) => {
         fs.writeFileSync(customTypeFilePath, customTypeFileContent, { flag: 'w' });
       }
     }
+
+    exportsFileContent += declaration('zapatos/custom');
+    exportsFileContent += footer();
 
     const exportsFilePath = path.join(customFolderTargetPath, 'index.ts');
     fs.writeFileSync(exportsFilePath, exportsFileContent, { flag: 'w' });
