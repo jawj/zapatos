@@ -7,6 +7,7 @@ Released under the MIT licence: see LICENCE file
 import * as fs from 'fs';
 import * as path from 'path';
 import { finaliseConfig, Config } from './config';
+import * as legacy from './legacy';
 import { tsForConfig } from './tsOutput';
 
 export const customFolderName = 'custom';
@@ -27,7 +28,6 @@ export const generate = async (suppliedConfig: Config) => {
     schemaTargetPath = path.join(folderTargetPath, schemaName),
     customFolderTargetPath = path.join(folderTargetPath, customFolderName);
 
-
   fs.mkdirSync(folderTargetPath, { recursive: true });
   log(`Writing generated schema: ${schemaTargetPath}`);
   fs.writeFileSync(schemaTargetPath, ts, { flag: 'w' });
@@ -46,6 +46,7 @@ export const generate = async (suppliedConfig: Config) => {
         fs.writeFileSync(customTypeFilePath, customTypeFileContent, { flag: 'w' });
       }
     }
-
   }
+
+  legacy.srcWarning(config);
 };

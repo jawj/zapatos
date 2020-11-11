@@ -18,6 +18,7 @@ import type {
   Column,
 } from 'zapatos/schema';
 
+export interface SchemaVersionCanary { version: 'a' };
 
 // === symbols, types, wrapper classes and shortcuts ===
 
