@@ -21,7 +21,9 @@ export function srcWarning(config: CompleteConfig) {
     legacySrcExists = fs.existsSync(legacySrcPath),
     legacyCustomName = 'custom',
     legacyCustomPath = path.join(legacyFolderPath, legacyCustomName),
-    legacyCustomTypes = recurseNodes(legacyCustomPath).filter(f => !f.match(/[.]d[.]ts$/)),
+    legacyCustomPathExists = fs.existsSync(legacyCustomPath),
+    legacyCustomTypes = !legacyCustomPathExists ? [] :
+      recurseNodes(legacyCustomPath).filter(f => !f.match(/[.]d[.]ts$/)),
     legacyCustomTypesExist = legacyCustomTypes.length > 0;
 
   if (legacySchemaExists || legacySrcExists || legacyCustomTypesExist) {
