@@ -4,6 +4,7 @@ import * as fs from 'fs';
 
 import { CompleteConfig } from "./config";
 
+
 const recurseNodes = (node: string): string[] =>
   fs.statSync(node).isFile() ? [node] :
     fs.readdirSync(node).reduce<string[]>((memo, n) =>
@@ -31,7 +32,7 @@ export function srcWarning(config: CompleteConfig) {
       config.warningListener || (() => void 0);
 
     warn(`
-*** ZAPATOS 3.0+ NO LONGER COPIES ITS SOURCE FILES TO YOUR SOURCE TREE ***
+*** GOOD NEWS! ZAPATOS NO LONGER COPIES ITS SOURCE TO YOUR SOURCE TREE ***
 
 To convert your codebase, please do the following:
 ` +
@@ -55,13 +56,13 @@ To convert your codebase, please do the following:
    1) Change: import * as zapatos from 'zapatos'
       To:     import * as zapatos from 'zapatos/generate'
 
-      /^(\\s*import[^"'\`]*['"\`])zapatos(["'\`])/g
-      -> $1zapatos / generate$2
+      /^(\\s*import[^"']*['"])zapatos(["'])/g
+      -> $1zapatos/generate$2
 
    2) Change: import * as db from './path/to/zapatos/src'
       To:     import * as db from 'zapatos'
 
-      /^(\\s*import[^"'\`]*['"\`])[^"'\`]+/zapatos / src(["'\`])/g 
+      /^(\\s*import[^"']*['"])[^"']*/zapatos/src(["'])/g 
       -> $1zapatos$2
 
    3) Change: import * as s from './path/to/zapatos/schema'
@@ -69,7 +70,7 @@ To convert your codebase, please do the following:
                      ^^^^
                      be sure to import type, not just import
 
-      /^(\\s*import\\s*)(type)?([^"'\`]*['"\`])[^"'\`]+/(zapatos / schema["'\`])/g 
+      /^(\\s*import\\s*)(type)?([^"']*['"])[^"']+/(zapatos/schema["'])/g 
       -> $1type$3$4
 
 Thank you.
