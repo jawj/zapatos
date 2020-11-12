@@ -21,9 +21,11 @@
     "dist/db",
     "db.js",
     "db.d.ts",
+    "db.mjs",
     "dist/generate",
     "generate.js",
-    "generate.d.ts"
+    "generate.d.ts",
+    "generate.mjs"
   ],
   "exports": {
     "./db": {
