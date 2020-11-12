@@ -48,6 +48,9 @@ To convert your codebase, please do the following:
 
 * Delete all the plain '.ts' files in 'zapatos/custom', including 'index.ts'
 ` : ``) + `
+* Ensure all the '.d.ts' files in 'zapatos' are picked up by your TypeScript
+  configuration (e.g. check the "files" or "include" keys in 'tsconfig.json')
+
 * If you use 'ts-node' or 'node -r ts-node/register', pass the --files option
   ('ts-node' only) or set 'TS_NODE_FILES=true' (either case)
 
