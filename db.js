@@ -1,4 +1,4 @@
-/* this file is created by hand */
+/* this is a shim for consumers that don't support the package.json "exports" key, and is created by hand */
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function (o, m, k, k2) {
   if (k2 === undefined) k2 = k;

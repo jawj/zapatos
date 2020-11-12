@@ -12,7 +12,7 @@
   },
   "scripts": {
     "lint": "eslint --ext .ts .",
-    "build": "tsc",
+    "build": "tsc && npx gen-esm-wrapper db db.mjs && npx gen-esm-wrapper generate generate.mjs",
     "version": "npm run lint && npm run build",
     "postversion": "git push && git push --tags && npm publish",
     "postinstall": "node -e \"console.warn('>>> \\u001b[1;33mZapatos was installed or upgraded. Please (re-)run \\u001b[1;32mnpx zapatos\\u001b[1;33m.\\u001b[0m <<<\\u000a')\""
@@ -25,6 +25,16 @@
     "generate.js",
     "generate.d.ts"
   ],
+  "exports": {
+    "./db": {
+      "require": "./db.js",
+      "import": "./db.mjs"
+    },
+    "./generate": {
+      "require": "./generate.js",
+      "import": "./generate.mjs"
+    }
+  },
   "keywords": [
     "postgres",
     "typescript",
@@ -46,9 +56,8 @@
     "eslint-config-prettier": "^6.12.0",
     "pg": "^8.4.0",
     "ts-node": "^9.0.0",
-    "typescript": "^4.0.3"
-  },
-  "dependencies": {
-    "eslint-plugin-import": "^2.22.1"
+    "typescript": "^4.0.3",
+    "eslint-plugin-import": "^2.22.1",
+    "gen-esm-wrapper": "^1.1.0"
   }
 }

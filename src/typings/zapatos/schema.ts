@@ -1,4 +1,5 @@
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 export interface Updatable { [k: string]: any }
 export interface Whereable { [k: string]: any }
 export interface Insertable { [k: string]: any }
