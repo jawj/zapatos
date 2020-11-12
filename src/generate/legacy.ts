@@ -63,15 +63,15 @@ To convert your codebase, please do the following:
       To:     import * as db from 'zapatos/db'
 
       /^(\\s*import[^"']*['"])[^"']*/zapatos/src(["'])/g 
-      -> $1zapatos$2
+      -> $1zapatos/db$2
 
    3) Change: import * as s from './path/to/zapatos/schema'
       To:     import type * as s from 'zapatos/schema'
                      ^^^^
                      be sure to import type, not just import
 
-      /^(\\s*import\\s*)(type)?([^"']*['"])[^"']+/(zapatos/schema["'])/g 
-      -> $1type$3$4
+      /^(\\s*import\\s*)(type\\s*)?([^"']*['"])[^"']+/(zapatos/schema["'])/g 
+      -> $1type $3$4
 
 Thank you.
 `);
