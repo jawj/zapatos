@@ -4,21 +4,23 @@ Copyright (C) 2020 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
-import * as db from '../src';
-import type * as s from '../typings/zapatos/schema';
+import * as pg from 'pg';
 
 
 export type EnumData = { [k: string]: string[] };
 
-export const enumDataForSchema = async (schemaName: string, pool: db.Queryable) => {
+export const enumDataForSchema = async (schemaName: string, pool: pg.Pool) => {
   const
-    rows = await db.sql<s.pg_type.SQL | s.pg_enum.SQL | s.pg_namespace.SQL>`
-      SELECT n.${"nspname"} AS "schema", t.${"typname"} AS "name", e.${"enumlabel"} AS value
-      FROM ${"pg_type"} t
-      JOIN ${"pg_enum"} e ON t.${"oid"} = e.${"enumtypid"}
-      JOIN ${"pg_namespace"} n ON n.${"oid"} = t.${"typnamespace"}
-      WHERE n.${"nspname"} = ${db.param(schemaName)}
-      ORDER BY t.${"typname"} ASC, e.${"enumlabel"} ASC`.run(pool),
+    { rows } = await pool.query({
+      text: `
+        SELECT n."nspname" AS "schema", t."typname" AS "name", e."enumlabel" AS value
+        FROM "pg_type" t
+        JOIN "pg_enum" e ON t."oid" = e."enumtypid"
+        JOIN "pg_namespace" n ON n."oid" = t."typnamespace"
+        WHERE n."nspname" = $1
+        ORDER BY t."typname" ASC, e."enumlabel" ASC`,
+      values: [schemaName],
+    }),
 
     enums: EnumData = rows.reduce((memo, row) => {
       memo[row.name] = memo[row.name] ?? [];

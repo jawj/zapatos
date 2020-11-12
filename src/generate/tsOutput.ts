@@ -64,7 +64,7 @@ const sourceFilesForCustomTypes = (customTypes: CustomTypes) =>
     .map(([name, baseType]) => [
       name,
       customTypeHeader + declareModule('zapatos/custom',
-        (baseType === 'db.JSONValue' ? `import type * as db from 'zapatos';\n` : ``) +
+        (baseType === 'db.JSONValue' ? `import type * as db from 'zapatos/db';\n` : ``) +
         `export type ${name} = ${baseType};  // replace with your custom type or interface as desired`
       )
     ]));
@@ -102,7 +102,7 @@ export const tsForConfig = async (config: CompleteConfig) => {
     pkg = JSON.parse(fs.readFileSync(pkgPath, { encoding: 'utf8' })),
     version = pkg.version,
     ts = header(version) + declareModule('zapatos/schema',
-      `\nimport type * as db from 'zapatos';\n` +
+      `\nimport type * as db from 'zapatos/db';\n` +
       (hasCustomTypes ? `import type * as c from 'zapatos/custom';\n` : ``) +
       versionCanary +
       coreDefs +

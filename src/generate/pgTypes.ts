@@ -6,6 +6,7 @@ Released under the MIT licence: see LICENCE file
 
 import type { EnumData } from './enums';
 
+
 const baseTsTypeForBasePgType = (pgType: string, enums: EnumData) => {
   const hasOwnProp = Object.prototype.hasOwnProperty;
   switch (pgType) {

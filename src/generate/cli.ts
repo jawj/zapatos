@@ -8,8 +8,8 @@ Released under the MIT licence: see LICENCE file
 */
 
 import * as fs from 'fs';
-import { generate } from "./generate";
-import type { Config } from './generate/config';
+import { generate } from ".";
+import type { Config } from './config';
 
 
 const recursivelyInterpolateEnvVars = (obj: any): any =>

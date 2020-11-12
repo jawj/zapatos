@@ -51,7 +51,7 @@ To convert your codebase, please do the following:
 * If you use 'ts-node' or 'node -r ts-node/register', pass the --files option
   ('ts-node' only) or set 'TS_NODE_FILES=true' (either case)
 
-* If you haven't yet updated your imports, make these changes in this order:
+* If you haven't yet updated your imports, make these changes:
 
    1) Change: import * as zapatos from 'zapatos'
       To:     import * as zapatos from 'zapatos/generate'
@@ -60,7 +60,7 @@ To convert your codebase, please do the following:
       -> $1zapatos/generate$2
 
    2) Change: import * as db from './path/to/zapatos/src'
-      To:     import * as db from 'zapatos'
+      To:     import * as db from 'zapatos/db'
 
       /^(\\s*import[^"']*['"])[^"']*/zapatos/src(["'])/g 
       -> $1zapatos$2

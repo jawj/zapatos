@@ -4,18 +4,20 @@ Copyright (C) 2020 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
-import * as db from '../src';
-import type * as s from '../typings/zapatos/schema';
+import * as pg from 'pg';
 import { tsTypeForPgType } from './pgTypes';
 import type { EnumData } from './enums';
 import type { CustomTypes } from './tsOutput';
 import { CompleteConfig } from './config';
 
-export const tablesInSchema = async (schemaName: string, pool: db.Queryable): Promise<string[]> => {
-  const rows = await db.sql<s.information_schema.columns.SQL>`
-    SELECT ${"table_name"} FROM ${'"information_schema"."columns"'} 
-    WHERE ${{ table_schema: schemaName }} 
-    GROUP BY ${"table_name"} ORDER BY lower(${"table_name"})`.run(pool);
+export const tablesInSchema = async (schemaName: string, pool: pg.Pool): Promise<string[]> => {
+  const { rows } = await pool.query({
+    text: `
+      SELECT "table_name" FROM "information_schema"."columns"
+      WHERE "table_schema" = $1 
+      GROUP BY "table_name" ORDER BY lower("table_name")`,
+    values: [schemaName]
+  });
 
   return rows.map(r => r.table_name);
 };
@@ -26,20 +28,23 @@ export const definitionForTableInSchema = async (
   enums: EnumData,
   customTypes: CustomTypes,  // an 'out' parameter
   config: CompleteConfig,
-  pool: db.Queryable,
+  pool: pg.Pool,
 ) => {
 
   const
-    rows = await db.sql<s.information_schema.columns.SQL>`
-      SELECT
-        ${"column_name"} AS "column"
-      , ${"is_nullable"} = 'YES' AS "nullable"
-      , ${"is_generated"} = 'ALWAYS' AS "generated"
-      , ${"column_default"} IS NOT NULL OR ${"is_identity"} = 'YES' AS "hasDefault"
-      , ${"udt_name"} AS "udtName"
-      , ${"domain_name"} AS "domainName"
-      FROM ${'"information_schema"."columns"'}
-      WHERE ${{ table_name: tableName, table_schema: schemaName }}`.run(pool),
+    { rows } = await pool.query({
+      text: `
+        SELECT
+          "column_name" AS "column"
+        , "is_nullable" = 'YES' AS "nullable"
+        , "is_generated" = 'ALWAYS' AS "generated"
+        , "column_default" IS NOT NULL OR "is_identity" = 'YES' AS "hasDefault"
+        , "udt_name" AS "udtName"
+        , "domain_name" AS "domainName"
+        FROM "information_schema"."columns"
+        WHERE "table_name" = $1 AND "table_schema" = $2`,
+      values: [tableName, schemaName]
+    }),
 
     selectables: string[] = [],
     insertables: string[] = [];
@@ -77,12 +82,17 @@ export const definitionForTableInSchema = async (
     insertables.push(`${column}${insertablyOptional}: ${type} | db.Parameter<${type}>${orDateString}${orNull}${orDefault} | db.SQLFragment;`);
   });
 
-  const uniqueIndexes = await db.sql<s.pg_indexes.SQL | s.pg_class.SQL | s.pg_index.SQL, { indexname: string }[]>`
-    SELECT i.${"indexname"}
-    FROM ${"pg_indexes"} i 
-    JOIN ${"pg_class"} c ON c.${"relname"} = i.${"indexname"} 
-    JOIN ${"pg_index"} idx ON idx.${"indexrelid"} = c.${"oid"} AND idx.${"indisunique"} 
-    WHERE i.${"tablename"} = ${db.param(tableName)}`.run(pool);
+  const
+    result = await pool.query({
+      text: `
+        SELECT i."indexname"
+        FROM "pg_indexes" i 
+        JOIN "pg_class" c ON c."relname" = i."indexname" 
+        JOIN "pg_index" idx ON idx."indexrelid" = c."oid" AND idx."indisunique" 
+        WHERE i."tablename" = $1`,
+      values: [tableName]
+    }),
+    uniqueIndexes = result.rows;
 
   const tableDef = `
 export namespace ${tableName} {

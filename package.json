@@ -7,10 +7,8 @@
     "type": "git",
     "url": "https://github.com/jawj/zapatos"
   },
-  "main": "dist/src",
-  "types": "dist/src/index.d.ts",
   "bin": {
-    "zapatos": "dist/generate-schema.js"
+    "zapatos": "dist/generate/cli.js"
   },
   "scripts": {
     "lint": "eslint --ext .ts .",
@@ -20,7 +18,12 @@
     "postinstall": "node -e \"console.warn('>>> \\u001b[1;33mZapatos was installed or upgraded. Please (re-)run \\u001b[1;32mnpx zapatos\\u001b[1;33m.\\u001b[0m <<<\\u000a')\""
   },
   "files": [
-    "dist"
+    "dist/db",
+    "db.js",
+    "db.d.ts",
+    "dist/generate",
+    "generate.js",
+    "generate.d.ts"
   ],
   "keywords": [
     "postgres",

@@ -14,7 +14,10 @@
     "project": "tsconfig.json",
     "sourceType": "module"
   },
-  "ignorePatterns": "**/*.d.ts",
+  "ignorePatterns": [
+    "**/*.d.ts",
+    "**/*.js"
+  ],
   "plugins": [
     "@typescript-eslint",
     "import"
