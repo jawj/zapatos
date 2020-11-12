@@ -37,14 +37,14 @@ export function srcWarning(config: CompleteConfig) {
 To convert your codebase, please do the following:
 ` +
       (legacySchemaExists ? `
-* Delete the file 'zapatos/schema.ts'
+* Delete the file 'zapatos/schema.ts' (but leave 'zapatos/schema.d.ts')
 ` : ``) +
       (legacySrcExists ? `
 * Delete the folder 'zapatos/src' and all its contents
 ` : ``) +
       (legacyCustomTypesExist ? `
-* Transfer any customised type declarations in 'zapatos/custom' from the old
-  plain '.ts' files to the new '.d.ts' files
+* Transfer any customised type declarations in 'zapatos/custom' from the plain
+  old '.ts' files to the new '.d.ts' files
 
 * Delete all the plain '.ts' files in 'zapatos/custom', including 'index.ts'
 ` : ``) + `
@@ -52,29 +52,30 @@ To convert your codebase, please do the following:
   configuration (e.g. check the "files" or "include" keys in 'tsconfig.json')
 
 * If you use 'ts-node' or 'node -r ts-node/register', pass the --files option
-  ('ts-node' only) or set 'TS_NODE_FILES=true' (either case)
+  ('ts-node' only) or set 'TS_NODE_FILES=true' (in either case)
 
-* If you haven't yet updated your imports, make these changes:
+* Make the following changes to your imports (you can use VS Code's 'Replace in
+  Files' command, just remember to toggle Regular Expressions on):
 
-   1) Change: import * as zapatos from 'zapatos'
-      To:     import * as zapatos from 'zapatos/generate'
+   1) Change:  import * as zapatos from 'zapatos'
+      To:      import * as zapatos from 'zapatos/generate'
 
-      /^(\\s*import[^"']*['"])zapatos(["'])/g
-      -> $1zapatos/generate$2
+      Search:  ^(\\s*import[^"']*['"])zapatos(["'])
+      Replace: $1zapatos/generate$2
 
-   2) Change: import * as db from './path/to/zapatos/src'
-      To:     import * as db from 'zapatos/db'
+   2) Change:  import * as db from './path/to/zapatos/src'
+      To:      import * as db from 'zapatos/db'
 
-      /^(\\s*import[^"']*['"])[^"']*/zapatos/src(["'])/g 
-      -> $1zapatos/db$2
+      Search:  ^(\\s*import[^"']*['"])[^"']*/zapatos/src(["'])
+      Replace: $1zapatos/db$2
 
-   3) Change: import * as s from './path/to/zapatos/schema'
-      To:     import type * as s from 'zapatos/schema'
-                     ^^^^
-                     be sure to import type, not just import
+   3) Change:  import * as s from './path/to/zapatos/schema'
+      To:      import type * as s from 'zapatos/schema'
+                      ^^^^
+                      be sure to import type, not just import
 
-      /^(\\s*import\\s*)(type\\s*)?([^"']*['"])[^"']+/(zapatos/schema["'])/g 
-      -> $1type $3$4
+      Search:  ^(\\s*import\\s*)(type\\s*)?([^"']*['"])[^"']+/(zapatos/schema["'])
+      Replace: $1type $3$4
 
 Thank you.
 `);
