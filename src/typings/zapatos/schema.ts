@@ -1,3 +1,10 @@
+/*
+Zapatos: https://jawj.github.io/zapatos/
+Copyright (C) 2020 George MacKerron
+Released under the MIT licence: see LICENCE file
+*/
+
+// this file exists only to suppress type errors when compiling the files in src/db
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export interface Updatable { [k: string]: any }

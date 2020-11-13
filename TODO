@@ -1,4 +1,2 @@
 
-* Find and warn about ./src subdir and non-d.ts files under ./src/custom
 * Fix behaviour of db.param's cast argument so that native types are not erroneously quoted
-* Check schema/src mismatch
