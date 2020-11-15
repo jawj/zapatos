@@ -13,7 +13,7 @@ export interface Config {
   castArrayParamsToJson: boolean;   // see https://github.com/brianc/node-postgres/issues/2012
   castObjectParamsToJson: boolean;  // useful if json will be cast onward differently from text
   queryListener?(str: any, txnId?: number): void;
-  resultListener?(str: any, txnId?: number): void;
+  resultListener?(str: any, txnId?: number, timing?: number): void;
   transactionListener?(str: any, txnId?: number): void;
 }
 export type NewConfig = Partial<Config>;

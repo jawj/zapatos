@@ -8,6 +8,7 @@ Released under the MIT licence: see LICENCE file
 */
 
 import type * as pg from 'pg';
+import { performance } from 'perf_hooks';
 import { getConfig } from './config';
 import { isPOJO, NoInfer } from './utils';
 
@@ -183,6 +184,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
     const
       query = this.compile(),
       config = getConfig(),
+      startMs = performance.now(),
       txnId = (queryable as any)._zapatos?.txnId;
 
     if (config.queryListener) config.queryListener(query, txnId);
@@ -196,7 +198,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
       result = this.noopResult;
     }
 
-    if (config.resultListener) config.resultListener(result, txnId);
+    if (config.resultListener) config.resultListener(result, txnId, performance.now() - startMs);
     return result;
   };
 
@@ -218,6 +220,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
   };
 
   compileExpression = (expression: SQL, result: SQLQuery = { text: '', values: [] }, parentTable?: string, currentColumn?: Column) => {
+
     if (this.parentTable) parentTable = this.parentTable;
 
     if (expression instanceof SQLFragment) {
@@ -321,6 +324,13 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
           const
             columnName = columnNames[i],
             columnValue = (<any>expression)[columnName];
+
+          // if the value is undefined, skip the condition. Otherwise you will will end up with
+          // `${value} = undefined` in the SQL which will always be false
+          if (typeof columnValue === 'undefined') {
+            continue;
+          }
+
           if (i > 0) result.text += ' AND ';
           if (columnValue instanceof SQLFragment) {
             result.text += '(';
