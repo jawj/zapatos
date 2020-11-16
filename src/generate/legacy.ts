@@ -37,7 +37,7 @@ export function srcWarning(config: CompleteConfig) {
       config.warningListener || (() => void 0);
 
     warn(`
-*** GOOD NEWS! ZAPATOS NO LONGER COPIES ITS SOURCE TO YOUR SOURCE TREE ***
+*** IMPORTANT: ZAPATOS NO LONGER COPIES ITS SOURCE TO YOUR SOURCE TREE ***
 
 To convert your codebase, please do the following:
 ` +
@@ -53,14 +53,14 @@ To convert your codebase, please do the following:
 
 * Delete all the plain '.ts' files in 'zapatos/custom', including 'index.ts'
 ` : ``) + `
-* Ensure all the '.d.ts' files in 'zapatos' are picked up by your TypeScript
-  configuration (e.g. check the "files" or "include" keys in 'tsconfig.json')
+* Ensure that the '.d.ts' files in 'zapatos' are picked up by your TypeScript
+  configuration (e.g. check the "files" or "include" key in 'tsconfig.json')
 
 * If you use 'ts-node' or 'node -r ts-node/register', pass the --files option
   ('ts-node' only) or set 'TS_NODE_FILES=true' (in either case)
 
 * Make the following changes to your imports (you can use VS Code's 'Replace in
-  Files' command, just remember to toggle Regular Expressions on):
+  Files' command, remembering to toggle Regular Expressions on):
 
    1) Change:  import * as zapatos from 'zapatos'
       To:      import * as zapatos from 'zapatos/generate'
@@ -79,7 +79,7 @@ To convert your codebase, please do the following:
                       ^^^^
                       be sure to import type, not just import
 
-      Search:  ^(\\s*import\\s*)(type\\s*)?([^"']*['"])[^"']+/(zapatos/schema["'])
+      Search:  ^(\\s*import\\s*)(type\\s*)?([^"']*['"])[^"']*/(zapatos/schema["'])
       Replace: $1type $3$4
 
 Thank you.

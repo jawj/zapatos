@@ -40,6 +40,7 @@ export const mapWithSeparator = <TIn, TSep, TOut>(
  * 
  * `e.g. [{ x: 1 }, { y: 2 }] => [{ x: 1, y: defaultValue }, { x: defaultValue, y: 2}]`
  * @param objs The array of objects
+ * @param defaultValue The default value to assign to missing keys for each object
  */
 export const completeKeysWithDefaultValue = <T extends object>(objs: T[], defaultValue: any): T[] => {
   const unionKeys = Object.assign({}, ...objs);
