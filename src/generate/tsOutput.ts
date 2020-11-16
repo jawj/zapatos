@@ -16,12 +16,12 @@ export interface CustomTypes {
   [name: string]: string;  // any, or TS type for domain's base type
 }
 
-export const versionCanary = `
+const versionCanary = `
 // got a type error on schemaVersionCanary below? update by running \`npx zapatos\`
 export interface schemaVersionCanary extends db.SchemaVersionCanary { version: 100 }
 `;
 
-export const declareModule = (module: string, declarations: string) => `
+const declareModule = (module: string, declarations: string) => `
 declare module '${module}' {
 ${declarations.replace(/^(?=[ \t]*\S)/gm, '  ')}
 }

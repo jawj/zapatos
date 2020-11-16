@@ -46,7 +46,8 @@ type JSONSelectableForTable<T extends Table> = { [K in keyof SelectableForTable<
   SelectableForTable<T>[K]
 };
 
-export type JSONOnlyColsForTable<T extends Table, C extends any[] /* `ColumnForTable<T>[]` gives errors here for reasons I haven't got to the bottom of */> = Pick<JSONSelectableForTable<T>, C[number]>;
+export type JSONOnlyColsForTable<T extends Table, C extends any[] /* `ColumnForTable<T>[]` gives errors here for reasons I haven't got to the bottom of */> =
+  Pick<JSONSelectableForTable<T>, C[number]>;
 
 export interface SQLFragmentsMap { [k: string]: SQLFragment<any> }
 export type PromisedSQLFragmentReturnType<R extends SQLFragment<any>> = PromisedType<ReturnType<R['run']>>;
@@ -138,13 +139,13 @@ export const insert: InsertSignatures = function (
 /* === upsert === */
 
 /**
- * Wraps a unique index of the target table for use as the arbiter constraint of an 
- * `upsert` shortcut query.
+ * Wraps a unique index of the target table for use as the arbiter constraint
+ * of an `upsert` shortcut query.
  */
 export class Constraint<T extends Table> { constructor(public value: UniqueIndexForTable<T>) { } }
 /**
- * Returns a `Constraint` instance, wrapping a unique index of the target table for 
- * use as the arbiter constraint of an `upsert` shortcut query.
+ * Returns a `Constraint` instance, wrapping a unique index of the target table
+ * for use as the arbiter constraint of an `upsert` shortcut query.
  */
 export function constraint<T extends Table>(x: UniqueIndexForTable<T>) { return new Constraint<T>(x); }
 
@@ -175,12 +176,13 @@ interface UpsertSignatures {
 /**
  * Generate an 'upsert' (`INSERT ... ON CONFLICT ...`) query `SQLFragment`.
  * @param table The table to update or insert into
- * @param values An `Insertable` of values (or an array thereof) to be inserted or updated
- * @param conflictTarget A `UNIQUE` index or `UNIQUE`-indexed column (or array thereof) that determines
- * whether this is an `UPDATE` (when there's a matching existing value) or an `INSERT` 
- * (when there isn't)
- * @param noNullUpdateCols Optionally, a column (or array thereof) that should not be 
- * overwritten with `NULL` values during an update
+ * @param values An `Insertable` of values (or an array thereof) to be inserted 
+ * or updated
+ * @param conflictTarget A `UNIQUE` index or `UNIQUE`-indexed column (or array
+ * thereof) that determines whether this is an `UPDATE` (when there's a matching
+ * existing value) or an `INSERT` (when there isn't)
+ * @param noNullUpdateCols Optionally, a column (or array thereof) that should 
+ * not be overwritten with `NULL` values during an update
  */
 export const upsert: UpsertSignatures = function (
   table: Table,
@@ -276,7 +278,7 @@ export interface DeleteSignatures {
 }
 
 /**
- * Generate an `DELETE` query `SQLFragment` (sadly, plain 'delete' is a reserved word).
+ * Generate an `DELETE` query `SQLFragment` (plain 'delete' is a reserved word)
  * @param table The table to delete from
  * @param where A `Whereable` (or `SQLFragment`) defining which rows to delete
  */
@@ -311,7 +313,8 @@ interface TruncateSignatures {
 /**
  * Generate a `TRUNCATE` query `SQLFragment`.
  * @param table The table (or array thereof) to truncate
- * @param opts Options: 'CONTINUE IDENTITY'/'RESTART IDENTITY' and/or 'RESTRICT'/'CASCADE'
+ * @param opts Options: 'CONTINUE IDENTITY'/'RESTART IDENTITY' and/or 
+ * 'RESTRICT'/'CASCADE'
  */
 export const truncate: TruncateSignatures = function (
   table: Table | Table[],
@@ -424,21 +427,23 @@ export class NotExactlyOneError extends Error {
 }
 
 /**
- * Generate a `SELECT` query `SQLFragment`. This can be nested with other `select`/
- * `selectOne`/`count` queries using the `lateral` option.
+ * Generate a `SELECT` query `SQLFragment`. This can be nested with other 
+ * `select`/`selectOne`/`count` queries using the `lateral` option.
  * @param table The table to select from
- * @param where A `Whereable` or `SQLFragment` defining the rows to be selected, or `all`
+ * @param where A `Whereable` or `SQLFragment` defining the rows to be selected,
+ * or `all`
  * @param options Options object. Keys (all optional) are: 
  * * `columns` — an array of column names: only these columns will be returned
- * * `order` – an array of `OrderSpec` objects, such as `{ by: 'column', direction: 'ASC' 
- * }`  
+ * * `order` – an array of `OrderSpec` objects, such as 
+ * `{ by: 'column', direction: 'ASC' }`  
  * * `limit` and `offset` – numbers: apply this limit and offset to the query
- * * `lateral` — an object mapping key(s) to nested `select`/`selectOne`/`count` queries 
- * to be `LATERAL JOIN`ed
- * * `alias` — table alias (string): required if using `lateral` to join a table to itself
+ * * `lateral` — an object mapping key(s) to nested `select`/`selectOne`/`count`
+ * queries to be `LATERAL JOIN`ed
+ * * `alias` — table alias (string): required if using `lateral` to join a table
+ * to itself
  * * `extras` — an object mapping key(s) to `SQLFragment`s, so that derived 
  * quantities can be included in the JSON result
- * @param mode Used internally by `selectOne` and `count`
+ * @param mode (Used internally by `selectOne` and `count`)
  */
 export const select: SelectSignatures = function (
   table: Table,
@@ -532,17 +537,20 @@ export interface SelectOneSignatures {
 
 /**
  * Generate a `SELECT` query `SQLFragment` that returns only a single result (or 
- * undefined). A `LIMIT 1` clause is added automatically. This can be nested with other 
- * `select`/`selectOne`/`count` queries using the `lateral` option.
+ * undefined). A `LIMIT 1` clause is added automatically. This can be nested with 
+ * other `select`/`selectOne`/`count` queries using the `lateral` option.
  * @param table The table to select from
- * @param where A `Whereable` or `SQLFragment` defining the rows to be selected, or `all`
+ * @param where A `Whereable` or `SQLFragment` defining the rows to be selected,
+ * or `all`
  * @param options Options object. See documentation for `select` for details.
  */
 export const selectOne: SelectOneSignatures = function (table, where, options = {}) {
-  // you might argue that 'selectOne' offers little that you can't get with destructuring assignment 
-  // and plain 'select' -- e.g. let [x] = async select(...).run(pool); -- but a thing that is definitely worth 
-  // having is '| undefined' in the return signature, because the result of indexing never includes undefined
-  // (see e.g. https://github.com/Microsoft/TypeScript/issues/13778)
+  // you might argue that 'selectOne' offers little that you can't get with 
+  // destructuring assignment and plain 'select' 
+  // -- e.g.let[x] = async select(...).run(pool); -- but something worth having
+  // is '| undefined' in the return signature, because the result of indexing 
+  // never includes undefined 
+  // (see https://github.com/Microsoft/TypeScript/issues/13778)
 
   return select(table, where, options, SelectResultMode.One);
 };
@@ -564,11 +572,13 @@ export interface SelectExactlyOneSignatures {
 }
 
 /**
- * Generate a `SELECT` query `SQLFragment` that returns a single result or throws an error. 
- * A `LIMIT 1` clause is added automatically. This can be nested with other 
- * `select`/`selectOne`/`count` queries using the `lateral` option.
+ * Generate a `SELECT` query `SQLFragment` that returns a single result or 
+ * throws an error. A `LIMIT 1` clause is added automatically. This can be 
+ * nested with other `select`/`selectOne`/`count` queries using the `lateral` 
+ * option.
  * @param table The table to select from
- * @param where A `Whereable` or `SQLFragment` defining the rows to be selected, or `all`
+ * @param where A `Whereable` or `SQLFragment` defining the rows to be selected,
+ * or `all`
  * @param options Options object. See documentation for `select` for details.
  */
 
@@ -588,10 +598,11 @@ export interface CountSignatures {
 }
 
 /**
- * Generate a `SELECT` query `SQLFragment` that returns a count. This can be nested in 
- * other `select`/`selectOne` queries using their `lateral` option.
+ * Generate a `SELECT` query `SQLFragment` that returns a count. This can be 
+ * nested in other `select`/`selectOne` queries using their `lateral` option.
  * @param table The table to count from
- * @param where A `Whereable` or `SQLFragment` defining the rows to be counted, or `all`
+ * @param where A `Whereable` or `SQLFragment` defining the rows to be counted, 
+ * or `all`
  * @param options Options object. Keys are: `columns`, `alias`.
  */
 export const count: CountSignatures = function (table, where, options?) {

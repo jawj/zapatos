@@ -60,25 +60,28 @@ export type DateString = string;
  * Compiles to a numbered query parameter (`$1`, `$2`, etc) and adds the wrapped value 
  * at the appropriate position of the values array passed to `pg`.
  * @param x The value to be wrapped
- * @param cast Optional cast type. If a string, the parameter will be cast to this type
- * within the query e.g. `CAST($1 AS type)` instead of plain `$1`. If `true`, the value
- * will be JSON stringified and cast to `json` (irrespective of the configuration parameters
- * `castArrayParamsToJson` and `castObjectParamsToJson`). If `false`, the value will **not**
- * be JSON stringified or cast to `json` (again irrespective of the configuration parameters
- * `castArrayParamsToJson` and `castObjectParamsToJson`).
+ * @param cast Optional cast type. If a string, the parameter will be cast to
+ * this type within the query e.g. `CAST($1 AS type)` instead of plain `$1`. If
+ * `true`, the value will be JSON stringified and cast to `json` (irrespective 
+ * of the configuration parameters `castArrayParamsToJson` and 
+ * `castObjectParamsToJson`). If `false`, the value will **not** be JSON-
+ * stringified or cast to `json` (again irrespective of the configuration 
+ * parameters `castArrayParamsToJson` and `castObjectParamsToJson`).
  */
 export class Parameter<T = any> { constructor(public value: T, public cast?: boolean | string) { } }
+
 /**
- * Returns a `Parameter` instance, which compiles to a numbered query parameter (`$1`, 
- * `$2`, etc) and adds its wrapped value at the appropriate position of the values array 
- * passed to `pg`.
+ * Returns a `Parameter` instance, which compiles to a numbered query parameter 
+ * (`$1`, `$2`, etc) and adds its wrapped value at the appropriate position of
+ * the values array passed to `pg`.
  * @param x The value to be wrapped
- * @param cast Optional cast type. If a string, the parameter will be cast to this type 
- * within the query e.g. `CAST($1 AS type)` instead of plain `$1`. If `true`, the value 
- * will be JSON stringified and cast to `json` (irrespective of the configuration parameters 
- * `castArrayParamsToJson` and `castObjectParamsToJson`). If `false`, the value will **not** 
- * be JSON stringified or cast to `json` (again irrespective of the configuration parameters 
- * `castArrayParamsToJson` and `castObjectParamsToJson`).
+ * @param cast Optional cast type. If a string, the parameter will be cast to 
+ * this type within the query e.g. `CAST($1 AS type)` instead of plain `$1`. If
+ * `true`, the value will be JSON stringified and cast to `json` (irrespective
+ * of the configuration parameters `castArrayParamsToJson` and 
+ * `castObjectParamsToJson`). If `false`, the value will **not** be JSON 
+ * stringified or cast to `json` (again irrespective of the configuration 
+ * parameters `castArrayParamsToJson` and `castObjectParamsToJson`).
  */
 export function param<T = any>(x: T, cast?: boolean | string) { return new Parameter(x, cast); }
 
@@ -87,34 +90,35 @@ export function param<T = any>(x: T, cast?: boolean | string) { return new Param
  */
 export class DangerousRawString { constructor(public value: string) { } }
 /**
- * Returns a `DangerousRawString` instance, wrapping a string. `DangerousRawString`
- * compiles to the wrapped string value, as is. Dangerous: https://xkcd.com/327/.
+ * Returns a `DangerousRawString` instance, wrapping a string. 
+ * `DangerousRawString` compiles to the wrapped string value, as is. 
+ * Dangerous: https://xkcd.com/327/.
  */
 export function raw(x: string) { return new DangerousRawString(x); }
 
 /**
- * Wraps either an array or object, and compiles to a quoted, comma-separated list of 
- * array values (for use in a `SELECT` query) or object keys (for use in an `INSERT`, 
- * `UDPATE` or `UPSERT` query, alongside `ColumnValues`).
+ * Wraps either an array or object, and compiles to a quoted, comma-separated
+ * list of array values (for use in a `SELECT` query) or object keys (for use
+ * in an `INSERT`, `UPDATE` or `UPSERT` query, alongside `ColumnValues`).
  */
 export class ColumnNames<T> { constructor(public value: T) { } }
 /**
- * Returns a `ColumnNames` instance, wrapping either an array or an object. `ColumnNames` 
- * compiles to a quoted, comma-separated list of array values (for use in a `SELECT` 
- * query) or object keys (for use in an `INSERT`, `UDPATE` or `UPSERT` query alongside 
- * a `ColumnValues`).
+ * Returns a `ColumnNames` instance, wrapping either an array or an object.
+ * `ColumnNames` compiles to a quoted, comma-separated list of array values (for
+ * use in a `SELECT` query) or object keys (for use in an `INSERT`, `UDPATE` or
+ * `UPSERT` query alongside a `ColumnValues`).
  */
 export function cols<T>(x: T) { return new ColumnNames<T>(x); }
 
 /**
- * Compiles to a quoted, comma-separated list of object keys for use in an `INSERT`, 
- * `UPDATE` or `UPSERT` query, alongside `ColumnNames`.
+ * Compiles to a quoted, comma-separated list of object keys for use in an
+ * `INSERT`, `UPDATE` or `UPSERT` query, alongside `ColumnNames`.
  */
 export class ColumnValues<T> { constructor(public value: T) { } }
 /**
- * Returns a ColumnValues instance, wrapping an object. ColumnValues compiles to a 
- * quoted, comma-separated list of object keys for use in an INSERT, UPDATE or UPSERT 
- * query alongside a `ColumnNames`.
+ * Returns a ColumnValues instance, wrapping an object. ColumnValues compiles to
+ * a  quoted, comma-separated list of object keys for use in an INSERT, UPDATE
+ * or UPSERT query alongside a `ColumnNames`.
  */
 export function vals<T>(x: T) { return new ColumnValues<T>(x); }
 
@@ -124,8 +128,8 @@ export function vals<T>(x: T) { return new ColumnValues<T>(x); }
  */
 export class ParentColumn<T extends Column = Column> { constructor(public value: T) { } }
 /**
- * Returns a `ParentColumn` instance, wrapping a column name, which compiles to that 
- * column name of the table of the parent query.
+ * Returns a `ParentColumn` instance, wrapping a column name, which compiles to
+ * that column name of the table of the parent query.
  */
 export function parent<T extends Column = Column>(x: T) { return new ParentColumn<T>(x); }
 
@@ -145,10 +149,10 @@ interface SQLQuery {
 }
 
 /**
- * Tagged template function returning a `SQLFragment`. The first generic type argument 
- * defines what interpolated value types are allowed. The second defines what type the 
- * `SQLFragment` produces, where relevant (i.e. when calling `.run(...)` on it, or using 
- * it as the value of an `extras` object).
+ * Tagged template function returning a `SQLFragment`. The first generic type
+ * argument defines what interpolated value types are allowed. The second
+ * defines what type the `SQLFragment` produces, where relevant (i.e. when
+ * calling `.run(...)` on it, or using it as the value of an `extras` object).
  */
 export function sql<
   Interpolations = SQL,
@@ -162,10 +166,10 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
   protected constraint?: Constraint;
 
   /**
-   * When calling `run`, this function is applied to the object returned by `pg` to 
-   * produce the result that is returned. By default, the `rows` array is returned — i.e.
-   * `(qr) => qr.rows` — but some shortcut functions alter this in order to match their 
-   * declared `RunResult` type.
+   * When calling `run`, this function is applied to the object returned by `pg`
+   * to produce the result that is returned. By default, the `rows` array is 
+   * returned — i.e. `(qr) => qr.rows` — but some shortcut functions alter this
+   * in order to match their declared `RunResult` type.
    */
   runResultTransform: (qr: pg.QueryResult) => any = qr => qr.rows;
 
@@ -177,8 +181,8 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
   constructor(private literals: string[], private expressions: SQL[]) { }
 
   /**
-   * Compile and run this query using the provided database connection. What's returned 
-   * is piped via `runResultTransform` before being returned.
+   * Compile and run this query using the provided database connection. What's
+   * returned is piped via `runResultTransform` before being returned.
    * @param queryable A database client or pool
    * @param force If true, force this query to hit the DB even if it's marked as a no-op
    */
@@ -204,9 +208,9 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
   };
 
   /**
-   * Compile this query, returning a `{ text: string, values: any[] }` object that could 
-   * be passed to the `pg` query function. Arguments are generally only passed when the 
-   * function calls itself recursively.
+   * Compile this query, returning a `{ text: string, values: any[] }` object
+   * that could be passed to the `pg` query function. Arguments are generally
+   * only passed when the function calls itself recursively.
    */
   compile = (result: SQLQuery = { text: '', values: [] }, parentTable?: string, currentColumn?: Column) => {
     if (this.parentTable) parentTable = this.parentTable;

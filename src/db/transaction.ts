@@ -51,13 +51,15 @@ export type TxnClientForSerializableRODeferrable = TxnClient<IsolationSatisfying
 let txnSeq = 0;
 
 /**
- * Provide a database client to the callback, whose queries are then wrapped in a 
- * database transaction. The transaction is committed, retried, or rolled back as 
- * appropriate. 
- * @param txnClientOrPool The `pg.Pool` from which to check out the database client
- * or an appropriate client to be passed through
- * @param isolationLevel The desired `IsolationLevel` (e.g `Serializable`) 
- * @param callback A callback function that runs queries on the client provided to it
+ * Provide a database client to the callback, whose queries are then wrapped in 
+ * a database transaction. The transaction is committed, retried, or rolled back
+ * as appropriate. 
+ * @param txnClientOrPool The `pg.Pool` from which to check out the database
+ * client or an appropriate transaction client to be passed through
+ * @param isolationLevel The desired isolation level (e.g.
+ * `IsolationLevel.Serializable`)
+ * @param callback A callback function that runs queries on the client provided
+ * to it
  */
 export async function transaction<T, M extends IsolationLevel>(
   txnClientOrPool: pg.Pool | TxnClient<IsolationSatisfying<M>>,
@@ -123,62 +125,70 @@ export async function transaction<T, M extends IsolationLevel>(
 
 /**
  * Shortcut for `transaction` with isolation level `Serializable`.
- * @param txnClientOrPool The `pg.Pool` from which to check out the database client
- * @param callback A callback function that runs queries on the client provided to it
+ * @param txnClientOrPool The `pg.Pool` from which to check out the database 
+ * client
+ * @param callback A callback function that runs queries on the client provided
+ * to it
  */
 export async function serializable<T>(txnClientOrPool: pg.Pool | TxnClientForSerializable, callback: (client: TxnClientForSerializable) => Promise<T>) {
   return transaction(txnClientOrPool, IsolationLevel.Serializable, callback);
 }
 /**
  * Shortcut for `transaction` with isolation level `RepeatableRead`.
- * @param txnClientOrPool The `pg.Pool` from which to check out the database client
- * or an appropriate client to be passed through
- * @param callback A callback function that runs queries on the client provided to it
+ * @param txnClientOrPool The `pg.Pool` from which to check out the database 
+ * client or an appropriate client to be passed through
+ * @param callback A callback function that runs queries on the client provided
+ * to it
  */
 export async function repeatableRead<T>(txnClientOrPool: pg.Pool | TxnClientForRepeatableRead, callback: (client: TxnClientForRepeatableRead) => Promise<T>) {
   return transaction(txnClientOrPool, IsolationLevel.RepeatableRead, callback);
 }
 /**
  * Shortcut for `transaction` with isolation level `ReadCommitted`.
- * @param txnClientOrPool The `pg.Pool` from which to check out the database client
- * or an appropriate client to be passed through
- * @param callback A callback function that runs queries on the client provided to it
+ * @param txnClientOrPool The `pg.Pool` from which to check out the database 
+ * client or an appropriate client to be passed through
+ * @param callback A callback function that runs queries on the client provided 
+ * to it
  */
 export async function readCommitted<T>(txnClientOrPool: pg.Pool | TxnClientForReadCommitted, callback: (client: TxnClientForReadCommitted) => Promise<T>) {
   return transaction(txnClientOrPool, IsolationLevel.ReadCommitted, callback);
 }
 /**
  * Shortcut for `transaction` with isolation level `SerializableRO`.
- * @param txnClientOrPool The `pg.Pool` from which to check out the database client
- * or an appropriate client to be passed through
- * @param callback A callback function that runs queries on the client provided to it
+ * @param txnClientOrPool The `pg.Pool` from which to check out the database
+ * client or an appropriate client to be passed through
+ * @param callback A callback function that runs queries on the client provided
+ * to it
  */
 export async function serializableRO<T>(txnClientOrPool: pg.Pool | TxnClientForSerializableRO, callback: (client: TxnClientForSerializableRO) => Promise<T>) {
   return transaction(txnClientOrPool, IsolationLevel.SerializableRO, callback);
 }
 /**
  * Shortcut for `transaction` with isolation level `RepeatableReadRO`.
- * @param txnClientOrPool The `pg.Pool` from which to check out the database client
- * or an appropriate client to be passed through
- * @param callback A callback function that runs queries on the client provided to it
+ * @param txnClientOrPool The `pg.Pool` from which to check out the database
+ * client or an appropriate client to be passed through
+ * @param callback A callback function that runs queries on the client provided
+ * to it
  */
 export async function repeatableReadRO<T>(txnClientOrPool: pg.Pool | TxnClientForRepeatableReadRO, callback: (client: TxnClientForRepeatableReadRO) => Promise<T>) {
   return transaction(txnClientOrPool, IsolationLevel.RepeatableReadRO, callback);
 }
 /**
  * Shortcut for `transaction` with isolation level `ReadCommittedRO`.
- * @param txnClientOrPool The `pg.Pool` from which to check out the database client
- * or an appropriate client to be passed through
- * @param callback A callback function that runs queries on the client provided to it
+ * @param txnClientOrPool The `pg.Pool` from which to check out the database
+ * client or an appropriate client to be passed through
+ * @param callback A callback function that runs queries on the client provided
+ * to it
  */
 export async function readCommittedRO<T>(txnClientOrPool: pg.Pool | TxnClientForReadCommittedRO, callback: (client: TxnClientForReadCommittedRO) => Promise<T>) {
   return transaction(txnClientOrPool, IsolationLevel.ReadCommittedRO, callback);
 }
 /**
  * Shortcut for `transaction` with isolation level `SerializableRODeferrable`.
- * @param txnClientOrPool The `pg.Pool` from which to check out the database client
- * or an appropriate client to be passed through
- * @param callback A callback function that runs queries on the client provided to it
+ * @param txnClientOrPool The `pg.Pool` from which to check out the database
+ * client or an appropriate client to be passed through
+ * @param callback A callback function that runs queries on the client provided
+ * to it
  */
 export async function serializableRODeferrable<T>(txnClientOrPool: pg.Pool | TxnClientForSerializableRODeferrable, callback: (client: TxnClientForSerializableRODeferrable) => Promise<T>) {
   return transaction(txnClientOrPool, IsolationLevel.SerializableRODeferrable, callback);
