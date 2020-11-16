@@ -1,2 +1,2 @@
 
-* Fix behaviour of db.param's cast argument so that native types are not erroneously quoted
+Consider SAVEPOINT/RESTORE TO helpers and nested transaction behaviour

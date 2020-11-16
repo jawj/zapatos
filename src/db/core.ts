@@ -16,7 +16,8 @@ import type {
 } from 'zapatos/schema';
 
 
-export interface SchemaVersionCanary { version: 'a' };
+export interface SchemaVersionCanary { version: 100 };
+
 
 // === symbols, types, wrapper classes and shortcuts ===
 
