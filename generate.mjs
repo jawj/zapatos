@@ -10,7 +10,5 @@ export const tsTypeForPgType = mod.tsTypeForPgType;
 export const tablesInSchema = mod.tablesInSchema;
 export const definitionForTableInSchema = mod.definitionForTableInSchema;
 export const crossTableTypesForTables = mod.crossTableTypesForTables;
-export const versionCanary = mod.versionCanary;
-export const declareModule = mod.declareModule;
 export const tsForConfig = mod.tsForConfig;
 export const generate = mod.generate;
