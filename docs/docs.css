@@ -186,6 +186,11 @@ pre code {
   display: inline-block;
   padding: 0 7px;
 }
+.openmonaco {
+  /* these rules fix a Safari bug */
+  min-width: 110px;
+  text-align: center;
+}
 .openmonaco, .toggleimports {
   color: #36e;
   border: 1px solid #36e;
