@@ -50,16 +50,17 @@ export const definitionForTableInSchema = async (
     insertables: string[] = [];
 
   rows.forEach(row => {
-    const { column, nullable, hasDefault, udtName, domainName } = row;
+    const { column, generated, nullable, hasDefault, udtName, domainName } = row;
     let type = tsTypeForPgType(udtName, enums);
 
     const
-      insertablyOptional = nullable || hasDefault ? '?' : '',
+      columnOptions = config.columnOptions[tableName] && config.columnOptions[tableName][column],
+      insertablyOptional = nullable || hasDefault || generated || columnOptions?.optional ? '?' : '',
       orNull = nullable ? ' | null' : '',
       orDateString = type === 'Date' ? ' | db.DateString' : type === 'Date[]' ? ' | db.DateString[]' : '',
       orDefault = nullable || hasDefault ? ' | db.DefaultType' : '';
 
-    // TODO: remove `is_generated` columns from Insertable (and Updatable, but not Selectable or Whereable)
+    // TODO: actually remove `is_generated` columns from Insertable (and Updatable, but not Selectable or Whereable)
 
     // Now, 4 cases: 
     //   1. null domain, known udt        <-- standard case

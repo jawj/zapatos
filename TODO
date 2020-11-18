@@ -1,2 +1,3 @@
 
+Actually remove `is_generated` columns from Insertable (and Updatable, but not Selectable or Whereable)
 Consider SAVEPOINT/RESTORE TO helpers and nested transaction behaviour

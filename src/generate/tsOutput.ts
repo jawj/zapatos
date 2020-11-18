@@ -8,17 +8,20 @@ import * as pg from 'pg';
 
 import { enumDataForSchema, enumTypesForEnumData } from './enums';
 import { tablesInSchema, definitionForTableInSchema, crossTableTypesForTables } from './tables';
-import type { CompleteConfig } from './config';
 import { header } from './header';
+import type { CompleteConfig } from './config';
+import type { SchemaVersionCanary } from "../db/canary";
 
 
 export interface CustomTypes {
   [name: string]: string;  // any, or TS type for domain's base type
 }
 
-const versionCanary = `
+const
+  canaryVersion: SchemaVersionCanary['version'] = 100,
+  versionCanary = `
 // got a type error on schemaVersionCanary below? update by running \`npx zapatos\`
-export interface schemaVersionCanary extends db.SchemaVersionCanary { version: 100 }
+export interface schemaVersionCanary extends db.SchemaVersionCanary { version: ${canaryVersion} }
 `;
 
 const declareModule = (module: string, declarations: string) => `

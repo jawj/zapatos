@@ -27,6 +27,7 @@ export interface OptionalConfig {
   progressListener: boolean | ((s: string) => void);
   warningListener: boolean | ((s: string) => void);
   customTypesTransform: 'PgMy_type' | 'my_type' | 'PgMyType' | ((s: string) => string);
+  columnOptions: { [k: string]: { [k: string]: { optional?: boolean } } };
 }
 
 export type Config = RequiredConfig & Partial<OptionalConfig>;
@@ -39,6 +40,7 @@ const defaultConfig: OptionalConfig = {
   progressListener: false,
   warningListener: true,
   customTypesTransform: 'PgMy_type',
+  columnOptions: {},
 };
 
 export const moduleRoot = () => {
