@@ -51,11 +51,6 @@ export const notReImatch = <T extends string>(a: T) => sql<SQL, boolean | null, 
 export const isIn = <T>(a: T[]) => a.length > 0 ? sql<SQL, boolean | null, T>`${self} IN (${vals(a)})` : sql`false`;
 export const isNotIn = <T>(a: T[]) => a.length > 0 ? sql<SQL, boolean | null, T>`${self} NOT IN (${vals(a)})` : sql`true`;
 
-export const distanceIsLt = <T extends string>(a: T | SQL, threshold: number) =>
-  sql<SQL, boolean, T>`(${self} <-> ${conditionalParam(a)}) < ${conditionalParam(threshold)}`;
-export const distanceIsGt = <T extends string>(a: T | SQL, threshold: number) =>
-  sql<SQL, boolean, T>`(${self} <-> ${conditionalParam(a)}) > ${conditionalParam(threshold)}`;
-
 export const or = <T>(...conditions: SQLFragment<any, T>[]) => sql<SQL, boolean | null, T>`(${mapWithSeparator(conditions, sql` OR `, c => c)})`;
 export const and = <T>(...conditions: SQLFragment<any, T>[]) => sql<SQL, boolean | null, T>`(${mapWithSeparator(conditions, sql` AND `, c => c)})`;
 export const not = <T>(condition: SQLFragment<any, T>) => sql<SQL, boolean | null, T>`(NOT ${condition})`;
@@ -63,7 +58,4 @@ export const not = <T>(condition: SQLFragment<any, T>) => sql<SQL, boolean | nul
 // these are really more operations than conditions, but we sneak them in here for now, for use e.g. in UPDATE queries
 export const add = <T extends number | Date>(a: T) => sql<SQL, number, T>`${self} + ${conditionalParam(a)}`;
 export const subtract = <T extends number | Date>(a: T) => sql<SQL, number, T>`${self} - ${conditionalParam(a)}`;
-
-// helper for defining an ordering in terms of distance
-export const distanceOrder = <T extends string>(a: SQL, b: SQL | T) => sql<SQL, SQL, T>`${a} <-> ${conditionalParam(b)}`;
 

@@ -325,10 +325,10 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
             columnName = columnNames[i],
             columnValue = (<any>expression)[columnName];
 
-          // if the value is undefined, skip the condition. Otherwise you will will end up with
+          // if the value is undefined, throw an error. Otherwise you will will end up with
           // `${value} = undefined` in the SQL which will always be false
           if (typeof columnValue === 'undefined') {
-            continue;
+            throw new Error(`Where condition for ${columnValue} was "undefined"`);
           }
 
           if (i > 0) result.text += ' AND ';
