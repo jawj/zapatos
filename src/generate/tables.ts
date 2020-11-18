@@ -37,8 +37,8 @@ export const definitionForTableInSchema = async (
         SELECT
           "column_name" AS "column"
         , "is_nullable" = 'YES' AS "nullable"
-        , "is_generated" = 'ALWAYS' AS "generated"
-        , "column_default" IS NOT NULL OR "is_identity" = 'YES' AS "hasDefault"
+        , "is_generated" = 'ALWAYS' OR "identity_generation" = 'ALWAYS' AS "generated"
+        , "column_default" IS NOT NULL OR "identity_generation" = 'BY DEFAULT' AS "hasDefault"
         , "udt_name" AS "udtName"
         , "domain_name" AS "domainName"
         FROM "information_schema"."columns"
@@ -47,7 +47,9 @@ export const definitionForTableInSchema = async (
     }),
 
     selectables: string[] = [],
-    insertables: string[] = [];
+    whereables: string[] = [],
+    insertables: string[] = [],
+    updatables: string[] = [];
 
   rows.forEach(row => {
     const { column, generated, nullable, hasDefault, udtName, domainName } = row;
@@ -55,12 +57,11 @@ export const definitionForTableInSchema = async (
 
     const
       columnOptions = config.columnOptions[tableName] && config.columnOptions[tableName][column],
-      insertablyOptional = nullable || hasDefault || generated || columnOptions?.optional ? '?' : '',
+      readonly = generated || columnOptions?.readonly,
+      insertablyOptional = nullable || hasDefault || columnOptions?.optionalInsert ? '?' : '',
       orNull = nullable ? ' | null' : '',
       orDateString = type === 'Date' ? ' | db.DateString' : type === 'Date[]' ? ' | db.DateString[]' : '',
       orDefault = nullable || hasDefault ? ' | db.DefaultType' : '';
-
-    // TODO: actually remove `is_generated` columns from Insertable (and Updatable, but not Selectable or Whereable)
 
     // Now, 4 cases: 
     //   1. null domain, known udt        <-- standard case
@@ -80,7 +81,15 @@ export const definitionForTableInSchema = async (
     }
 
     selectables.push(`${column}: ${type}${orNull};`);
-    insertables.push(`${column}${insertablyOptional}: ${type} | db.Parameter<${type}>${orDateString}${orNull}${orDefault} | db.SQLFragment;`);
+
+    const basicWhereableTypes = `${type} | db.Parameter<${type}>${orDateString} | db.SQLFragment | db.ParentColumn`;
+    whereables.push(`${column}?: ${basicWhereableTypes} | db.SQLFragment<any, ${basicWhereableTypes}>;`);
+
+    if (!readonly) {
+      const basicInsertableTypes = `${type} | db.Parameter<${type}>${orDateString}${orNull}${orDefault} | db.SQLFragment`;
+      insertables.push(`${column}${insertablyOptional}: ${basicInsertableTypes};`);
+      updatables.push(`${column}?: ${basicInsertableTypes} | db.SQLFragment<any, ${basicInsertableTypes}>;`);
+    }
   });
 
   const
@@ -101,11 +110,15 @@ export namespace ${tableName} {
   export interface Selectable {
     ${selectables.join('\n    ')}
   }
+  export interface Whereable {
+    ${whereables.join('\n    ')}
+  }
   export interface Insertable {
     ${insertables.join('\n    ')}
   }
-  export interface Updatable extends UpdatableFromInsertable<Insertable> { }
-  export interface Whereable extends WhereableFromInsertable<Insertable> { }
+  export interface Updatable {
+    ${updatables.join('\n    ')}
+  }
   export interface JSONSelectable extends JSONSelectableFromSelectable<Selectable> { }
   export type UniqueIndex = ${uniqueIndexes.length > 0 ?
       uniqueIndexes.map(ui => "'" + ui.indexname + "'").join(' | ') :
