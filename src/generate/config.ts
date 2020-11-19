@@ -28,10 +28,10 @@ export interface OptionalConfig {
   warningListener: boolean | ((s: string) => void);
   customTypesTransform: 'PgMy_type' | 'my_type' | 'PgMyType' | ((s: string) => string);
   columnOptions: {
-    [k: string]: {
-      [k: string]: {
-        optionalInsert?: boolean;
-        readonly?: boolean;
+    [k: string]: {  // table name
+      [k: string]: {  // column name
+        insert?: 'auto' | 'disabled' | 'optional';
+        update?: 'auto' | 'disabled';
       };
     };
   };

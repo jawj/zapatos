@@ -36,8 +36,8 @@ export const definitionForTableInSchema = async (
       text: `
         SELECT
           "column_name" AS "column"
-        , "is_nullable" = 'YES' AS "nullable"
-        , "is_generated" = 'ALWAYS' OR "identity_generation" = 'ALWAYS' AS "generated"
+        , "is_nullable" = 'YES' AS "isNullable"
+        , "is_generated" = 'ALWAYS' OR "identity_generation" = 'ALWAYS' AS "isGenerated"
         , "column_default" IS NOT NULL OR "identity_generation" = 'BY DEFAULT' AS "hasDefault"
         , "udt_name" AS "udtName"
         , "domain_name" AS "domainName"
@@ -52,16 +52,17 @@ export const definitionForTableInSchema = async (
     updatables: string[] = [];
 
   rows.forEach(row => {
-    const { column, generated, nullable, hasDefault, udtName, domainName } = row;
+    const { column, isGenerated, isNullable, hasDefault, udtName, domainName } = row;
     let type = tsTypeForPgType(udtName, enums);
 
     const
       columnOptions = config.columnOptions[tableName] && config.columnOptions[tableName][column],
-      readonly = generated || columnOptions?.readonly,
-      insertablyOptional = nullable || hasDefault || columnOptions?.optionalInsert ? '?' : '',
-      orNull = nullable ? ' | null' : '',
+      isInsertable = !isGenerated && columnOptions?.insert !== 'disabled',
+      isUpdatable = !isGenerated && columnOptions?.update !== 'disabled',
+      insertablyOptional = isNullable || hasDefault || columnOptions?.insert === 'optional' ? '?' : '',
+      orNull = isNullable ? ' | null' : '',
       orDateString = type === 'Date' ? ' | db.DateString' : type === 'Date[]' ? ' | db.DateString[]' : '',
-      orDefault = nullable || hasDefault ? ' | db.DefaultType' : '';
+      orDefault = isNullable || hasDefault ? ' | db.DefaultType' : '';
 
     // Now, 4 cases: 
     //   1. null domain, known udt        <-- standard case
@@ -85,11 +86,9 @@ export const definitionForTableInSchema = async (
     const basicWhereableTypes = `${type} | db.Parameter<${type}>${orDateString} | db.SQLFragment | db.ParentColumn`;
     whereables.push(`${column}?: ${basicWhereableTypes} | db.SQLFragment<any, ${basicWhereableTypes}>;`);
 
-    if (!readonly) {
-      const basicInsertableTypes = `${type} | db.Parameter<${type}>${orDateString}${orNull}${orDefault} | db.SQLFragment`;
-      insertables.push(`${column}${insertablyOptional}: ${basicInsertableTypes};`);
-      updatables.push(`${column}?: ${basicInsertableTypes} | db.SQLFragment<any, ${basicInsertableTypes}>;`);
-    }
+    const basicInsertableTypes = `${type} | db.Parameter<${type}>${orDateString}${orNull}${orDefault} | db.SQLFragment`;
+    if (isInsertable) insertables.push(`${column}${insertablyOptional}: ${basicInsertableTypes};`);
+    if (isUpdatable) updatables.push(`${column}?: ${basicInsertableTypes} | db.SQLFragment<any, ${basicInsertableTypes}>;`);
   });
 
   const
