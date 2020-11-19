@@ -22,7 +22,6 @@ export interface RequiredConfig {
 
 export interface OptionalConfig {
   outDir: string;
-  srcMode: 'symlink' | 'copy';
   schemas: SchemaRules;
   progressListener: boolean | ((s: string) => void);
   warningListener: boolean | ((s: string) => void);
@@ -42,7 +41,6 @@ export type CompleteConfig = RequiredConfig & OptionalConfig;
 
 const defaultConfig: OptionalConfig = {
   outDir: '.',
-  srcMode: 'copy',
   schemas: { public: { include: '*', exclude: [] } },
   progressListener: false,
   warningListener: true,
