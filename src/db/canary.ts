@@ -10,4 +10,4 @@ Released under the MIT licence: see LICENCE file
  * generated schema format, in order to raise a type error and thereby force
  * schema regeneration.
  */
-export interface SchemaVersionCanary { version: 100 }
+export interface SchemaVersionCanary { version: 101 }

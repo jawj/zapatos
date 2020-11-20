@@ -431,8 +431,10 @@ export class NotExactlyOneError extends Error {
  * * `order` – an array of `OrderSpec` objects, such as 
  * `{ by: 'column', direction: 'ASC' }`  
  * * `limit` and `offset` – numbers: apply this limit and offset to the query
- * * `lateral` — an object mapping key(s) to nested `select`/`selectOne`/`count`
- * queries to be `LATERAL JOIN`ed
+ * * `lateral` — either an object mapping keys to nested `select`/`selectOne`/
+ * `count` queries to be `LATERAL JOIN`ed, or a single `select`/`selectOne`/
+ * `count` query whose result will be passed through directly as the result of
+ * the containing query
  * * `alias` — table alias (string): required if using `lateral` to join a table
  * to itself
  * * `extras` — an object mapping key(s) to `SQLFragment`s, so that derived 
@@ -456,16 +458,16 @@ export const select: SelectSignatures = function (
     tableAliasSQL = alias === table ? [] : sql<string>` AS ${alias}`,
     distinctSQL = !distinct ? [] : sql` DISTINCT${distinct instanceof SQLFragment || typeof distinct === 'string' ? sql` ON (${distinct})` :
       Array.isArray(distinct) ? sql` ON (${cols(distinct)})` : []}`,
-    colsSQL = mode === SelectResultMode.Count ?
-      (columns ? sql`count(${cols(columns)})` : sql<typeof alias>`count(${alias}.*)`) :
-      SQLForColumnsOfTable(columns, alias as Table),
-    colsExtraSQL = SQLForExtras(extras),
+    colsSQL = lateral instanceof SQLFragment ? [] :
+      mode === SelectResultMode.Count ?
+        (columns ? sql`count(${cols(columns)})` : sql<typeof alias>`count(${alias}.*)`) :
+        SQLForColumnsOfTable(columns, alias as Table),
+    colsExtraSQL = lateral instanceof SQLFragment ? [] : SQLForExtras(extras),
     colsLateralSQL = lateral === undefined ? [] :
       lateral instanceof SQLFragment ? sql`"ljoin_passthru".result` :
         sql` || jsonb_build_object(${mapWithSeparator(
           Object.keys(lateral).sort(), sql`, `, (k, i) => sql`${param(k)}::text, "ljoin_${raw(String(i))}".result`)})`,
-    allColsSQL = lateral instanceof SQLFragment ? colsLateralSQL :
-      sql`${colsSQL}${colsExtraSQL}${colsLateralSQL}`,
+    allColsSQL = sql`${colsSQL}${colsExtraSQL}${colsLateralSQL}`,
     whereSQL = where === all ? [] : sql` WHERE ${where}`,
     groupBySQL = !groupBy ? [] : sql` GROUP BY ${groupBy instanceof SQLFragment || typeof groupBy === 'string' ? groupBy : cols(groupBy)}`,
     havingSQL = !having ? [] : sql` HAVING ${having}`,
