@@ -374,10 +374,9 @@ type SelectReturnTypeForTable<
   L extends LateralOption,
   E extends ExtrasOption,
   > =
-  L extends SQLFragment ? PromisedSQLFragmentReturnType<L> :
-  ReturningTypeForTable<T, C, E> &
-  (undefined extends L ? {} :
-    L extends SQLFragmentsMap ? LateralResult<L> :
+  (undefined extends L ? ReturningTypeForTable<T, C, E> :
+    L extends SQLFragmentsMap ? ReturningTypeForTable<T, C, E> & LateralResult<L> :
+    L extends SQLFragment<any> ? PromisedSQLFragmentReturnType<L> :
     never);
 
 export enum SelectResultMode { Many, One, ExactlyOne, Count }
