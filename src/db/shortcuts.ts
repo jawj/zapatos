@@ -53,20 +53,24 @@ export interface SQLFragmentsMap { [k: string]: SQLFragment<any> }
 export type PromisedSQLFragmentReturnType<R extends SQLFragment<any>> = PromisedType<ReturnType<R['run']>>;
 
 // yes, the next two types are identical, but distinct names make complex inferred types more readable
-export type Lateral<L extends SQLFragmentsMap> = { [K in keyof L]: PromisedSQLFragmentReturnType<L[K]> };
-export type Extras<L extends SQLFragmentsMap> = { [K in keyof L]: PromisedSQLFragmentReturnType<L[K]> };
+export type LateralResult<L extends SQLFragmentsMap> = { [K in keyof L]: PromisedSQLFragmentReturnType<L[K]> };
+export type ExtrasResult<L extends SQLFragmentsMap> = { [K in keyof L]: PromisedSQLFragmentReturnType<L[K]> };
 
-export interface ReturningOptionsForTable<T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined> {
+type LateralOption = SQLFragmentsMap | SQLFragment<any> | undefined;
+type ExtrasOption = SQLFragmentsMap | undefined;
+type ColumnsOption<T extends Table> = ColumnForTable<T>[] | undefined;
+
+export interface ReturningOptionsForTable<T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption> {
   returning?: C;
   extras?: E;
 };
 
-type ReturningTypeForTable<T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined> =
+type ReturningTypeForTable<T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption> =
   (undefined extends C ? JSONSelectableForTable<T> :
     C extends ColumnForTable<T>[] ? JSONOnlyColsForTable<T, C> :
     never) &
   (undefined extends E ? {} :
-    E extends SQLFragmentsMap ? Extras<E> :
+    E extends SQLFragmentsMap ? ExtrasResult<E> :
     never);
 
 
@@ -346,9 +350,9 @@ export interface SelectLockingOptions {
 
 export interface SelectOptionsForTable<
   T extends Table,
-  C extends ColumnForTable<T>[] | undefined,
-  L extends SQLFragmentsMap | undefined,
-  E extends SQLFragmentsMap | undefined,
+  C extends ColumnsOption<T>,
+  L extends LateralOption,
+  E extends ExtrasOption,
   > {
   distinct?: boolean | ColumnForTable<T> | ColumnForTable<T>[] | SQLFragment<any>;
   order?: OrderSpecForTable<T> | OrderSpecForTable<T>[];
@@ -364,48 +368,39 @@ export interface SelectOptionsForTable<
   lock?: SelectLockingOptions | SelectLockingOptions[];
 };
 
-type BaseSelectReturnTypeForTable<T extends Table, C extends ColumnForTable<T>[] | undefined> =
-  undefined extends C ? JSONSelectableForTable<T> :
-  C extends ColumnForTable<T>[] ? JSONOnlyColsForTable<T, C> :
-  never;
-
-type EnhancedSelectReturnTypeForTable<
+type SelectReturnTypeForTable<
   T extends Table,
-  C extends ColumnForTable<T>[] | undefined,
-  L extends SQLFragmentsMap | undefined,
-  E extends SQLFragmentsMap | undefined,
+  C extends ColumnsOption<T>,
+  L extends LateralOption,
+  E extends ExtrasOption,
   > =
-  undefined extends L ?
-  (undefined extends E ? BaseSelectReturnTypeForTable<T, C> :
-    E extends SQLFragmentsMap ? BaseSelectReturnTypeForTable<T, C> & Extras<E> :
-    never) :
-  L extends SQLFragmentsMap ?
-  (undefined extends E ? BaseSelectReturnTypeForTable<T, C> & Lateral<L> :
-    E extends SQLFragmentsMap ? BaseSelectReturnTypeForTable<T, C> & Lateral<L> & Extras<E> :
-    never) :
-  never;
+  L extends SQLFragment ? PromisedSQLFragmentReturnType<L> :
+  ReturningTypeForTable<T, C, E> &
+  (undefined extends L ? {} :
+    L extends SQLFragmentsMap ? LateralResult<L> :
+    never);
 
 export enum SelectResultMode { Many, One, ExactlyOne, Count }
 
 export type FullSelectReturnTypeForTable<
   T extends Table,
-  C extends ColumnForTable<T>[] | undefined,
-  L extends SQLFragmentsMap | undefined,
-  E extends SQLFragmentsMap | undefined,
+  C extends ColumnsOption<T>,
+  L extends LateralOption,
+  E extends ExtrasOption,
   M extends SelectResultMode,
   > =
   {
-    [SelectResultMode.Many]: EnhancedSelectReturnTypeForTable<T, C, L, E>[];
-    [SelectResultMode.ExactlyOne]: EnhancedSelectReturnTypeForTable<T, C, L, E>;
-    [SelectResultMode.One]: EnhancedSelectReturnTypeForTable<T, C, L, E> | undefined;
+    [SelectResultMode.Many]: SelectReturnTypeForTable<T, C, L, E>[];
+    [SelectResultMode.ExactlyOne]: SelectReturnTypeForTable<T, C, L, E>;
+    [SelectResultMode.One]: SelectReturnTypeForTable<T, C, L, E> | undefined;
     [SelectResultMode.Count]: number;
   }[M];
 
 export interface SelectSignatures {
   <T extends Table,
-    C extends ColumnForTable<T>[] | undefined,
-    L extends SQLFragmentsMap | undefined,
-    E extends SQLFragmentsMap | undefined,
+    C extends ColumnsOption<T>,
+    L extends LateralOption,
+    E extends ExtrasOption,
     M extends SelectResultMode = SelectResultMode.Many
     >(
     table: T,
@@ -448,7 +443,7 @@ export class NotExactlyOneError extends Error {
 export const select: SelectSignatures = function (
   table: Table,
   where: Whereable | SQLFragment | AllType = all,
-  options: SelectOptionsForTable<Table, ColumnForTable<Table>[] | undefined, SQLFragmentsMap | undefined, SQLFragmentsMap | undefined> = {},
+  options: SelectOptionsForTable<Table, ColumnsOption<Table>, LateralOption, ExtrasOption> = {},
   mode: SelectResultMode = SelectResultMode.Many,
 ) {
 
@@ -467,9 +462,11 @@ export const select: SelectSignatures = function (
       SQLForColumnsOfTable(columns, alias as Table),
     colsExtraSQL = SQLForExtras(extras),
     colsLateralSQL = lateral === undefined ? [] :
-      sql` || jsonb_build_object(${mapWithSeparator(
-        Object.keys(lateral), sql`, `, (k, i) => sql<SQL>`${param(k)}::text, "ljoin_${raw(String(i))}".result`)})`,
-    allColsSQL = sql`${colsSQL}${colsExtraSQL}${colsLateralSQL}`,
+      lateral instanceof SQLFragment ? sql`"ljoin_passthru".result` :
+        sql` || jsonb_build_object(${mapWithSeparator(
+          Object.keys(lateral).sort(), sql`, `, (k, i) => sql`${param(k)}::text, "ljoin_${raw(String(i))}".result`)})`,
+    allColsSQL = lateral instanceof SQLFragment ? colsLateralSQL :
+      sql`${colsSQL}${colsExtraSQL}${colsLateralSQL}`,
     whereSQL = where === all ? [] : sql` WHERE ${where}`,
     groupBySQL = !groupBy ? [] : sql` GROUP BY ${groupBy instanceof SQLFragment || typeof groupBy === 'string' ? groupBy : cols(groupBy)}`,
     havingSQL = !having ? [] : sql` HAVING ${having}`,
@@ -481,19 +478,23 @@ export const select: SelectSignatures = function (
       })}`,
     offsetSQL = allOptions.offset === undefined ? [] : sql` OFFSET ${param(allOptions.offset)} ROWS`,
     limitSQL = allOptions.limit === undefined ? [] :
-      sql<SQL>` FETCH FIRST ${param(allOptions.limit)} ROWS ${allOptions.withTies ? sql`WITH TIES` : sql`ONLY`}`,
+      sql` FETCH FIRST ${param(allOptions.limit)} ROWS ${allOptions.withTies ? sql`WITH TIES` : sql`ONLY`}`,
     lockSQL = lock === undefined ? [] : (lock as SelectLockingOptions[]).map(lock => {  // `as` clause is required when TS not strict
       const
         ofTables = lock.of === undefined || Array.isArray(lock.of) ? lock.of : [lock.of],
         ofClause = ofTables === undefined ? [] : sql` OF ${mapWithSeparator(ofTables as Table[], sql`, `, t => t)}`;  // `as` clause is required when TS not strict
-      return sql<SQL>` FOR ${raw(lock.for)}${ofClause}${lock.wait ? sql` ${raw(lock.wait)}` : []}`;
+      return sql` FOR ${raw(lock.for)}${ofClause}${lock.wait ? sql` ${raw(lock.wait)}` : []}`;
     }),
     lateralSQL = lateral === undefined ? [] :
-      Object.keys(lateral).map((k, i) => {
-        const subQ = lateral[k];
-        subQ.parentTable = alias;  // enables `parent('column')` in subquery's Wherables
-        return sql<SQL>` LEFT JOIN LATERAL (${subQ}) AS "ljoin_${raw(String(i))}" ON true`;
-      });
+      lateral instanceof SQLFragment ? (() => {
+        lateral.parentTable = alias;
+        return sql` LEFT JOIN LATERAL (${lateral}) AS "ljoin_passthru" ON true`;
+      })() :
+        Object.keys(lateral).sort().map((k, i) => {
+          const subQ = lateral[k];
+          subQ.parentTable = alias;  // enables `parent('column')` in subquery's Wherables
+          return sql` LEFT JOIN LATERAL (${subQ}) AS "ljoin_${raw(String(i))}" ON true`;
+        });
 
   const
     rowsQuery = sql<SQL, any>`SELECT${distinctSQL} ${allColsSQL} AS result FROM ${table}${tableAliasSQL}${lateralSQL}${whereSQL}${groupBySQL}${havingSQL}${orderSQL}${offsetSQL}${limitSQL}${lockSQL}`,
@@ -525,9 +526,9 @@ export const select: SelectSignatures = function (
 export interface SelectOneSignatures {
   <
     T extends Table,
-    C extends ColumnForTable<T>[] | undefined,
-    L extends SQLFragmentsMap | undefined,
-    E extends SQLFragmentsMap | undefined
+    C extends ColumnsOption<T>,
+    L extends LateralOption,
+    E extends ExtrasOption,
     >(
     table: T,
     where: WhereableForTable<T> | SQLFragment | AllType,
@@ -561,9 +562,9 @@ export const selectOne: SelectOneSignatures = function (table, where, options = 
 export interface SelectExactlyOneSignatures {
   <
     T extends Table,
-    C extends ColumnForTable<T>[] | undefined,
-    L extends SQLFragmentsMap | undefined,
-    E extends SQLFragmentsMap | undefined
+    C extends ColumnsOption<T>,
+    L extends LateralOption,
+    E extends ExtrasOption,
     >(
     table: T,
     where: WhereableForTable<T> | SQLFragment | AllType,
@@ -593,7 +594,7 @@ export interface CountSignatures {
   <T extends Table>(
     table: T,
     where: WhereableForTable<T> | SQLFragment | AllType,
-    options?: { columns?: ColumnForTable<T>[]; alias?: string },
+    options?: { columns?: ColumnsOption<T>; alias?: string },
   ): SQLFragment<number>;
 }
 
