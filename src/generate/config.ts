@@ -27,7 +27,7 @@ export interface OptionalConfig {
   warningListener: boolean | ((s: string) => void);
   customTypesTransform: 'PgMy_type' | 'my_type' | 'PgMyType' | ((s: string) => string);
   columnOptions: {
-    [k: string]: {  // table name
+    [k: string]: {  // table name or "*"
       [k: string]: {  // column name
         insert?: 'auto' | 'disabled' | 'optional';
         update?: 'auto' | 'disabled';

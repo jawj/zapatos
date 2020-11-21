@@ -40,6 +40,9 @@ export function srcWarning(config: CompleteConfig) {
 *** IMPORTANT: ZAPATOS NO LONGER COPIES ITS SOURCE TO YOUR SOURCE TREE ***
 
 To convert your codebase, please do the following:
+
+* Remove the "srcMode" key, if present, from 'zapatosconfig.json' or the config
+  argument passed to 'generate'
 ` +
       (legacySchemaExists ? `
 * Delete the file 'zapatos/schema.ts' (but leave 'zapatos/schema.d.ts')

@@ -56,7 +56,9 @@ export const definitionForTableInSchema = async (
     let type = tsTypeForPgType(udtName, enums);
 
     const
-      columnOptions = config.columnOptions[tableName] && config.columnOptions[tableName][column],
+      columnOptions =
+        (config.columnOptions[tableName] && config.columnOptions[tableName][column]) ??
+        (config.columnOptions["*"] && config.columnOptions["*"][column]),
       isInsertable = !isGenerated && columnOptions?.insert !== 'disabled',
       isUpdatable = !isGenerated && columnOptions?.update !== 'disabled',
       insertablyOptional = isNullable || hasDefault || columnOptions?.insert === 'optional' ? '?' : '',

@@ -56,9 +56,16 @@ export type PromisedSQLFragmentReturnType<R extends SQLFragment<any>> = Promised
 export type LateralResult<L extends SQLFragmentsMap> = { [K in keyof L]: PromisedSQLFragmentReturnType<L[K]> };
 export type ExtrasResult<L extends SQLFragmentsMap> = { [K in keyof L]: PromisedSQLFragmentReturnType<L[K]> };
 
-type LateralOption = SQLFragmentsMap | SQLFragment<any> | undefined;
 type ExtrasOption = SQLFragmentsMap | undefined;
 type ColumnsOption<T extends Table> = ColumnForTable<T>[] | undefined;
+
+type LimitedLateralOption = SQLFragmentsMap | undefined;
+type FullLateralOption = LimitedLateralOption | SQLFragment<any>;
+type LateralOption<
+  C extends ColumnsOption<Table>,
+  E extends ExtrasOption,
+  > =
+  undefined extends C ? undefined extends E ? FullLateralOption : LimitedLateralOption : LimitedLateralOption;
 
 export interface ReturningOptionsForTable<T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption> {
   returning?: C;
@@ -351,7 +358,7 @@ export interface SelectLockingOptions {
 export interface SelectOptionsForTable<
   T extends Table,
   C extends ColumnsOption<T>,
-  L extends LateralOption,
+  L extends LateralOption<C, E>,
   E extends ExtrasOption,
   > {
   distinct?: boolean | ColumnForTable<T> | ColumnForTable<T>[] | SQLFragment<any>;
@@ -371,7 +378,7 @@ export interface SelectOptionsForTable<
 type SelectReturnTypeForTable<
   T extends Table,
   C extends ColumnsOption<T>,
-  L extends LateralOption,
+  L extends LateralOption<C, E>,
   E extends ExtrasOption,
   > =
   (undefined extends L ? ReturningTypeForTable<T, C, E> :
@@ -384,7 +391,7 @@ export enum SelectResultMode { Many, One, ExactlyOne, Count }
 export type FullSelectReturnTypeForTable<
   T extends Table,
   C extends ColumnsOption<T>,
-  L extends LateralOption,
+  L extends LateralOption<C, E>,
   E extends ExtrasOption,
   M extends SelectResultMode,
   > =
@@ -398,7 +405,7 @@ export type FullSelectReturnTypeForTable<
 export interface SelectSignatures {
   <T extends Table,
     C extends ColumnsOption<T>,
-    L extends LateralOption,
+    L extends LateralOption<C, E>,
     E extends ExtrasOption,
     M extends SelectResultMode = SelectResultMode.Many
     >(
@@ -444,7 +451,7 @@ export class NotExactlyOneError extends Error {
 export const select: SelectSignatures = function (
   table: Table,
   where: Whereable | SQLFragment | AllType = all,
-  options: SelectOptionsForTable<Table, ColumnsOption<Table>, LateralOption, ExtrasOption> = {},
+  options: SelectOptionsForTable<Table, ColumnsOption<Table>, LateralOption<ColumnsOption<Table>, ExtrasOption>, ExtrasOption> = {},
   mode: SelectResultMode = SelectResultMode.Many,
 ) {
 
@@ -528,7 +535,7 @@ export interface SelectOneSignatures {
   <
     T extends Table,
     C extends ColumnsOption<T>,
-    L extends LateralOption,
+    L extends LateralOption<C, E>,
     E extends ExtrasOption,
     >(
     table: T,
@@ -551,7 +558,7 @@ export const selectOne: SelectOneSignatures = function (table, where, options = 
   // destructuring assignment and plain 'select' 
   // -- e.g.let[x] = async select(...).run(pool); -- but something worth having
   // is '| undefined' in the return signature, because the result of indexing 
-  // never includes undefined 
+  // never includes undefined (until 4.1 and --noUncheckedIndexedAccess)
   // (see https://github.com/Microsoft/TypeScript/issues/13778)
 
   return select(table, where, options, SelectResultMode.One);
@@ -564,7 +571,7 @@ export interface SelectExactlyOneSignatures {
   <
     T extends Table,
     C extends ColumnsOption<T>,
-    L extends LateralOption,
+    L extends LateralOption<C, E>,
     E extends ExtrasOption,
     >(
     table: T,
