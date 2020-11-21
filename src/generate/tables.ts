@@ -59,8 +59,8 @@ export const definitionForTableInSchema = async (
       columnOptions =
         (config.columnOptions[tableName] && config.columnOptions[tableName][column]) ??
         (config.columnOptions["*"] && config.columnOptions["*"][column]),
-      isInsertable = !isGenerated && columnOptions?.insert !== 'disabled',
-      isUpdatable = !isGenerated && columnOptions?.update !== 'disabled',
+      isInsertable = !isGenerated && columnOptions?.insert !== 'excluded',
+      isUpdatable = !isGenerated && columnOptions?.update !== 'excluded',
       insertablyOptional = isNullable || hasDefault || columnOptions?.insert === 'optional' ? '?' : '',
       orNull = isNullable ? ' | null' : '',
       orDateString = type === 'Date' ? ' | db.DateString' : type === 'Date[]' ? ' | db.DateString[]' : '',

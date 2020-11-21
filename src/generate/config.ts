@@ -9,13 +9,6 @@ import * as path from 'path';
 import type * as pg from 'pg';
 
 
-interface SchemaRules {
-  [schema: string]: {
-    include: '*' | string[];
-    exclude: '*' | string[];
-  };
-}
-
 export interface RequiredConfig {
   db: pg.ClientConfig;
 }
@@ -26,12 +19,21 @@ export interface OptionalConfig {
   progressListener: boolean | ((s: string) => void);
   warningListener: boolean | ((s: string) => void);
   customTypesTransform: 'PgMy_type' | 'my_type' | 'PgMyType' | ((s: string) => string);
-  columnOptions: {
-    [k: string]: {  // table name or "*"
-      [k: string]: {  // column name
-        insert?: 'auto' | 'disabled' | 'optional';
-        update?: 'auto' | 'disabled';
-      };
+  columnOptions: ColumnOptions;
+}
+
+interface SchemaRules {
+  [schema: string]: {
+    include: '*' | string[];
+    exclude: '*' | string[];
+  };
+}
+
+interface ColumnOptions {
+  [k: string]: {  // table name or "*"
+    [k: string]: {  // column name
+      insert?: 'auto' | 'excluded' | 'optional';
+      update?: 'auto' | 'excluded';
     };
   };
 }
