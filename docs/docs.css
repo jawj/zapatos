@@ -98,9 +98,15 @@ h2, h3, h4, h5, h6 {
   border-bottom: 1px #ddd solid;
   padding-bottom: 5px;
 }
-h1, h2, h3, h4, h5 {
+h1, h2, h3, h4, h5, h6 {
   line-height: 1.1;
   color: #000;
+}
+h6 {
+  border: none;
+  font-size: inherit;
+  font-style: italic;
+  font-weight: normal;
 }
 a {
   color: #36e;

@@ -116,6 +116,9 @@ document.addEventListener('click', function (e) {
           fontSize: 15,
           theme: 'vs-dark',
           automaticLayout: true,  // resize with host <div>
+          tabSize: 2,
+          insertSpaces: true,
+          detectIndentation: false,
         },
         uri = monaco.Uri.parse(`file:///main.ts`),
         model = monaco.editor.createModel('/* nothing */', 'typescript', uri),
