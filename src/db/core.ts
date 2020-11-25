@@ -5,7 +5,9 @@ Released under the MIT licence: see LICENCE file
 */
 
 import type * as pg from 'pg';
-import { getConfig } from './config';
+import { performance } from 'perf_hooks';
+
+import { getConfig, SQLQuery } from './config';
 import { isPOJO, NoInfer } from './utils';
 
 import type {
@@ -135,11 +137,6 @@ export type Queryable = pg.ClientBase | pg.Pool;
 
 // === SQL tagged template strings ===
 
-interface SQLQuery {
-  text: string;
-  values: any[];
-}
-
 /**
  * Tagged template function returning a `SQLFragment`. The first generic type
  * argument defines what interpolated value types are allowed. The second
@@ -186,6 +183,8 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
 
     if (config.queryListener) config.queryListener(query, txnId);
 
+    const startMs = performance.now();
+
     let result;
     if (!this.noop || force) {
       const qr = await queryable.query(query);
@@ -195,7 +194,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
       result = this.noopResult;
     }
 
-    if (config.resultListener) config.resultListener(result, txnId);
+    if (config.resultListener) config.resultListener(result, txnId, performance.now() - startMs);
     return result;
   };
 

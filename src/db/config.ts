@@ -4,14 +4,19 @@ Copyright (C) 2020 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
+export interface SQLQuery {
+  text: string;
+  values: any[];
+}
+
 export interface Config {
   transactionAttemptsMax: number;
   transactionRetryDelay: { minMs: number; maxMs: number };
   castArrayParamsToJson: boolean;   // see https://github.com/brianc/node-postgres/issues/2012
   castObjectParamsToJson: boolean;  // useful if json will be cast onward differently from text
-  queryListener?(str: any, txnId?: number): void;
-  resultListener?(str: any, txnId?: number): void;
-  transactionListener?(str: any, txnId?: number): void;
+  queryListener?(query: SQLQuery, txnId?: number): void;
+  resultListener?(result: any, txnId?: number, elapsedMs?: number): void;
+  transactionListener?(str: string, txnId?: number): void;
 }
 export type NewConfig = Partial<Config>;
 
