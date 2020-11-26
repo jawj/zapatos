@@ -41,6 +41,9 @@ export function srcWarning(config: CompleteConfig) {
 
 To convert your codebase, please do the following:
 
+* Make sure zapatos is a "dependency" (not merely a "devDependency") in your npm
+  'package.json'
+
 * Remove the "srcMode" key, if present, from 'zapatosconfig.json' or the config
   argument passed to 'generate'
 ` +
