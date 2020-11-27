@@ -60,6 +60,11 @@ export const or = <T>(...conditions: SQLFragment<any, T>[]) => sql<SQL, boolean 
 export const and = <T>(...conditions: SQLFragment<any, T>[]) => sql<SQL, boolean | null, T>`(${mapWithSeparator(conditions, sql` AND `, c => c)})`;
 export const not = <T>(condition: SQLFragment<any, T>) => sql<SQL, boolean | null, T>`(NOT ${condition})`;
 
+type IntervalUnit = 'microsecond' | 'millisecond' | 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year' | 'decade' | 'century' | 'millennium';
+export const fromNow = (n: number, unit: IntervalUnit = 'millisecond') => sql`now() + ${param(String(n) + ' ' + unit)}`;
+export const after = gt;
+export const before = lt;
+
 // these are really more operations than conditions, but we sneak them in here for now, for use e.g. in UPDATE queries
 export const add = <T extends number | Date>(a: T) => sql<SQL, number, T>`${self} + ${conditionalParam(a)}`;
 export const subtract = <T extends number | Date>(a: T) => sql<SQL, number, T>`${self} - ${conditionalParam(a)}`;
