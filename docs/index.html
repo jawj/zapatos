@@ -805,7 +805,7 @@
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
 </div>
 <p>Finally, there’s a set of helper functions you can use to create appropriate <code>SQLFragment</code>s like these for use as <code>Whereable</code> values. The advantages are: (1) there’s slighly less to type, and (2) you get type-checking on their arguments (so you’re not tempted to compare incomparable things).</p>
-<p>They’re exported under <code>conditions</code> on the main object, and the full set can be seen in <a href="https://github.com/jawj/zapatos/blob/master/src/conditions.ts">conditions.ts</a>. Using two of them, we’d rewrite the above example as:</p>
+<p>They’re exported under <code>conditions</code> on the main object, and the full set can be seen in <a href="https://github.com/jawj/zapatos/blob/master/src/db/conditions.ts">conditions.ts</a>. Using two of them, we’d rewrite the above example as:</p>
 <pre class="language-typescript runnable"><code class="imports"><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">import</span> * <span class="hljs-keyword">as</span> db <span class="hljs-keyword">from</span> <span class="hljs-string">'zapatos/db'</span>;</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">import</span> { conditions <span class="hljs-keyword">as</span> dc } <span class="hljs-keyword">from</span> <span class="hljs-string">'zapatos/db'</span>;</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">import type</span> * <span class="hljs-keyword">as</span> s <span class="hljs-keyword">from</span> <span class="hljs-string">'zapatos/schema'</span>;</span>
