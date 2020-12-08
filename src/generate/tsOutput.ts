@@ -7,7 +7,7 @@ Released under the MIT licence: see LICENCE file
 import * as pg from 'pg';
 
 import { enumDataForSchema, enumTypesForEnumData } from './enums';
-import { tablesInSchema, definitionForTableInSchema, crossTableTypesForTables } from './tables';
+import { TableMeta, tablesInSchema, definitionForTableInSchema, crossTableTypesForTables } from './tables';
 import { header } from './header';
 import type { CompleteConfig } from './config';
 import type { SchemaVersionCanary } from "../db/canary";
@@ -54,6 +54,11 @@ const sourceFilesForCustomTypes = (customTypes: CustomTypes) =>
       )
     ]));
 
+const convertToTableInSchema = (tables: string[]) =>
+  tables.map((t: string) => ({
+    tableName: t,
+    tableType: 'table',
+  }));
 
 export const tsForConfig = async (config: CompleteConfig) => {
   const
@@ -65,10 +70,10 @@ export const tsForConfig = async (config: CompleteConfig) => {
         const
           rules = schemas[schema],
           tables = rules.exclude === '*' ? [] :  // exclude takes precedence
-            (rules.include === '*' ? await tablesInSchema(schema, pool) : rules.include)
-              .filter(table => rules.exclude.indexOf(table) < 0),
+            (rules.include === '*' ? await tablesInSchema(schema, pool) : convertToTableInSchema(rules.include))
+              .filter((table: TableMeta) => rules.exclude.indexOf(table.tableName) < 0),
           enums = await enumDataForSchema(schema, pool),
-          tableDefs = await Promise.all(tables.map(async table =>
+          tableDefs = await Promise.all(tables.map(async (table: TableMeta) =>
             definitionForTableInSchema(table, schema, enums, customTypes, config, pool))),
           schemaDef = `\n/* === schema: ${schema} === */\n` +
             `\n/* --- enums --- */\n` +
@@ -80,7 +85,7 @@ export const tsForConfig = async (config: CompleteConfig) => {
       }))
     ),
     schemaDefs = schemaData.map(r => r.schemaDef).sort(),
-    schemaTables = schemaData.map(r => r.tables),
+    schemaTables = schemaData.map(r => r.tables.map(t => t.tableName)),
     allTables = ([] as string[]).concat(...schemaTables).sort(),
     hasCustomTypes = Object.keys(customTypes).length > 0,
     ts = header() + declareModule('zapatos/schema',
