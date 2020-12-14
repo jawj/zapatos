@@ -10,51 +10,45 @@ import type { EnumData } from './enums';
 import type { CustomTypes } from './tsOutput';
 import { CompleteConfig } from './config';
 
-export interface TableMeta {
-  tableName: string;
-  tableType: string;
+export interface Relation {
+  name: string;
+  type: 'table' | 'mview';
 }
 
-export const tablesInSchema = async (schemaName: string, pool: pg.Pool): Promise<TableMeta[]> => {
+export const relationsInSchema = async (schemaName: string, pool: pg.Pool): Promise<Relation[]> => {
   const { rows } = await pool.query({
     text: `
-      SELECT "table_name", 'table'::TEXT AS table_type
+      SELECT 
+        "table_name" AS "name"
+      , lower("table_name") AS "lname"  -- because you can't order by a function in a UNION query
+      , 'table'::text AS "type"
       FROM "information_schema"."columns"
       WHERE "table_schema" = $1 
-      GROUP BY "table_name" ORDER BY lower("table_name")`,
-    values: [schemaName]
-  });
-
-  const { rows: rowsV } = await pool.query({
-    text: `
+      GROUP BY "name"
+      UNION ALL
       SELECT
-          pg_class.relname AS table_name
-        , 'materialized view'::TEXT AS table_type
-
+        pg_class.relname AS "name"
+      , lower(pg_class.relname) AS "lname"
+      , 'mview'::text AS "type"
       FROM pg_catalog.pg_class
-
       INNER JOIN pg_catalog.pg_namespace ON pg_class.relnamespace = pg_namespace.oid
-
-      WHERE pg_class.relkind = 'm'
-        AND pg_namespace.nspname = $1
-    `,
+      WHERE pg_class.relkind = 'm' AND pg_namespace.nspname = $1
+      GROUP BY "name"
+      ORDER BY "lname", "name"`,
     values: [schemaName]
   });
 
-  return rows.concat(rowsV).map(r => ({
-    tableName: r.table_name,
-    tableType: r.table_type,
-  }));
+  return rows;
 };
 
-const columnsForTable = async(
-  table: TableMeta,
+const columnsForRelation = async (
+  rel: Relation,
   schemaName: string,
   pool: pg.Pool,
 ) => {
   const
     { rows } = await pool.query({
-      text: `
+      text: rel.type === 'table' ? `
         SELECT
           "column_name" AS "column"
         , "is_nullable" = 'YES' AS "isNullable"
@@ -63,75 +57,38 @@ const columnsForTable = async(
         , "udt_name" AS "udtName"
         , "domain_name" AS "domainName"
         FROM "information_schema"."columns"
-        WHERE "table_name" = $1 AND "table_schema" = $2`,
-      values: [table.tableName, schemaName]
-    });
-
-  return rows;
-};
-
-const columnsForMaterializedView = async(
-  table: TableMeta,
-  schemaName: string,
-  pool: pg.Pool,
-) => {
-  const
-    { rows } = await pool.query({
-      text: `
+        WHERE "table_name" = $1 AND "table_schema" = $2` : `
         SELECT
           a.attname AS "column"
         , a.attnotnull = 'f' AS "isNullable"
-        , 't' AS "isGenerated" -- You can't write to materalized views
-        , 'f' AS "hasDefault"
+        , 't' AS "isGenerated"  -- irrelevant, since can't write to materalized views
+        , 'f' AS "hasDefault"   -- irrelevant, since can't write to materalized views
         , pg_catalog.format_type(a.atttypid, a.atttypmod) AS "udtName"
-        , '?' AS "domainName"
-
-      FROM pg_catalog.pg_class
-
-      INNER JOIN pg_catalog.pg_attribute a ON pg_class.oid = a.attrelid
-      INNER JOIN pg_catalog.pg_namespace n ON pg_class.relnamespace = n.oid
-
-      WHERE pg_class.relkind = 'm'
-        AND a.attnum >= 1
-        AND pg_class.relname = $1
-        AND n.nspname = $2
-      `,
-      values: [table.tableName, schemaName]
+        , null AS "domainName"
+        FROM pg_catalog.pg_class
+        INNER JOIN pg_catalog.pg_attribute a ON pg_class.oid = a.attrelid
+        INNER JOIN pg_catalog.pg_namespace n ON pg_class.relnamespace = n.oid
+        WHERE pg_class.relkind = 'm' AND a.attnum >= 1 AND pg_class.relname = $1 AND n.nspname = $2`,
+      values: [rel.name, schemaName]
     });
 
   return rows;
 };
 
 export const definitionForTableInSchema = async (
-  table: TableMeta,
+  rel: Relation,
   schemaName: string,
   enums: EnumData,
   customTypes: CustomTypes,  // an 'out' parameter
   config: CompleteConfig,
   pool: pg.Pool,
 ) => {
-  let rows;
-  if (table.tableType === 'materialized view') {
-    rows = await columnsForMaterializedView(
-      table,
-      schemaName,
-      pool
-    );
-  } else {
-    rows = await columnsForTable(
-      table,
-      schemaName,
-      pool
-    );
-  }
-
   const
+    rows = await columnsForRelation(rel, schemaName, pool),
     selectables: string[] = [],
     whereables: string[] = [],
     insertables: string[] = [],
     updatables: string[] = [];
-
-  const tableName = table.tableName;
 
   rows.forEach(row => {
     const { column, isGenerated, isNullable, hasDefault, udtName, domainName } = row;
@@ -139,7 +96,7 @@ export const definitionForTableInSchema = async (
 
     const
       columnOptions =
-        (config.columnOptions[tableName] && config.columnOptions[tableName][column]) ??
+        (config.columnOptions[rel.name] && config.columnOptions[rel.name][column]) ??
         (config.columnOptions["*"] && config.columnOptions["*"][column]),
       isInsertable = !isGenerated && columnOptions?.insert !== 'excluded',
       isUpdatable = !isGenerated && columnOptions?.update !== 'excluded',
@@ -183,13 +140,13 @@ export const definitionForTableInSchema = async (
         JOIN "pg_class" c ON c."relname" = i."indexname" 
         JOIN "pg_index" idx ON idx."indexrelid" = c."oid" AND idx."indisunique" 
         WHERE i."tablename" = $1`,
-      values: [tableName]
+      values: [rel.name]
     }),
     uniqueIndexes = result.rows;
 
   const tableDef = `
-export namespace ${tableName} {
-  export type Table = '${tableName}';
+export namespace ${rel.name} {
+  export type Table = '${rel.name}';
   export interface Selectable {
     ${selectables.join('\n    ')}
   }
@@ -226,23 +183,24 @@ const transformCustomType = (customType: string, config: CompleteConfig) => {
         ctt(customType);
 };
 
-const mappedUnion = (arr: string[], fn: (name: string) => string) =>
-  arr.length === 0 ? 'any' : arr.map(name => fn(name)).join(' | ');
+const mappedUnion = (arr: Relation[], fn: (name: string) => string) =>
+  arr.length === 0 ? 'any' : arr.map(rel => fn(rel.name)).join(' | ');
 
-export const crossTableTypesForTables = (tableNames: string[]) => `${tableNames.length === 0 ?
+export const crossTableTypesForTables = (relations: Relation[]) => `${relations.length === 0 ?
   '\n// `never` rather than `any` types would be more accurate in this no-tables case, but they stop `shortcuts.ts` compiling\n' : ''
   }
-export type Table = ${mappedUnion(tableNames, name => `${name}.Table`)};
-export type Selectable = ${mappedUnion(tableNames, name => `${name}.Selectable`)};
-export type Whereable = ${mappedUnion(tableNames, name => `${name}.Whereable`)};
-export type Insertable = ${mappedUnion(tableNames, name => `${name}.Insertable`)};
-export type Updatable = ${mappedUnion(tableNames, name => `${name}.Updatable`)};
-export type UniqueIndex = ${mappedUnion(tableNames, name => `${name}.UniqueIndex`)};
-export type Column = ${mappedUnion(tableNames, name => `${name}.Column`)};
-export type AllTables = [${tableNames.map(name => `${name}.Table`).join(', ')}];
+export type Table = ${mappedUnion(relations, name => `${name}.Table`)};
+export type Selectable = ${mappedUnion(relations, name => `${name}.Selectable`)};
+export type Whereable = ${mappedUnion(relations, name => `${name}.Whereable`)};
+export type Insertable = ${mappedUnion(relations, name => `${name}.Insertable`)};
+export type Updatable = ${mappedUnion(relations, name => `${name}.Updatable`)};
+export type UniqueIndex = ${mappedUnion(relations, name => `${name}.UniqueIndex`)};
+export type Column = ${mappedUnion(relations, name => `${name}.Column`)};
+export type AllTables = [${relations.filter(rel => rel.type === 'table').map(rel => `${rel.name}.Table`).join(', ')}];
+export type AllMaterializedViews = [${relations.filter(rel => rel.type === 'mview').map(rel => `${rel.name}.Table`).join(', ')}];
 
 ${['Selectable', 'Whereable', 'Insertable', 'Updatable', 'UniqueIndex', 'Column', 'SQL'].map(thingable => `
-export type ${thingable}ForTable<T extends Table> = ${tableNames.length === 0 ? 'any' : `{${tableNames.map(name => `
-  ${name}: ${name}.${thingable};`).join('')}
+export type ${thingable}ForTable<T extends Table> = ${relations.length === 0 ? 'any' : `{${relations.map(rel => `
+  ${rel.name}: ${rel.name}.${thingable};`).join('')}
 }[T]`};
 `).join('')}`;

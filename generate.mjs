@@ -9,6 +9,6 @@ export const enumTypesForEnumData = mod.enumTypesForEnumData;
 export const finaliseConfig = mod.finaliseConfig;
 export const generate = mod.generate;
 export const moduleRoot = mod.moduleRoot;
-export const tablesInSchema = mod.tablesInSchema;
+export const relationsInSchema = mod.relationsInSchema;
 export const tsForConfig = mod.tsForConfig;
 export const tsTypeForPgType = mod.tsTypeForPgType;
