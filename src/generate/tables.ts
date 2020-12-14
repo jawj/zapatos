@@ -41,11 +41,7 @@ export const relationsInSchema = async (schemaName: string, pool: pg.Pool): Prom
   return rows;
 };
 
-const columnsForRelation = async (
-  rel: Relation,
-  schemaName: string,
-  pool: pg.Pool,
-) => {
+const columnsForRelation = async (rel: Relation, schemaName: string, pool: pg.Pool) => {
   const
     { rows } = await pool.query({
       text: rel.type === 'table' ? `
@@ -57,18 +53,21 @@ const columnsForRelation = async (
         , "udt_name" AS "udtName"
         , "domain_name" AS "domainName"
         FROM "information_schema"."columns"
-        WHERE "table_name" = $1 AND "table_schema" = $2` : `
+        WHERE "table_name" = $1 AND "table_schema" = $2`
+        : `
         SELECT
           a.attname AS "column"
         , a.attnotnull = 'f' AS "isNullable"
-        , 't' AS "isGenerated"  -- irrelevant, since can't write to materalized views
-        , 'f' AS "hasDefault"   -- irrelevant, since can't write to materalized views
-        , pg_catalog.format_type(a.atttypid, a.atttypmod) AS "udtName"
-        , null AS "domainName"
-        FROM pg_catalog.pg_class
-        INNER JOIN pg_catalog.pg_attribute a ON pg_class.oid = a.attrelid
-        INNER JOIN pg_catalog.pg_namespace n ON pg_class.relnamespace = n.oid
-        WHERE pg_class.relkind = 'm' AND a.attnum >= 1 AND pg_class.relname = $1 AND n.nspname = $2`,
+        , 't' AS "isGenerated"  -- true, to reflect that we can't write to materalized views
+        , 'f' AS "hasDefault"   -- irrelevant, since we can't write to materalized views
+        , CASE WHEN t1.typtype = 'd' THEN t2.typname ELSE t1.typname END AS "udtName"
+        , CASE WHEN t1.typtype = 'd' THEN t1.typname ELSE NULL END AS "domainName"
+        FROM pg_catalog.pg_class c
+        INNER JOIN pg_catalog.pg_attribute a ON c.oid = a.attrelid
+        INNER JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+        INNER JOIN pg_catalog.pg_type t1 ON t1.oid = a.atttypid
+        LEFT JOIN pg_catalog.pg_type t2 ON t2.oid = t1.typbasetype
+        WHERE c.relkind = 'm' AND a.attnum >= 1 AND c.relname = $1 AND n.nspname = $2`,
       values: [rel.name, schemaName]
     });
 
