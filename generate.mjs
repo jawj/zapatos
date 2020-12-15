@@ -3,7 +3,7 @@ import mod from "./generate.js";
 export default mod;
 export const __esModule = mod.__esModule;
 export const crossTableTypesForTables = mod.crossTableTypesForTables;
-export const definitionForTableInSchema = mod.definitionForTableInSchema;
+export const definitionForRelationInSchema = mod.definitionForRelationInSchema;
 export const enumDataForSchema = mod.enumDataForSchema;
 export const enumTypesForEnumData = mod.enumTypesForEnumData;
 export const finaliseConfig = mod.finaliseConfig;
