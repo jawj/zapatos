@@ -7,7 +7,7 @@ Released under the MIT licence: see LICENCE file
 import * as pg from 'pg';
 
 import { enumDataForSchema, enumTypesForEnumData } from './enums';
-import { Relation, relationsInSchema, definitionForTableInSchema, crossTableTypesForTables } from './tables';
+import { Relation, relationsInSchema, definitionForRelationInSchema, crossTableTypesForTables } from './tables';
 import { header } from './header';
 import type { CompleteConfig } from './config';
 import type { SchemaVersionCanary } from "../db/canary";
@@ -69,7 +69,7 @@ export const tsForConfig = async (config: CompleteConfig) => {
               .filter(rel => rules.exclude.indexOf(rel.name) < 0),
           enums = await enumDataForSchema(schema, pool),
           tableDefs = await Promise.all(tables.map(async table =>
-            definitionForTableInSchema(table, schema, enums, customTypes, config, pool))),
+            definitionForRelationInSchema(table, schema, enums, customTypes, config, pool))),
           schemaDef = `\n/* === schema: ${schema} === */\n` +
             `\n/* --- enums --- */\n` +
             enumTypesForEnumData(enums) +

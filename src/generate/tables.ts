@@ -74,7 +74,7 @@ const columnsForRelation = async (rel: Relation, schemaName: string, pool: pg.Po
   return rows;
 };
 
-export const definitionForTableInSchema = async (
+export const definitionForRelationInSchema = async (
   rel: Relation,
   schemaName: string,
   enums: EnumData,
