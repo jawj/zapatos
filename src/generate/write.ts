@@ -26,11 +26,11 @@ export const generate = async (suppliedConfig: Config) => {
     { ts, customTypeSourceFiles } = await tsForConfig(config),
 
     folderName = 'zapatos',
-    schemaName = 'schema.d.ts',
+    schemaName = 'schema' + config.outExt,
     customFolderName = 'custom',
     eslintrcName = '.eslintrc.json',
     eslintrcContent = '{\n  "ignorePatterns": [\n    "*"\n  ]\n}',
-    customTypesIndexName = 'index.d.ts',
+    customTypesIndexName = 'index' + config.outExt,
     customTypesIndexContent = header() + `
 // this empty declaration appears to fix relative imports in other custom type files
 declare module 'zapatos/custom' { }
@@ -55,7 +55,7 @@ declare module 'zapatos/custom' { }
     fs.mkdirSync(customFolderTargetPath, { recursive: true });
 
     for (const customTypeFileName in customTypeSourceFiles) {
-      const customTypeFilePath = path.join(customFolderTargetPath, customTypeFileName + '.d.ts');
+      const customTypeFilePath = path.join(customFolderTargetPath, customTypeFileName + config.outExt);
       if (fs.existsSync(customTypeFilePath)) {
         log(`Custom type or domain declaration file already exists: ${customTypeFilePath}`);
 

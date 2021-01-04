@@ -15,6 +15,7 @@ export interface RequiredConfig {
 
 export interface OptionalConfig {
   outDir: string;
+  outExt: string;
   schemas: SchemaRules;
   progressListener: boolean | ((s: string) => void);
   warningListener: boolean | ((s: string) => void);
@@ -43,6 +44,7 @@ export type CompleteConfig = RequiredConfig & OptionalConfig;
 
 const defaultConfig: OptionalConfig = {
   outDir: '.',
+  outExt: '.d.ts',
   schemas: { public: { include: '*', exclude: [] } },
   progressListener: false,
   warningListener: true,
