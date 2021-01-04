@@ -165,6 +165,7 @@ type UpsertReturnableForTable<T extends Table, C extends ColumnForTable<T>[] | u
 type UpsertConflictTargetForTable<T extends Table> = Constraint<T> | ColumnForTable<T> | ColumnForTable<T>[];
 
 interface UpsertOptions<T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined> extends ReturningOptionsForTable<T, C, E> {
+  updateColumns?: ColumnForTable<T> | ColumnForTable<T>[];
   noNullUpdateColumns?: ColumnForTable<T> | ColumnForTable<T>[];
 }
 
@@ -205,8 +206,12 @@ export const upsert: UpsertSignatures = function (
   if (Array.isArray(values) && values.length === 0) return insert(table, values);  // punt a no-op to plain insert
 
   if (typeof conflictTarget === 'string') conflictTarget = [conflictTarget];  // now either Column[] or Constraint
+
   let noNullUpdateColumns = options?.noNullUpdateColumns ?? [];
   if (!Array.isArray(noNullUpdateColumns)) noNullUpdateColumns = [noNullUpdateColumns];
+
+  let updateColumns = options?.updateColumns;
+  if (updateColumns && !Array.isArray(updateColumns)) updateColumns = [updateColumns];
 
   const
     completedValues = Array.isArray(values) ? completeKeysWithDefaultValue(values, Default) : values,
@@ -216,7 +221,7 @@ export const upsert: UpsertSignatures = function (
       mapWithSeparator(completedValues as Insertable[], sql`, `, v => sql`(${vals(v)})`) :
       sql`(${vals(completedValues)})`,
     colNames = Object.keys(firstRow) as Column[],
-    nonUniqueCols = Array.isArray(conflictTarget) ?
+    nonUniqueCols = updateColumns ?? Array.isArray(conflictTarget) ?
       colNames.filter(v => !(conflictTarget as Column[]).includes(v)) :
       colNames,
     uniqueColsSQL = Array.isArray(conflictTarget) ?
