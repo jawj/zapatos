@@ -221,9 +221,11 @@ export const upsert: UpsertSignatures = function (
       mapWithSeparator(completedValues as Insertable[], sql`, `, v => sql`(${vals(v)})`) :
       sql`(${vals(completedValues)})`,
     colNames = Object.keys(firstRow) as Column[],
-    nonUniqueCols = updateColumns ?? Array.isArray(conflictTarget) ?
-      colNames.filter(v => !(conflictTarget as Column[]).includes(v)) :
-      colNames,
+    nonUniqueCols = updateColumns as string[] ?? (
+      Array.isArray(conflictTarget) ?
+        colNames.filter(v => !(conflictTarget as Column[]).includes(v)) :
+        colNames
+    ),
     uniqueColsSQL = Array.isArray(conflictTarget) ?
       sql`(${mapWithSeparator(conflictTarget.slice().sort(), sql`, `, c => c)})` :
       sql<string>`ON CONSTRAINT ${conflictTarget.value}`,
