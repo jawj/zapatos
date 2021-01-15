@@ -42,9 +42,10 @@ export const relationsInSchema = async (schemaName: string, pool: pg.Pool): Prom
 };
 
 const columnsForRelation = async (rel: Relation, schemaName: string, pool: pg.Pool) => {
-  const
-    { rows } = await pool.query({
-      text: rel.type === 'table' ? `
+  const { rows } = await pool.query({
+    text:
+      rel.type === "table"
+        ? `
         SELECT
           "column_name" AS "column"
         , "is_nullable" = 'YES' AS "isNullable"
@@ -52,7 +53,11 @@ const columnsForRelation = async (rel: Relation, schemaName: string, pool: pg.Po
         , "column_default" IS NOT NULL OR "identity_generation" = 'BY DEFAULT' AS "hasDefault"
         , "udt_name" AS "udtName"
         , "domain_name" AS "domainName"
-        FROM "information_schema"."columns"
+        , ( SELECT description 
+            FROM pg_description AS d 
+            WHERE objoid = $3::regclass AND d.objsubid = c.ordinal_position
+          ) AS "description"
+        FROM "information_schema"."columns" AS c
         WHERE "table_name" = $1 AND "table_schema" = $2`
         : `
         SELECT
@@ -62,14 +67,18 @@ const columnsForRelation = async (rel: Relation, schemaName: string, pool: pg.Po
         , 'f' AS "hasDefault"   -- irrelevant, since we can't write to materalized views
         , CASE WHEN t1.typtype = 'd' THEN t2.typname ELSE t1.typname END AS "udtName"
         , CASE WHEN t1.typtype = 'd' THEN t1.typname ELSE NULL END AS "domainName"
+        , ( SELECT description 
+            FROM pg_description AS d 
+            WHERE objoid = $3::regclass AND d.objsubid = a.attnum
+          ) AS "description"        
         FROM pg_catalog.pg_class c
         INNER JOIN pg_catalog.pg_attribute a ON c.oid = a.attrelid
         INNER JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
         INNER JOIN pg_catalog.pg_type t1 ON t1.oid = a.atttypid
         LEFT JOIN pg_catalog.pg_type t2 ON t2.oid = t1.typbasetype
         WHERE c.relkind = 'm' AND a.attnum >= 1 AND c.relname = $1 AND n.nspname = $2`,
-      values: [rel.name, schemaName]
-    });
+    values: [rel.name, schemaName, `"${schemaName}"."${rel.name}"`],
+  });
 
   return rows;
 };
@@ -92,7 +101,7 @@ export const definitionForRelationInSchema = async (
   rows.forEach(row => {
     const { column, isGenerated, isNullable, hasDefault, udtName, domainName } = row;
     let type = tsTypeForPgType(udtName, enums);
-
+    const columnDoc = createColumnDoc(row);
     const
       columnOptions =
         (config.columnOptions[rel.name] && config.columnOptions[rel.name][column]) ??
@@ -121,14 +130,14 @@ export const definitionForRelationInSchema = async (
       type = 'c.' + prefixedCustomType;
     }
 
-    selectables.push(`${column}: ${type}${orNull};`);
+    selectables.push(`${columnDoc}${column}: ${type}${orNull};`);
 
     const basicWhereableTypes = `${type} | db.Parameter<${type}>${orDateString} | db.SQLFragment | db.ParentColumn`;
-    whereables.push(`${column}?: ${basicWhereableTypes} | db.SQLFragment<any, ${basicWhereableTypes}>;`);
+    whereables.push(`${columnDoc}${column}?: ${basicWhereableTypes} | db.SQLFragment<any, ${basicWhereableTypes}>;`);
 
     const basicInsertableTypes = `${type} | db.Parameter<${type}>${orDateString}${orNull}${orDefault} | db.SQLFragment`;
-    if (isInsertable) insertables.push(`${column}${insertablyOptional}: ${basicInsertableTypes};`);
-    if (isUpdatable) updatables.push(`${column}?: ${basicInsertableTypes} | db.SQLFragment<any, ${basicInsertableTypes}>;`);
+    if (isInsertable) insertables.push(`${columnDoc}${column}${insertablyOptional}: ${basicInsertableTypes};`);
+    if (isUpdatable) updatables.push(`${columnDoc}${column}?: ${basicInsertableTypes} | db.SQLFragment<any, ${basicInsertableTypes}>;`);
   });
 
   const
@@ -203,3 +212,27 @@ export type ${thingable}ForTable<T extends Table> = ${relations.length === 0 ? '
   ${rel.name}: ${rel.name}.${thingable};`).join('')}
 }[T]`};
 `).join('')}`;
+
+
+const createColumnDoc = (columnDetails: Record<string, unknown>) => { 
+  const {
+    column,
+    isGenerated,
+    isNullable,
+    hasDefault,
+    udtName,
+    domainName,
+    description,
+  } = columnDetails;
+  const doc = `
+  /**
+  * ***${column}***${description ? ': ' + description : ''}
+  * - Generated: &nbsp;&nbsp; *${isGenerated ? 'true' : 'false'}*
+  * - Nullable: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *${isNullable ? 'true' : 'false'}*
+  * - Has Default: *${hasDefault ? 'true' : 'false'}*
+  * - DB Type: &nbsp;&nbsp;&nbsp;&nbsp; ${udtName ? `*${udtName}*` : ''}
+  * - Domain: &nbsp;&nbsp;&nbsp;&nbsp; ${domainName ? `*${domainName}*` : ''}
+  *
+  */`;
+  return doc;
+}
