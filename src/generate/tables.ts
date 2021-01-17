@@ -51,6 +51,7 @@ const columnsForRelation = async (rel: Relation, schemaName: string, pool: pg.Po
         , "is_nullable" = 'YES' AS "isNullable"
         , "is_generated" = 'ALWAYS' OR "identity_generation" = 'ALWAYS' AS "isGenerated"
         , "column_default" IS NOT NULL OR "identity_generation" = 'BY DEFAULT' AS "hasDefault"
+        , "column_default"::text AS "defaultValue"
         , "udt_name" AS "udtName"
         , "domain_name" AS "domainName"
         , ( SELECT description 
@@ -65,6 +66,7 @@ const columnsForRelation = async (rel: Relation, schemaName: string, pool: pg.Po
         , a.attnotnull = 'f' AS "isNullable"
         , 't' AS "isGenerated"  -- true, to reflect that we can't write to materalized views
         , 'f' AS "hasDefault"   -- irrelevant, since we can't write to materalized views
+        , NULL as "defaultValue"
         , CASE WHEN t1.typtype = 'd' THEN t2.typname ELSE t1.typname END AS "udtName"
         , CASE WHEN t1.typtype = 'd' THEN t1.typname ELSE NULL END AS "domainName"
         , ( SELECT description 
@@ -101,8 +103,8 @@ export const definitionForRelationInSchema = async (
   rows.forEach(row => {
     const { column, isGenerated, isNullable, hasDefault, udtName, domainName } = row;
     let type = tsTypeForPgType(udtName, enums);
-    const columnDoc = createColumnDoc(row);
     const
+      columnDoc = createColumnDoc(schemaName, rel, row),
       columnOptions =
         (config.columnOptions[rel.name] && config.columnOptions[rel.name][column]) ??
         (config.columnOptions["*"] && config.columnOptions["*"][column]),
@@ -214,25 +216,24 @@ export type ${thingable}ForTable<T extends Table> = ${relations.length === 0 ? '
 `).join('')}`;
 
 
-const createColumnDoc = (columnDetails: Record<string, unknown>) => { 
+const createColumnDoc = (schemaName: string, rel: Relation, columnDetails: Record<string, unknown>) => {
   const {
     column,
     isGenerated,
     isNullable,
     hasDefault,
+    defaultValue,
     udtName,
     domainName,
     description,
   } = columnDetails;
-  const doc = `
-  /**
-  * ***${column}***${description ? ': ' + description : ''}
-  * - Generated: &nbsp;&nbsp; *${isGenerated ? 'true' : 'false'}*
-  * - Nullable: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; *${isNullable ? 'true' : 'false'}*
-  * - Has Default: *${hasDefault ? 'true' : 'false'}*
-  * - DB Type: &nbsp;&nbsp;&nbsp;&nbsp; ${udtName ? `*${udtName}*` : ''}
-  * - Domain: &nbsp;&nbsp;&nbsp;&nbsp; ${domainName ? `*${domainName}*` : ''}
-  *
-  */`;
+
+  const doc = `/**
+    * **${rel.name}.${column}**${description ? '\n    *\n    * ' + description : ''}
+    * - ${domainName ? `\`${domainName}\` (base type: \`${udtName ?? '(none)'}\`)` : `\`${udtName ?? '(none)'}\``} in database
+    * - ${rel.type === 'mview' ? 'Materialized view column' : isGenerated ? 'Generated column' :
+      `${isNullable ? 'Nullable' : '`NOT NULL`'}, ${hasDefault && defaultValue === null ? `identity column` : hasDefault ? `default: \`${defaultValue}\`` : `no default`}`}
+    */
+    `;
   return doc;
-}
+};
