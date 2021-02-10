@@ -7,7 +7,7 @@ Released under the MIT licence: see LICENCE file
 import type { EnumData } from './enums';
 
 
-const baseTsTypeForBasePgType = (pgType: string, enums: EnumData) => {
+const baseTsTypeForBasePgType = (pgType: string, enums: EnumData): string | null => {
   const hasOwnProp = Object.prototype.hasOwnProperty;
   switch (pgType) {
     case 'bpchar':
@@ -22,7 +22,6 @@ const baseTsTypeForBasePgType = (pgType: string, enums: EnumData) => {
     case 'timetz':
     case 'interval':
     case 'name':
-    case 'int8':
       return 'string';
     case 'int2':
     case 'int4':
@@ -41,13 +40,15 @@ const baseTsTypeForBasePgType = (pgType: string, enums: EnumData) => {
     case 'timestamp':
     case 'timestamptz':
       return 'Date';
+    case 'int8':
+      return 'string | number';
     default:
       if (hasOwnProp.call(enums, pgType)) return pgType;
       return null;
   }
 };
 
-export const tsTypeForPgType = (pgType: string, enums: EnumData) => {
+export const tsTypeForPgType = (pgType: string, enums: EnumData): string => {
   // basic and enum types (enum names can begin with an underscore even if not an array)
   const baseTsType = baseTsTypeForBasePgType(pgType, enums);
   if (baseTsType !== null) return baseTsType;
