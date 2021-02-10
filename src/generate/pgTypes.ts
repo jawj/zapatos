@@ -22,10 +22,10 @@ const baseTsTypeForBasePgType = (pgType: string, enums: EnumData) => {
     case 'timetz':
     case 'interval':
     case 'name':
+    case 'int8':
       return 'string';
     case 'int2':
     case 'int4':
-    case 'int8':
     case 'float4':
     case 'float8':
     case 'numeric':
