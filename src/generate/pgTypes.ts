@@ -39,9 +39,9 @@ const baseTsTypeForBasePgType = (pgType: string, enums: EnumData): string | null
     case 'date':
     case 'timestamp':
     case 'timestamptz':
-      return 'Date';
+      return 'Date | string';
     case 'int8':
-      return 'string | number';
+      return 'number | string';
     default:
       if (hasOwnProp.call(enums, pgType)) return pgType;
       return null;
