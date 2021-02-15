@@ -35,6 +35,17 @@ export const mapWithSeparator = <TIn, TSep, TOut>(
 };
 
 /**
+ * Shallow copy an object, including only the specified keys
+ * @param obj A POJO
+ * @param keys An array of key names
+ */
+export const pick = <T, K extends keyof T>(obj: T, ...keys: K[]): Pick<T, K> => {
+  const result = {} as Pick<T, K>;
+  for (const key of keys) result[key] = obj[key];
+  return result;
+};
+
+/**
  * Map an array of objects to an output array by taking the union of all objects' keys
  * and ensuring that any key not present on any object gets a default value. 
  * 

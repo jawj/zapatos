@@ -36,6 +36,7 @@ import {
 import {
   completeKeysWithDefaultValue,
   mapWithSeparator,
+  pick,
   PromisedType,
 } from './utils';
 
@@ -160,7 +161,7 @@ export class Constraint<T extends Table> { constructor(public value: UniqueIndex
  */
 export function constraint<T extends Table>(x: UniqueIndexForTable<T>) { return new Constraint<T>(x); }
 
-export interface UpsertAction { $action: 'INSERT' | 'UPDATE' }
+export interface UpsertAction { $action: 'INSERT' | 'UPDATE' | 'NOTHING' }
 type UpsertReturnableForTable<T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined> = ReturningTypeForTable<T, C, E> & UpsertAction;
 type UpsertConflictTargetForTable<T extends Table> = Constraint<T> | ColumnForTable<T> | ColumnForTable<T>[];
 
@@ -214,12 +215,10 @@ export const upsert: UpsertSignatures = function (
   if (updateColumns && !Array.isArray(updateColumns)) updateColumns = [updateColumns];
 
   const
-    completedValues = Array.isArray(values) ? completeKeysWithDefaultValue(values, Default) : values,
-    firstRow = Array.isArray(completedValues) ? completedValues[0] : completedValues,
+    completedValues = Array.isArray(values) ? completeKeysWithDefaultValue(values, Default) : [values],
+    firstRow = completedValues[0],
     colsSQL = cols(firstRow),
-    valuesSQL = Array.isArray(completedValues) ?
-      mapWithSeparator(completedValues as Insertable[], sql`, `, v => sql`(${vals(v)})`) :
-      sql`(${vals(completedValues)})`,
+    valuesSQL = mapWithSeparator(completedValues, sql`, `, v => sql`(${vals(v)})`),
     colNames = Object.keys(firstRow) as Column[],
     nonUniqueCols = updateColumns as string[] ?? (
       Array.isArray(conflictTarget) ?
@@ -227,10 +226,13 @@ export const upsert: UpsertSignatures = function (
         colNames
     ),
     uniqueColsSQL = Array.isArray(conflictTarget) ?
-      sql`(${mapWithSeparator(conflictTarget.slice().sort(), sql`, `, c => c)})` :
+      sql`(${mapWithSeparator(conflictTarget, sql`, `, c => c)})` :
       sql<string>`ON CONSTRAINT ${conflictTarget.value}`,
-    updateColsSQL = mapWithSeparator(nonUniqueCols.slice().sort(), sql`, `, c => c),
-    updateValuesSQL = mapWithSeparator(nonUniqueCols.slice().sort(), sql`, `, c =>
+    uniqueValuesSQL = !Array.isArray(conflictTarget) ? [] :
+      mapWithSeparator(completedValues, sql`, `, cv =>
+        sql`ROW(${vals(pick(cv, ...(conflictTarget as string[])))})`),
+    updateColsSQL = mapWithSeparator(nonUniqueCols, sql`, `, c => c),
+    updateValuesSQL = mapWithSeparator(nonUniqueCols, sql`, `, c =>
       noNullUpdateColumns.includes(c) ? sql`CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END` : sql`EXCLUDED.${c}`),
     returningSQL = SQLForColumnsOfTable(options?.returning, table),
     extrasSQL = SQLForExtras(options?.extras);
@@ -238,7 +240,16 @@ export const upsert: UpsertSignatures = function (
   // the added-on $action = 'INSERT' | 'UPDATE' key takes after SQL Server's approach to MERGE
   // (and on the use of xmax for this purpose, see: https://stackoverflow.com/questions/39058213/postgresql-upsert-differentiate-inserted-and-updated-rows-using-system-columns-x)
 
-  const query = sql`INSERT INTO ${table} (${colsSQL}) VALUES ${valuesSQL} ON CONFLICT ${uniqueColsSQL} DO UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL}) RETURNING ${returningSQL}${extrasSQL} || jsonb_build_object('$action', CASE xmax WHEN 0 THEN 'INSERT' ELSE 'UPDATE' END) AS result`;
+  // if we have only conflict targets as upserted columns, $action = 'NOTHING', using 
+  // DO NOTHING with a UNION SELECT as discussed here:
+  // https://stackoverflow.com/questions/34708509/how-to-use-returning-with-on-conflict-in-postgresql
+
+  const
+    conflictDo = updateColsSQL.length > 0 ? sql`UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL})` : sql`NOTHING`,
+    baseQuery = sql`INSERT INTO ${table} (${colsSQL}) VALUES ${valuesSQL} ON CONFLICT ${uniqueColsSQL} DO ${conflictDo} RETURNING ${returningSQL}${extrasSQL} || jsonb_build_object('$action', CASE xmax WHEN 0 THEN 'INSERT' ELSE 'UPDATE' END) AS result`,
+    query = updateColsSQL.length > 0 ? baseQuery : sql`WITH base AS (${baseQuery}) SELECT * FROM base UNION SELECT ${returningSQL}${extrasSQL} || '{ "$action": "NOTHING" }' AS result FROM ${table} WHERE ROW${uniqueColsSQL} IN (${uniqueValuesSQL})`;
+
+  // see 
 
   query.runResultTransform = Array.isArray(completedValues) ?
     (qr) => qr.rows.map(r => r.result) :
