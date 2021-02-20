@@ -221,34 +221,23 @@ export const upsert: UpsertSignatures = function (
   let noNullUpdateColumns = options?.noNullUpdateColumns ?? [];
   if (!Array.isArray(noNullUpdateColumns)) noNullUpdateColumns = [noNullUpdateColumns];
 
-  let updateColumns = options?.updateColumns;
-  if (updateColumns && !Array.isArray(updateColumns)) updateColumns = [updateColumns];
+  let specifiedUpdateColumns = options?.updateColumns;
+  if (specifiedUpdateColumns && !Array.isArray(specifiedUpdateColumns)) specifiedUpdateColumns = [specifiedUpdateColumns];
 
   const
-    valuesIsArray = Array.isArray(values),
     completedValues = Array.isArray(values) ? completeKeysWithDefaultValue(values, Default) : [values],
     firstRow = completedValues[0],
     insertColsSQL = cols(firstRow),
     insertValuesSQL = mapWithSeparator(completedValues, sql`, `, v => sql`(${vals(v)})`),
     colNames = Object.keys(firstRow) as Column[],
-    nonConflictCols = updateColumns as string[] ?? (
-      Array.isArray(conflictTarget) ?
-        colNames.filter(v => !(conflictTarget as Column[]).includes(v)) :
-        colNames
-    ),
+    updateColumns = specifiedUpdateColumns as string[] ?? colNames,
     conflictTargetSQL = Array.isArray(conflictTarget) ?
       sql`(${mapWithSeparator(conflictTarget, sql`, `, c => c)})` :
       sql<string>`ON CONSTRAINT ${conflictTarget.value}`,
-    // conflictValuesSQL = !Array.isArray(conflictTarget) ? [] :
-    //   mapWithSeparator(completedValues, sql`, `, cv =>
-    //     sql`ROW(${vals(pick(cv, ...(conflictTarget as string[])))})`),
-    updateColsSQL = mapWithSeparator(nonConflictCols, sql`, `, c => c),
-    updateValues = options?.updateValues,
-    completedUpdateValues = !updateValues ? [] :
-      Array.isArray(updateValues) ? completeKeysWithDefaultValue(updateValues, Default) : [updateValues],
-    updateValuesFirstRow = completedUpdateValues[0],
-    updateValuesSQL = mapWithSeparator(nonConflictCols, sql`, `, c =>
-      updateValuesFirstRow && updateValuesFirstRow[c] !== undefined ? updateValuesFirstRow[c] :
+    updateColsSQL = mapWithSeparator(updateColumns, sql`, `, c => c),
+    updateValues = options?.updateValues ?? {},
+    updateValuesSQL = mapWithSeparator(updateColumns, sql`, `, c =>
+      updateValues[c] !== undefined ? updateValues[c] :
         noNullUpdateColumns.includes(c) ? sql`CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END` :
           sql`EXCLUDED.${c}`),
     returningSQL = SQLForColumnsOfTable(options?.returning, table),
@@ -259,11 +248,12 @@ export const upsert: UpsertSignatures = function (
 
   const
     insertPart = sql`INSERT INTO ${table} (${insertColsSQL}) VALUES ${insertValuesSQL}`,
-    conflictPart = sql`ON CONFLICT ${conflictTargetSQL} DO ${updateColsSQL.length > 0 ? sql`UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL})` : sql`NOTHING`}`,
+    conflictPart = sql`ON CONFLICT ${conflictTargetSQL} DO`,
+    conflictActionPart = updateColsSQL.length > 0 ? sql`UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL})` : sql`NOTHING`,
     returningPart = sql`RETURNING ${returningSQL}${extrasSQL} || jsonb_build_object('$action', CASE xmax WHEN 0 THEN 'INSERT' ELSE 'UPDATE' END) AS result`,
-    query = sql`${insertPart} ${conflictPart} ${returningPart}`;
+    query = sql`${insertPart} ${conflictPart} ${conflictActionPart} ${returningPart}`;
 
-  query.runResultTransform = Array.isArray(valuesIsArray) ?
+  query.runResultTransform = Array.isArray(values) ?
     (qr) => qr.rows.map(r => r.result) :
     (qr) => qr.rows[0]?.result;
 
