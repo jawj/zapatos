@@ -203,10 +203,10 @@ export const doNothing = [] as const;
  * or updated
  * @param conflictTarget A `UNIQUE`-indexed column (or array thereof) or a 
  * `UNIQUE` index (wrapped in `db.constraint(...)`) that determines whether we
- * get an `UPDATE` or `DO NOTHING` (when there's a matching existing value) or 
- * an `INSERT` (when there isn't)
- * @param options Optionally, an object with keys controlling which columns are
- * to be affected on INSERT and/or UPDATE: updateColumns and noNullUpdateColumns
+ * get an `UPDATE` (when there's a matching existing value) or an `INSERT`
+ * (when there isn't)
+ * @param options Optionally, an object with any of the keys `updateColumns`,
+ * `noNullUpdateColumns` and `updateValues` (see documentation).
  */
 export const upsert: UpsertSignatures = function (
   table: Table,
