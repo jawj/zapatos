@@ -51,6 +51,11 @@ export type JSONArray = JSONValue[];
 export type DateString = string;
 
 /**
+ * Int8 to be represented as a string, which is how pg delivers them
+ */
+export type Int8String = string;
+
+/**
  * Compiles to a numbered query parameter (`$1`, `$2`, etc) and adds the wrapped value 
  * at the appropriate position of the values array passed to `pg`.
  * @param x The value to be wrapped

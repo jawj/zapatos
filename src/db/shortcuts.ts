@@ -5,7 +5,7 @@ Released under the MIT licence: see LICENCE file
 */
 
 import type {
-  SelectableForTable,
+  JSONSelectableForTable,
   WhereableForTable,
   InsertableForTable,
   UpdatableForTable,
@@ -22,7 +22,6 @@ import type {
 import {
   AllType,
   all,
-  DateString,
   SQL,
   SQLFragment,
   sql,
@@ -39,12 +38,6 @@ import {
   PromisedType,
 } from './utils';
 
-
-type JSONSelectableForTable<T extends Table> = { [K in keyof SelectableForTable<T>]:
-  Date extends SelectableForTable<T>[K] ? Exclude<SelectableForTable<T>[K], Date> | DateString :
-  Date[] extends SelectableForTable<T>[K] ? Exclude<SelectableForTable<T>[K], Date[]> | DateString[] :
-  SelectableForTable<T>[K]
-};
 
 export type JSONOnlyColsForTable<T extends Table, C extends any[] /* `ColumnForTable<T>[]` gives errors here for reasons I haven't got to the bottom of */> =
   Pick<JSONSelectableForTable<T>, C[number]>;

@@ -6,10 +6,21 @@ Released under the MIT licence: see LICENCE file
 
 import type { EnumData } from './enums';
 
+type TypeContext = 'JSONSelectable' | 'Selectable' | 'Insertable' | 'Updatable' | 'Whereable';
 
-const baseTsTypeForBasePgType = (pgType: string, enums: EnumData) => {
+const baseTsTypeForBasePgType = (pgType: string, enums: EnumData, context: TypeContext) => {
   const hasOwnProp = Object.prototype.hasOwnProperty;
   switch (pgType) {
+    case 'int8':
+      return context === 'JSONSelectable' ? 'number' :
+        context === 'Selectable' ? 'db.Int8String' :
+          '(number | db.Int8String)';
+    case 'date':
+    case 'timestamp':
+    case 'timestamptz':
+      return context === 'JSONSelectable' ? 'db.DateString' :
+        context === 'Selectable' ? 'Date' :
+          '(Date | db.DateString)';
     case 'bpchar':
     case 'char':
     case 'varchar':
@@ -25,7 +36,6 @@ const baseTsTypeForBasePgType = (pgType: string, enums: EnumData) => {
       return 'string';
     case 'int2':
     case 'int4':
-    case 'int8':
     case 'float4':
     case 'float8':
     case 'numeric':
@@ -37,25 +47,21 @@ const baseTsTypeForBasePgType = (pgType: string, enums: EnumData) => {
     case 'json':
     case 'jsonb':
       return 'db.JSONValue';
-    case 'date':
-    case 'timestamp':
-    case 'timestamptz':
-      return 'Date';
     default:
       if (hasOwnProp.call(enums, pgType)) return pgType;
       return null;
   }
 };
 
-export const tsTypeForPgType = (pgType: string, enums: EnumData) => {
+export const tsTypeForPgType = (pgType: string, enums: EnumData, context: TypeContext) => {
   // basic and enum types (enum names can begin with an underscore even if not an array)
-  const baseTsType = baseTsTypeForBasePgType(pgType, enums);
+  const baseTsType = baseTsTypeForBasePgType(pgType, enums, context);
   if (baseTsType !== null) return baseTsType;
 
   // arrays of basic and enum types: pg prefixes these with underscore (_)
   // see https://www.postgresql.org/docs/current/sql-createtype.html#id-1.9.3.94.5.9
   if (pgType.charAt(0) === '_') {
-    const arrayTsType = baseTsTypeForBasePgType(pgType.slice(1), enums);
+    const arrayTsType = baseTsTypeForBasePgType(pgType.slice(1), enums, context);
     if (arrayTsType !== null) return arrayTsType + '[]';
   }
 
