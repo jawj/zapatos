@@ -154,40 +154,59 @@ export class Constraint<T extends Table> { constructor(public value: UniqueIndex
 export function constraint<T extends Table>(x: UniqueIndexForTable<T>) { return new Constraint<T>(x); }
 
 export interface UpsertAction { $action: 'INSERT' | 'UPDATE' }
-type UpsertReturnableForTable<T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined> = ReturningTypeForTable<T, C, E> & UpsertAction;
-type UpsertConflictTargetForTable<T extends Table> = Constraint<T> | ColumnForTable<T> | ColumnForTable<T>[];
 
-type UpdateColumns<T extends Table> = ColumnForTable<T> | ColumnForTable<T>[] | readonly [];
+type UpsertReportAction = 'suppress';
+type UpsertReturnableForTable<
+  T extends Table,
+  C extends ColumnForTable<T>[] | undefined,
+  E extends SQLFragmentsMap | undefined,
+  RA extends UpsertReportAction | undefined
+  > =
+  ReturningTypeForTable<T, C, E> & (undefined extends RA ? UpsertAction : {});
+
+type UpsertConflictTargetForTable<T extends Table> = Constraint<T> | ColumnForTable<T> | ColumnForTable<T>[];
+type UpdateColumns<T extends Table> = ColumnForTable<T> | ColumnForTable<T>[];
 
 interface UpsertOptions<
   T extends Table,
   C extends ColumnForTable<T>[] | undefined,
   E extends SQLFragmentsMap | undefined,
-  UC extends UpdateColumns<T>,
+  UC extends UpdateColumns<T> | undefined,
+  RA extends UpsertReportAction | undefined,
   > extends ReturningOptionsForTable<T, C, E> {
-
   updateValues?: UpdatableForTable<T>;
   updateColumns?: UC;
   noNullUpdateColumns?: ColumnForTable<T> | ColumnForTable<T>[];
+  reportAction?: RA;
 }
 
 interface UpsertSignatures {
-  <T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined, UC extends UpdateColumns<T>>(
+  <T extends Table,
+    C extends ColumnForTable<T>[] | undefined,
+    E extends SQLFragmentsMap | undefined,
+    UC extends UpdateColumns<T> | undefined,
+    RA extends UpsertReportAction | undefined
+    >(
     table: T,
     values: InsertableForTable<T>,
     conflictTarget: UpsertConflictTargetForTable<T>,
-    options?: UpsertOptions<T, C, E, UC>
-  ): SQLFragment<UpsertReturnableForTable<T, C, E> | (UC['length'] extends 0 ? undefined : never)>;
+    options?: UpsertOptions<T, C, E, UC, RA>
+  ): SQLFragment<UpsertReturnableForTable<T, C, E, RA> | (UC extends never[] ? undefined : never)>;
 
-  <T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined, UC extends UpdateColumns<T>>(
+  <T extends Table,
+    C extends ColumnForTable<T>[] | undefined,
+    E extends SQLFragmentsMap | undefined,
+    UC extends UpdateColumns<T> | undefined,
+    RA extends UpsertReportAction | undefined
+    >(
     table: T,
     values: InsertableForTable<T>[],
     conflictTarget: UpsertConflictTargetForTable<T>,
-    options?: UpsertOptions<T, C, E, UC>
-  ): SQLFragment<UpsertReturnableForTable<T, C, E>[] | (UC['length'] extends 0 ? undefined : never)>;
+    options?: UpsertOptions<T, C, E, UC, RA>
+  ): SQLFragment<UpsertReturnableForTable<T, C, E, RA>[]>;
 }
 
-export const doNothing = [] as const;
+export const doNothing = [];
 
 /**
  * Generate an 'upsert' (`INSERT ... ON CONFLICT ...`) query `SQLFragment`.
@@ -205,7 +224,7 @@ export const upsert: UpsertSignatures = function (
   table: Table,
   values: Insertable | Insertable[],
   conflictTarget: Column | Column[] | Constraint<Table>,
-  options?: UpsertOptions<Table, Column[] | undefined, SQLFragmentsMap | undefined, UpdateColumns<Table>>
+  options?: UpsertOptions<Table, Column[] | undefined, SQLFragmentsMap | undefined, UpdateColumns<Table>, UpsertReportAction>
 ): SQLFragment<any> {
 
   if (Array.isArray(values) && values.length === 0) return insert(table, values);  // punt a no-op to plain insert
@@ -234,7 +253,8 @@ export const upsert: UpsertSignatures = function (
         noNullUpdateColumns.includes(c) ? sql`CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END` :
           sql`EXCLUDED.${c}`),
     returningSQL = SQLForColumnsOfTable(options?.returning, table),
-    extrasSQL = SQLForExtras(options?.extras);
+    extrasSQL = SQLForExtras(options?.extras),
+    suppressReport = options?.reportAction === 'suppress';
 
   // the added-on $action = 'INSERT' | 'UPDATE' key takes after SQL Server's approach to MERGE
   // (and on the use of xmax for this purpose, see: https://stackoverflow.com/questions/39058213/postgresql-upsert-differentiate-inserted-and-updated-rows-using-system-columns-x)
@@ -243,7 +263,8 @@ export const upsert: UpsertSignatures = function (
     insertPart = sql`INSERT INTO ${table} (${insertColsSQL}) VALUES ${insertValuesSQL}`,
     conflictPart = sql`ON CONFLICT ${conflictTargetSQL} DO`,
     conflictActionPart = updateColsSQL.length > 0 ? sql`UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL})` : sql`NOTHING`,
-    returningPart = sql`RETURNING ${returningSQL}${extrasSQL} || jsonb_build_object('$action', CASE xmax WHEN 0 THEN 'INSERT' ELSE 'UPDATE' END) AS result`,
+    reportPart = sql` || jsonb_build_object('$action', CASE xmax WHEN 0 THEN 'INSERT' ELSE 'UPDATE' END)`,
+    returningPart = sql`RETURNING ${returningSQL}${extrasSQL}${suppressReport ? [] : reportPart} AS result`,
     query = sql`${insertPart} ${conflictPart} ${conflictActionPart} ${returningPart}`;
 
   query.runResultTransform = Array.isArray(values) ?
