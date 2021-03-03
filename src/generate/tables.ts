@@ -111,7 +111,7 @@ export const definitionForRelationInSchema = async (
       updatableType = tsTypeForPgType(udtName, enums, 'Updatable');
 
     const
-      columnDoc = createColumnDoc(schemaName, rel, row),
+      columnDoc = config.schemaJSDoc ? createColumnDoc(schemaName, rel, row) : '',
       columnOptions =
         (config.columnOptions[rel.name] && config.columnOptions[rel.name][column]) ??
         (config.columnOptions["*"] && config.columnOptions["*"][column]),
@@ -159,7 +159,8 @@ export const definitionForRelationInSchema = async (
         FROM "pg_indexes" i 
         JOIN "pg_class" c ON c."relname" = i."indexname" 
         JOIN "pg_index" idx ON idx."indexrelid" = c."oid" AND idx."indisunique" 
-        WHERE i."tablename" = $1`,
+        WHERE i."tablename" = $1
+        ORDER BY i."indexname"`,
       values: [rel.name]
     }),
     uniqueIndexes = result.rows;

@@ -21,6 +21,7 @@ export interface OptionalConfig {
   warningListener: boolean | ((s: string) => void);
   customTypesTransform: 'PgMy_type' | 'my_type' | 'PgMyType' | ((s: string) => string);
   columnOptions: ColumnOptions;
+  schemaJSDoc: boolean;
 }
 
 interface SchemaRules {
@@ -50,6 +51,7 @@ const defaultConfig: OptionalConfig = {
   warningListener: true,
   customTypesTransform: 'PgMy_type',
   columnOptions: {},
+  schemaJSDoc: true,
 };
 
 export const moduleRoot = () => {
