@@ -54,8 +54,8 @@ export const reImatch = <T extends string>(a: T) => sql<SQL, boolean | null, T>`
 export const notReMatch = <T extends string>(a: T) => sql<SQL, boolean | null, T>`${self} !~ ${conditionalParam(a)}`;
 export const notReImatch = <T extends string>(a: T) => sql<SQL, boolean | null, T>`${self} !~* ${conditionalParam(a)}`;
 
-export const isIn = <T>(a: T[]) => a.length > 0 ? sql<SQL, boolean | null, T>`${self} IN (${vals(a)})` : sql`false`;
-export const isNotIn = <T>(a: T[]) => a.length > 0 ? sql<SQL, boolean | null, T>`${self} NOT IN (${vals(a)})` : sql`true`;
+export const isIn = <T>(a: readonly T[]) => a.length > 0 ? sql<SQL, boolean | null, T>`${self} IN (${vals(a)})` : sql`false`;
+export const isNotIn = <T>(a: readonly T[]) => a.length > 0 ? sql<SQL, boolean | null, T>`${self} NOT IN (${vals(a)})` : sql`true`;
 
 export const or = <T>(...conditions: SQLFragment<any, T>[]) => sql<SQL, boolean | null, T>`(${mapWithSeparator(conditions, sql` OR `, c => c)})`;
 export const and = <T>(...conditions: SQLFragment<any, T>[]) => sql<SQL, boolean | null, T>`(${mapWithSeparator(conditions, sql` AND `, c => c)})`;
