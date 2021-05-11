@@ -172,7 +172,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
   noop = false;  // if true, bypass actually running the query unless forced to e.g. for empty INSERTs
   noopResult: any;  // if noop is true and DB is bypassed, what should be returned?
 
-  constructor(private literals: string[], private expressions: SQL[]) { }
+  constructor(protected literals: string[], protected expressions: SQL[]) { }
 
   /**
    * Compile and run this query using the provided database connection. What's

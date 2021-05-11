@@ -51,15 +51,15 @@
     "@types/pg": ">=7.14.3"
   },
   "devDependencies": {
-    "@types/pg": "^7.14.7",
-    "@typescript-eslint/eslint-plugin": "^4.8.1",
-    "@typescript-eslint/parser": "^4.8.1",
-    "eslint": "^7.13.0",
-    "eslint-config-prettier": "^6.15.0",
+    "@types/pg": "^7.14.11",
+    "@typescript-eslint/eslint-plugin": "^4.23.0",
+    "@typescript-eslint/parser": "^4.23.0",
+    "eslint": "^7.26.0",
+    "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-import": "^2.22.1",
     "gen-esm-wrapper": "^1.1.1",
-    "pg": "^8.5.1",
-    "ts-node": "^9.0.0",
-    "typescript": "^4.1.2"
+    "pg": "^8.6.0",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.4"
   }
 }
