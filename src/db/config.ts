@@ -7,6 +7,7 @@ Released under the MIT licence: see LICENCE file
 export interface SQLQuery {
   text: string;
   values: any[];
+  name?: string;
 }
 
 export interface Config {

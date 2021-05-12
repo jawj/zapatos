@@ -156,6 +156,8 @@ export function sql<
   return new SQLFragment<RunResult, Constraint>(Array.prototype.slice.apply(literals), expressions);
 }
 
+let preparedNameSeq = 0;
+
 export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never> {
   protected constraint?: Constraint;
 
@@ -168,11 +170,23 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
   runResultTransform: (qr: pg.QueryResult) => any = qr => qr.rows;
 
   parentTable?: string = undefined;  // used for nested shortcut select queries
+  preparedName?: string = undefined;  // for prepared statements
 
   noop = false;  // if true, bypass actually running the query unless forced to e.g. for empty INSERTs
   noopResult: any;  // if noop is true and DB is bypassed, what should be returned?
 
   constructor(protected literals: string[], protected expressions: SQL[]) { }
+
+  /**
+   * Instruct Postgres to treat this as a prepared statement: see
+   * https://node-postgres.com/features/queries#prepared-statements
+   * @param name A name for the prepared query. If not specified, it takes the
+   * value '_zapatos_prepared_N', where N is an increasing sequence number.
+   */
+  prepared = (name = `_zapatos_prepared_${preparedNameSeq++}`) => {
+    this.preparedName = name;
+    return this;
+  };
 
   /**
    * Compile and run this query using the provided database connection. What's
@@ -217,6 +231,9 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
       this.compileExpression(this.expressions[i - 1], result, parentTable, currentColumn);
       result.text += this.literals[i];
     }
+
+    if (this.preparedName != null) result.name = this.preparedName;
+
     return result;
   };
 
