@@ -35,7 +35,6 @@ import {
 import {
   completeKeysWithDefaultValue,
   mapWithSeparator,
-  PromisedType,
 } from './utils';
 
 
@@ -43,11 +42,11 @@ export type JSONOnlyColsForTable<T extends Table, C extends any[] /* `ColumnForT
   Pick<JSONSelectableForTable<T>, C[number]>;
 
 export interface SQLFragmentsMap { [k: string]: SQLFragment<any> }
-export type PromisedSQLFragmentReturnType<R extends SQLFragment<any>> = PromisedType<ReturnType<R['run']>>;
+export type RunResultForSQLFragment<R extends SQLFragment<any>> = R extends SQLFragment<infer RunResult> ? RunResult : never;
 
 // yes, the next two types are identical, but distinct names make complex inferred types more readable
-export type LateralResult<L extends SQLFragmentsMap> = { [K in keyof L]: PromisedSQLFragmentReturnType<L[K]> };
-export type ExtrasResult<L extends SQLFragmentsMap> = { [K in keyof L]: PromisedSQLFragmentReturnType<L[K]> };
+export type LateralResult<L extends SQLFragmentsMap> = { [K in keyof L]: RunResultForSQLFragment<L[K]> };
+export type ExtrasResult<L extends SQLFragmentsMap> = { [K in keyof L]: RunResultForSQLFragment<L[K]> };
 
 type ExtrasOption = SQLFragmentsMap | undefined;
 type ColumnsOption<T extends Table> = ColumnForTable<T>[] | undefined;
@@ -417,7 +416,7 @@ type SelectReturnTypeForTable<
   > =
   (undefined extends L ? ReturningTypeForTable<T, C, E> :
     L extends SQLFragmentsMap ? ReturningTypeForTable<T, C, E> & LateralResult<L> :
-    L extends SQLFragment<any> ? PromisedSQLFragmentReturnType<L> :
+    L extends SQLFragment<any> ? RunResultForSQLFragment<L> :
     never);
 
 export enum SelectResultMode { Many, One, ExactlyOne, Count }

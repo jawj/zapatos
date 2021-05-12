@@ -5,7 +5,6 @@ Released under the MIT licence: see LICENCE file
 */
 
 export type NoInfer<T> = [T][T extends any ? 0 : never];  // https://github.com/Microsoft/TypeScript/issues/14829
-export type PromisedType<P> = P extends PromiseLike<infer U> ? U : never;
 
 /**
  * Simple promisification of setTimeout.
