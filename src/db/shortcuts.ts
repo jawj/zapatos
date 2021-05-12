@@ -42,7 +42,7 @@ export type JSONOnlyColsForTable<T extends Table, C extends any[] /* `ColumnForT
   Pick<JSONSelectableForTable<T>, C[number]>;
 
 export interface SQLFragmentsMap { [k: string]: SQLFragment<any> }
-export type RunResultForSQLFragment<R extends SQLFragment<any>> = R extends SQLFragment<infer RunResult> ? RunResult : never;
+export type RunResultForSQLFragment<T extends SQLFragment<any, any>> = T extends SQLFragment<infer RunResult, any> ? RunResult : never;
 
 // yes, the next two types are identical, but distinct names make complex inferred types more readable
 export type LateralResult<L extends SQLFragmentsMap> = { [K in keyof L]: RunResultForSQLFragment<L[K]> };
