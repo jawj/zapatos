@@ -41,6 +41,9 @@ import {
 export type JSONOnlyColsForTable<T extends Table, C extends any[] /* `ColumnForTable<T>[]` gives errors here for reasons I haven't got to the bottom of */> =
   Pick<JSONSelectableForTable<T>, C[number]>;
 
+export type JSONAliasedColsForTable<T extends Table, C extends { [K in keyof JSONSelectableForTable<T>]: string | boolean }> =
+  { [K in keyof C as C[K] extends string ? C[K] : C[K] extends true ? K : never]: K extends keyof JSONSelectableForTable<T> ? JSONSelectableForTable<T>[K] : never };
+
 export interface SQLFragmentsMap { [k: string]: SQLFragment<any> }
 export type RunResultForSQLFragment<T extends SQLFragment<any, any>> = T extends SQLFragment<infer RunResult, any> ? RunResult : never;
 
@@ -49,7 +52,10 @@ export type LateralResult<L extends SQLFragmentsMap> = { [K in keyof L]: RunResu
 export type ExtrasResult<L extends SQLFragmentsMap> = { [K in keyof L]: RunResultForSQLFragment<L[K]> };
 
 type ExtrasOption = SQLFragmentsMap | undefined;
-type ColumnsOption<T extends Table> = ColumnForTable<T>[] | undefined;
+type ColumnsOption<T extends Table> =
+  ColumnForTable<T>[] |
+  { [K in keyof JSONSelectableForTable<T>]: string | boolean } |
+  undefined;
 
 type LimitedLateralOption = SQLFragmentsMap | undefined;
 type FullLateralOption = LimitedLateralOption | SQLFragment<any>;
@@ -67,15 +73,17 @@ export interface ReturningOptionsForTable<T extends Table, C extends ColumnsOpti
 type ReturningTypeForTable<T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption> =
   (undefined extends C ? JSONSelectableForTable<T> :
     C extends ColumnForTable<T>[] ? JSONOnlyColsForTable<T, C> :
+    C extends { [K in keyof JSONSelectableForTable<T>]: string | boolean } ? JSONAliasedColsForTable<T, C> :
     never) &
   (undefined extends E ? {} :
     E extends SQLFragmentsMap ? ExtrasResult<E> :
     never);
 
 
-function SQLForColumnsOfTable(columns: Column[] | undefined, table: Table) {
+function SQLForColumnsOfTable(columns: Column[] | { [k: string]: string | boolean } | undefined, table: Table) {
   return columns === undefined ? sql`to_jsonb(${table}.*)` :
-    sql`jsonb_build_object(${mapWithSeparator(columns, sql`, `, c => sql`${param(c)}::text, ${c}`)})`;
+    Array.isArray(columns) ? sql`jsonb_build_object(${mapWithSeparator(columns, sql`, `, c => sql`${param(c)}::text, ${c}`)})` :
+      sql`to_jsonb(${table}.*)`;  // TODO: implement this!
 }
 
 function SQLForExtras(extras: SQLFragmentsMap | undefined) {
