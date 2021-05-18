@@ -41,35 +41,38 @@ import {
 export type JSONOnlyColsForTable<T extends Table, C extends any[] /* `ColumnForTable<T>[]` gives errors here for reasons I haven't got to the bottom of */> =
   Pick<JSONSelectableForTable<T>, C[number]>;
 
-export interface SQLFragmentsMap { [k: string]: SQLFragment<any> }
+export interface SQLFragmentMap { [k: string]: SQLFragment<any> }
+export interface SQLFragmentOrColumnMap<T extends Table> { [k: string]: SQLFragment<any> | ColumnForTable<T> }
 export type RunResultForSQLFragment<T extends SQLFragment<any, any>> = T extends SQLFragment<infer RunResult, any> ? RunResult : never;
 
 // yes, the next two types are identical, but distinct names make complex inferred types more readable
-export type LateralResult<L extends SQLFragmentsMap> = { [K in keyof L]: RunResultForSQLFragment<L[K]> };
-export type ExtrasResult<L extends SQLFragmentsMap> = { [K in keyof L]: RunResultForSQLFragment<L[K]> };
+export type LateralResult<L extends SQLFragmentMap> = { [K in keyof L]: RunResultForSQLFragment<L[K]> };
+export type ExtrasResult<T extends Table, E extends SQLFragmentOrColumnMap<T>> = { [K in keyof E]:
+  E[K] extends SQLFragment<any> ? RunResultForSQLFragment<E[K]> : E[K] extends keyof JSONSelectableForTable<T> ? JSONSelectableForTable<T>[E[K]] : never;
+};
 
-type ExtrasOption = SQLFragmentsMap | undefined;
+type ExtrasOption<T extends Table> = SQLFragmentOrColumnMap<T> | undefined;
 type ColumnsOption<T extends Table> = ColumnForTable<T>[] | undefined;
 
-type LimitedLateralOption = SQLFragmentsMap | undefined;
+type LimitedLateralOption = SQLFragmentMap | undefined;
 type FullLateralOption = LimitedLateralOption | SQLFragment<any>;
 type LateralOption<
   C extends ColumnsOption<Table>,
-  E extends ExtrasOption,
+  E extends ExtrasOption<Table>,
   > =
   undefined extends C ? undefined extends E ? FullLateralOption : LimitedLateralOption : LimitedLateralOption;
 
-export interface ReturningOptionsForTable<T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption> {
+export interface ReturningOptionsForTable<T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>> {
   returning?: C;
   extras?: E;
 };
 
-type ReturningTypeForTable<T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption> =
+type ReturningTypeForTable<T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>> =
   (undefined extends C ? JSONSelectableForTable<T> :
     C extends ColumnForTable<T>[] ? JSONOnlyColsForTable<T, C> :
     never) &
   (undefined extends E ? {} :
-    E extends SQLFragmentsMap ? ExtrasResult<E> :
+    E extends SQLFragmentOrColumnMap<T> ? ExtrasResult<T, E> :
     never);
 
 
@@ -78,7 +81,7 @@ function SQLForColumnsOfTable(columns: Column[] | undefined, table: Table) {
     sql`jsonb_build_object(${mapWithSeparator(columns, sql`, `, c => sql`${param(c)}::text, ${c}`)})`;
 }
 
-function SQLForExtras(extras: SQLFragmentsMap | undefined) {
+function SQLForExtras<T extends Table>(extras: ExtrasOption<T>) {
   return extras === undefined ? [] :
     sql` || jsonb_build_object(${mapWithSeparator(
       Object.keys(extras), sql`, `, k => sql`${param(k)}::text, ${extras[k]}`)})`;
@@ -88,13 +91,13 @@ function SQLForExtras(extras: SQLFragmentsMap | undefined) {
 /* === insert === */
 
 interface InsertSignatures {
-  <T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined>(
+  <T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>>(
     table: T,
     values: InsertableForTable<T>,
     options?: ReturningOptionsForTable<T, C, E>
   ): SQLFragment<ReturningTypeForTable<T, C, E>>;
 
-  <T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined>(
+  <T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>>(
     table: T,
     values: InsertableForTable<T>[],
     options?: ReturningOptionsForTable<T, C, E>
@@ -109,7 +112,7 @@ interface InsertSignatures {
 export const insert: InsertSignatures = function (
   table: Table,
   values: Insertable | Insertable[],
-  options?: ReturningOptionsForTable<Table, Column[] | undefined, SQLFragmentsMap | undefined>
+  options?: ReturningOptionsForTable<Table, ColumnsOption<Table>, ExtrasOption<Table>>
 ): SQLFragment<any> {
 
   let query;
@@ -157,8 +160,8 @@ export interface UpsertAction { $action: 'INSERT' | 'UPDATE' }
 type UpsertReportAction = 'suppress';
 type UpsertReturnableForTable<
   T extends Table,
-  C extends ColumnForTable<T>[] | undefined,
-  E extends SQLFragmentsMap | undefined,
+  C extends ColumnsOption<T>,
+  E extends ExtrasOption<T>,
   RA extends UpsertReportAction | undefined
   > =
   ReturningTypeForTable<T, C, E> & (undefined extends RA ? UpsertAction : {});
@@ -168,8 +171,8 @@ type UpdateColumns<T extends Table> = ColumnForTable<T> | ColumnForTable<T>[];
 
 interface UpsertOptions<
   T extends Table,
-  C extends ColumnForTable<T>[] | undefined,
-  E extends SQLFragmentsMap | undefined,
+  C extends ColumnsOption<T>,
+  E extends ExtrasOption<T>,
   UC extends UpdateColumns<T> | undefined,
   RA extends UpsertReportAction | undefined,
   > extends ReturningOptionsForTable<T, C, E> {
@@ -181,8 +184,8 @@ interface UpsertOptions<
 
 interface UpsertSignatures {
   <T extends Table,
-    C extends ColumnForTable<T>[] | undefined,
-    E extends SQLFragmentsMap | undefined,
+    C extends ColumnsOption<T>,
+    E extends ExtrasOption<T>,
     UC extends UpdateColumns<T> | undefined,
     RA extends UpsertReportAction | undefined
     >(
@@ -193,8 +196,8 @@ interface UpsertSignatures {
   ): SQLFragment<UpsertReturnableForTable<T, C, E, RA> | (UC extends never[] ? undefined : never)>;
 
   <T extends Table,
-    C extends ColumnForTable<T>[] | undefined,
-    E extends SQLFragmentsMap | undefined,
+    C extends ColumnsOption<T>,
+    E extends ExtrasOption<T>,
     UC extends UpdateColumns<T> | undefined,
     RA extends UpsertReportAction | undefined
     >(
@@ -223,7 +226,7 @@ export const upsert: UpsertSignatures = function (
   table: Table,
   values: Insertable | Insertable[],
   conflictTarget: Column | Column[] | Constraint<Table>,
-  options?: UpsertOptions<Table, Column[] | undefined, SQLFragmentsMap | undefined, UpdateColumns<Table>, UpsertReportAction>
+  options?: UpsertOptions<Table, ColumnsOption<Table>, ExtrasOption<Table>, UpdateColumns<Table>, UpsertReportAction>
 ): SQLFragment<any> {
 
   if (Array.isArray(values) && values.length === 0) return insert(table, values);  // punt a no-op to plain insert
@@ -277,7 +280,7 @@ export const upsert: UpsertSignatures = function (
 /* === update === */
 
 interface UpdateSignatures {
-  <T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined>(
+  <T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>>(
     table: T,
     values: UpdatableForTable<T>,
     where: WhereableForTable<T> | SQLFragment,
@@ -295,7 +298,7 @@ export const update: UpdateSignatures = function (
   table: Table,
   values: Updatable,
   where: Whereable | SQLFragment,
-  options?: ReturningOptionsForTable<Table, Column[] | undefined, SQLFragmentsMap | undefined>
+  options?: ReturningOptionsForTable<Table, ColumnsOption<Table>, ExtrasOption<Table>>
 ): SQLFragment {
 
   // note: the ROW() constructor below is required in Postgres 10+ if we're updating a single column
@@ -314,7 +317,7 @@ export const update: UpdateSignatures = function (
 /* === delete === */
 
 export interface DeleteSignatures {
-  <T extends Table, C extends ColumnForTable<T>[] | undefined, E extends SQLFragmentsMap | undefined>(
+  <T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>>(
     table: T,
     where: WhereableForTable<T> | SQLFragment,
     options?: ReturningOptionsForTable<T, C, E>
@@ -329,7 +332,7 @@ export interface DeleteSignatures {
 export const deletes: DeleteSignatures = function (
   table: Table,
   where: Whereable | SQLFragment,
-  options?: ReturningOptionsForTable<Table, Column[] | undefined, SQLFragmentsMap | undefined>
+  options?: ReturningOptionsForTable<Table, ColumnsOption<Table>, ExtrasOption<Table>>
 ): SQLFragment {
 
   const
@@ -392,7 +395,7 @@ export interface SelectOptionsForTable<
   T extends Table,
   C extends ColumnsOption<T>,
   L extends LateralOption<C, E>,
-  E extends ExtrasOption,
+  E extends ExtrasOption<T>,
   > {
   distinct?: boolean | ColumnForTable<T> | ColumnForTable<T>[] | SQLFragment<any>;
   order?: OrderSpecForTable<T> | OrderSpecForTable<T>[];
@@ -412,10 +415,10 @@ type SelectReturnTypeForTable<
   T extends Table,
   C extends ColumnsOption<T>,
   L extends LateralOption<C, E>,
-  E extends ExtrasOption,
+  E extends ExtrasOption<T>,
   > =
   (undefined extends L ? ReturningTypeForTable<T, C, E> :
-    L extends SQLFragmentsMap ? ReturningTypeForTable<T, C, E> & LateralResult<L> :
+    L extends SQLFragmentMap ? ReturningTypeForTable<T, C, E> & LateralResult<L> :
     L extends SQLFragment<any> ? RunResultForSQLFragment<L> :
     never);
 
@@ -425,7 +428,7 @@ export type FullSelectReturnTypeForTable<
   T extends Table,
   C extends ColumnsOption<T>,
   L extends LateralOption<C, E>,
-  E extends ExtrasOption,
+  E extends ExtrasOption<T>,
   M extends SelectResultMode,
   > =
   {
@@ -439,7 +442,7 @@ export interface SelectSignatures {
   <T extends Table,
     C extends ColumnsOption<T>,
     L extends LateralOption<C, E>,
-    E extends ExtrasOption,
+    E extends ExtrasOption<T>,
     M extends SelectResultMode = SelectResultMode.Many
     >(
     table: T,
@@ -484,7 +487,7 @@ export class NotExactlyOneError extends Error {
 export const select: SelectSignatures = function (
   table: Table,
   where: Whereable | SQLFragment | AllType = all,
-  options: SelectOptionsForTable<Table, ColumnsOption<Table>, LateralOption<ColumnsOption<Table>, ExtrasOption>, ExtrasOption> = {},
+  options: SelectOptionsForTable<Table, ColumnsOption<Table>, LateralOption<ColumnsOption<Table>, ExtrasOption<Table>>, ExtrasOption<Table>> = {},
   mode: SelectResultMode = SelectResultMode.Many,
 ) {
 
@@ -569,7 +572,7 @@ export interface SelectOneSignatures {
     T extends Table,
     C extends ColumnsOption<T>,
     L extends LateralOption<C, E>,
-    E extends ExtrasOption,
+    E extends ExtrasOption<T>,
     >(
     table: T,
     where: WhereableForTable<T> | SQLFragment | AllType,
@@ -605,7 +608,7 @@ export interface SelectExactlyOneSignatures {
     T extends Table,
     C extends ColumnsOption<T>,
     L extends LateralOption<C, E>,
-    E extends ExtrasOption,
+    E extends ExtrasOption<T>,
     >(
     table: T,
     where: WhereableForTable<T> | SQLFragment | AllType,
