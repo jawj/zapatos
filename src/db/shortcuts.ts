@@ -45,7 +45,6 @@ export interface SQLFragmentMap { [k: string]: SQLFragment<any> }
 export interface SQLFragmentOrColumnMap<T extends Table> { [k: string]: SQLFragment<any> | ColumnForTable<T> }
 export type RunResultForSQLFragment<T extends SQLFragment<any, any>> = T extends SQLFragment<infer RunResult, any> ? RunResult : never;
 
-// yes, the next two types are identical, but distinct names make complex inferred types more readable
 export type LateralResult<L extends SQLFragmentMap> = { [K in keyof L]: RunResultForSQLFragment<L[K]> };
 export type ExtrasResult<T extends Table, E extends SQLFragmentOrColumnMap<T>> = { [K in keyof E]:
   E[K] extends SQLFragment<any> ? RunResultForSQLFragment<E[K]> : E[K] extends keyof JSONSelectableForTable<T> ? JSONSelectableForTable<T>[E[K]] : never;
