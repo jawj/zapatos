@@ -46,14 +46,14 @@ export type JSONObject = { [k: string]: JSONValue };
 export type JSONArray = JSONValue[];
 
 /**
- * A date that has come via JSON. This is actually a `string` (in ISO8601
- * format) masquerading as an opaque class so that you can't forget deal with
- * it appropriately.
+ * A date that has come via JSON. The class itself is never instantiated.
+ * Instead, ISO8601 format `string` values are falsely typed to masquerade as
+ * instances of it, so that we can't neglect to deal with them appropriately.
  * 
- * Pass it to the library's `toDate` function to get back a JS `Date`, or to
- * the `toISOString` function to cast it to a normal `string`.
+ * You can pass a `DateString` to Zapatos' `toDate`, `toISOString` or 
+ * `toUnixMs` functions.
  * 
- * If you use a date library like Luxon or Moment, you can create an equivalent
+ * Or, if you use a date library like Luxon or Moment, create an equivalent
  * helper function using `nullableDateStringConversion` (which does the right 
  * thing with nullable date columns and casting). For example:
  * 
@@ -85,7 +85,7 @@ export abstract class DateString {
  * @param fn The underlying conversion function: e.g. `moment` (Moment) or
  * `DateTime.fromISO` (Luxon)
  */
-export function nullableDateStringConversion<U>(fn: (d: string) => U):
+export function dateStringConversion<U>(fn: (d: string) => U):
   <T extends DateString | null>(d: T) => T extends DateString ? Exclude<T, DateString> | U : T {
   return function <T extends DateString | null>(d: T) {
     return (d === null ? null : fn(d as any)) as any;
@@ -97,19 +97,19 @@ export function nullableDateStringConversion<U>(fn: (d: string) => U):
  * ISO8601 formatted date. Nullability is preserved: e.g `DateString | null`
  * becomes `string | null`.
  */
-export const toISOString = nullableDateStringConversion(d => d as string);
+export const toISOString = dateStringConversion(d => d as string);
 
 /**
  * Convert a (masquerading) `DateString` to a JavaScript `Date`. Nullability is
  * preserved: e.g `DateString | null` becomes `Date | null`.
  */
-export const toDate = nullableDateStringConversion(d => new Date(d));
+export const toDate = dateStringConversion(d => new Date(d));
 
 /**
  * Convert a (masquerading) `DateString` to milliseconds since 1 January 1970.
  * Nullability is preserved: e.g `DateString | null` becomes `number | null`.
  */
-export const toUnixMs = nullableDateStringConversion(Date.parse);
+export const toUnixMs = dateStringConversion(Date.parse);
 
 /**
  * Int8 to be represented as a string, which is how pg delivers them
