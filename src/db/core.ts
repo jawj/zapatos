@@ -93,8 +93,8 @@ export function nullableDateStringConversion<U>(fn: (d: string) => U):
 }
 
 /**
- * Cast a (masquerading) `DateString` to an ordinary `string` (containing an
- * ISO8601 formatted date). Nullability is preserved: e.g `DateString | null`
+ * Cast a (masquerading) `DateString` to an ordinary `string`, containing an
+ * ISO8601 formatted date. Nullability is preserved: e.g `DateString | null`
  * becomes `string | null`.
  */
 export const toISOString = nullableDateStringConversion(d => d as string);
@@ -104,6 +104,12 @@ export const toISOString = nullableDateStringConversion(d => d as string);
  * preserved: e.g `DateString | null` becomes `Date | null`.
  */
 export const toDate = nullableDateStringConversion(d => new Date(d));
+
+/**
+ * Convert a (masquerading) `DateString` to milliseconds since 1 January 1970.
+ * Nullability is preserved: e.g `DateString | null` becomes `number | null`.
+ */
+export const toUnixMs = nullableDateStringConversion(Date.parse);
 
 /**
  * Int8 to be represented as a string, which is how pg delivers them
