@@ -85,10 +85,10 @@ export abstract class DateString {
  * @param fn The underlying conversion function: e.g. `moment` (Moment) or
  * `DateTime.fromISO` (Luxon)
  */
-export function nullableDateStringConversion<U>(fn: (d: any) => U):
+export function nullableDateStringConversion<U>(fn: (d: string) => U):
   <T extends DateString | null>(d: T) => T extends DateString ? Exclude<T, DateString> | U : T {
   return function <T extends DateString | null>(d: T) {
-    return (d === null ? null : fn(d)) as any;
+    return (d === null ? null : fn(d as any)) as any;
   };
 }
 
