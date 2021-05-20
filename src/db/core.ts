@@ -46,9 +46,64 @@ export type JSONObject = { [k: string]: JSONValue };
 export type JSONArray = JSONValue[];
 
 /**
- * Date to be represented as an ISO8601 string, which is how Postgres casts them
+ * A date that has come via JSON. This is actually a `string` (in ISO8601
+ * format) masquerading as an opaque class so that you can't forget deal with
+ * it appropriately.
+ * 
+ * Pass it to the library's `toDate` function to get back a JS `Date`, or to
+ * the `toISOString` function to cast it to a normal `string`.
+ * 
+ * If you use a date library like Luxon or Moment, you can create an equivalent
+ * helper function using `nullableDateStringConversion` (which does the right 
+ * thing with nullable date columns and casting). For example:
+ * 
+ * ```
+ * // for Luxon
+ * const toDateTime = db.nullableDateStringConversion(DateTime.fromISO);
+ * const someDateTime = toDateTime(someDateString);
+ *   
+ * // for Moment:
+ * const toMoment = db.nullableDateStringConversion(moment);
+ * const someMoment = toMoment(someDateString);
+ * ```
+ * 
+ * Please note: `DateString` is marked `abstract` only so you can't instantiate
+ * it. Do not try to subclass it (it will throw).
  */
-export type DateString = string;
+export abstract class DateString {
+  protected _ds;  // don't be duck-typed as anything else
+  constructor() {
+    // just in case someone decides to subclass DateString, super() will catch them ...
+    throw new Error('DateString is a fake type for strings containing ISO8601 formatted dates. It should never be instantiated.');
+  }
+};
+
+/**
+ * Function that creates a function converting `DateString`s (which are
+ * actually just strings) to some other date representation, while preserving
+ * nullability. See documentation for `DateString`.
+ * @param fn The underlying conversion function: e.g. `moment` (Moment) or
+ * `DateTime.fromISO` (Luxon)
+ */
+export function nullableDateStringConversion<U>(fn: (d: any) => U):
+  <T extends DateString | null>(d: T) => T extends DateString ? Exclude<T, DateString> | U : T {
+  return function <T extends DateString | null>(d: T) {
+    return (d === null ? null : fn(d)) as any;
+  };
+}
+
+/**
+ * Cast a (masquerading) `DateString` to an ordinary `string` (containing an
+ * ISO8601 formatted date). Nullability is preserved: e.g `DateString | null`
+ * becomes `string | null`.
+ */
+export const toISOString = nullableDateStringConversion(d => d as string);
+
+/**
+ * Convert a (masquerading) `DateString` to a JavaScript `Date`. Nullability is
+ * preserved: e.g `DateString | null` becomes `Date | null`.
+ */
+export const toDate = nullableDateStringConversion(d => new Date(d));
 
 /**
  * Int8 to be represented as a string, which is how pg delivers them
