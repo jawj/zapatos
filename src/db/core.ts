@@ -50,25 +50,25 @@ export type JSONArray = JSONValue[];
  * Instead, ISO8601 format `string` values are falsely typed to masquerade as
  * instances of it, so that we can't neglect to deal with them appropriately.
  * 
- * You can pass a `DateString` to Zapatos' `toDate`, `toISOString` or 
+ * You can pass a `DateString` to Zapatos' `toDate`, `toISOString` or
  * `toUnixMs` functions.
  * 
  * Or, if you use a date library like Luxon or Moment, create an equivalent
- * helper function using `nullableDateStringConversion` (which does the right 
- * thing with nullable date columns and casting). For example:
+ * conversion function using the `dateStringConversion` function, which does
+ * the right thing with nullable date columns and casting. For example:
  * 
  * ```
  * // for Luxon
- * const toDateTime = db.nullableDateStringConversion(DateTime.fromISO);
+ * const toDateTime = db.dateStringConversion(DateTime.fromISO);
  * const someDateTime = toDateTime(someDateString);
  *   
  * // for Moment:
- * const toMoment = db.nullableDateStringConversion(moment);
+ * const toMoment = db.dateStringConversion(moment);
  * const someMoment = toMoment(someDateString);
  * ```
  * 
  * Please note: `DateString` is marked `abstract` only so you can't instantiate
- * it. Do not try to subclass it (it will throw).
+ * it. If you try to subclass it and instantiate the subclass, it will throw.
  */
 export abstract class DateString {
   protected _ds;  // don't be duck-typed as anything else
