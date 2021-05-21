@@ -50,20 +50,20 @@ export type JSONArray = JSONValue[];
  * Instead, ISO8601 format `string` values are falsely typed to masquerade as
  * instances of it, so that we can't neglect to deal with them appropriately.
  * 
- * You can pass a `DateString` to Zapatos' `toDate`, `toISOString` or
- * `toUnixMs` functions.
+ * You can use a `DateString` in a `Whereable`, `Insertable` or `Updatable`, or
+ * pass it to Zapatos' `toDate`, `toISOString` or `toUnixMs` functions.
  * 
- * Or, if you use a date library like Luxon or Moment, create an equivalent
- * conversion function using the `dateStringConversion` function, which does
- * the right thing with nullable date columns and casting. For example:
+ * Or, if you use a date library like Luxon or Moment, create an alternative
+ * conversion function using the `dateStringConversion` function (which does
+ * the right thing with nullable date columns and casting). For example:
  * 
  * ```
  * // for Luxon
- * const toDateTime = db.dateStringConversion(DateTime.fromISO);
+ * export const toDateTime = db.dateStringConversion(DateTime.fromISO);
  * const someDateTime = toDateTime(someDateString);
  *   
  * // for Moment:
- * const toMoment = db.dateStringConversion(moment);
+ * export const toMoment = db.dateStringConversion(moment);
  * const someMoment = toMoment(someDateString);
  * ```
  * 
@@ -74,7 +74,7 @@ export abstract class DateString {
   protected _ds;  // don't be duck-typed as anything else
   constructor() {
     // just in case someone decides to subclass DateString, super() will catch them ...
-    throw new Error('DateString is a fake type for strings containing ISO8601 formatted dates. It should never be instantiated.');
+    throw new Error('DateString is a pretend type for strings containing ISO8601 formatted dates. It should never be instantiated.');
   }
 };
 
@@ -82,8 +82,9 @@ export abstract class DateString {
  * Function that creates a function converting `DateString`s (which are
  * actually just strings) to some other date representation, while preserving
  * nullability. See documentation for `DateString`.
- * @param fn The underlying conversion function: e.g. `moment` (Moment) or
- * `DateTime.fromISO` (Luxon)
+ * @param fn The underlying conversion function, which must take a string 
+ * ISO8601 date representation and return the desired type: e.g. `moment` (for
+ * Moment) or `DateTime.fromISO` (for Luxon)
  */
 export function dateStringConversion<U>(fn: (d: string) => U):
   <T extends DateString | null>(d: T) => T extends DateString ? Exclude<T, DateString> | U : T {
@@ -107,9 +108,16 @@ export const toDate = dateStringConversion(d => new Date(d));
 
 /**
  * Convert a (masquerading) `DateString` to milliseconds since 1 January 1970.
+ * Returned to 3 decimal places, maintaining Postgres' microsecond precision.
  * Nullability is preserved: e.g `DateString | null` becomes `number | null`.
  */
-export const toUnixMs = dateStringConversion(Date.parse);
+export const toUnixMs = dateStringConversion(d => {
+  const
+    microMatch = d.match(/[.]\d{3}(\d{3})(|Z|[-+][\d:]+)$/),
+    microPart = microMatch ? parseInt(microMatch[1], 10) / 1000 : 0;
+
+  return Date.parse(d) + microPart;
+});
 
 /**
  * Int8 to be represented as a string, which is how pg delivers them
