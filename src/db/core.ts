@@ -1,6 +1,6 @@
 /*
 Zapatos: https://jawj.github.io/zapatos/
-Copyright (C) 2020 George MacKerron
+Copyright (C) 2020 - 2021 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
@@ -46,83 +46,33 @@ export type JSONObject = { [k: string]: JSONValue };
 export type JSONArray = JSONValue[];
 
 /**
- * A date that has come via JSON. The class itself is never instantiated.
- * Instead, ISO8601 format `string` values are falsely typed to masquerade as
- * instances of it, so that we can't neglect to deal with them appropriately.
- * 
- * You can use a `DateString` in a `Whereable`, `Insertable` or `Updatable`, or
- * pass it to Zapatos' `toDate`, `toISOString` or `toUnixMs` functions.
- * 
- * Or, if you use a date library like Luxon or Moment, create an alternative
- * conversion function using the `dateStringConversion` function (which does
- * the right thing with nullable date columns and casting). For example:
- * 
- * ```
- * // for Luxon
- * export const toDateTime = db.dateStringConversion(DateTime.fromISO);
- * const someDateTime = toDateTime(someDateString);
- *   
- * // for Moment:
- * export const toMoment = db.dateStringConversion(moment);
- * const someMoment = toMoment(someDateString);
- * ```
- * 
- * Please note: `DateString` is marked `abstract` only so you can't instantiate
- * it. If you try to subclass it and instantiate the subclass, it will throw.
- */
-export abstract class DateString {
-  protected _ds;  // don't be duck-typed as anything else
-  constructor() {
-    // just in case someone decides to subclass DateString, super() will catch them ...
-    throw new Error('DateString is a pretend type for strings containing ISO8601 formatted dates. It should never be instantiated.');
-  }
-};
-
-/**
- * Function that creates a function converting `DateString`s (which are
- * actually just strings) to some other date representation, while preserving
- * nullability. See documentation for `DateString`.
- * @param fn The underlying conversion function, which must take a string 
- * ISO8601 date representation and return the desired type: e.g. `moment` (for
- * Moment) or `DateTime.fromISO` (for Luxon)
- */
-export function dateStringConversion<U>(fn: (d: string) => U):
-  <T extends DateString | null>(d: T) => T extends DateString ? Exclude<T, DateString> | U : T {
-  return function <T extends DateString | null>(d: T) {
-    return (d === null ? null : fn(d as any)) as any;
-  };
-}
-
-/**
- * Cast a (masquerading) `DateString` to an ordinary `string`, containing an
- * ISO8601 formatted date. Nullability is preserved: e.g `DateString | null`
- * becomes `string | null`.
- */
-export const toISOString = dateStringConversion(d => d as string);
-
-/**
- * Convert a (masquerading) `DateString` to a JavaScript `Date`. Nullability is
- * preserved: e.g `DateString | null` becomes `Date | null`.
- */
-export const toDate = dateStringConversion(d => new Date(d));
-
-/**
- * Convert a (masquerading) `DateString` to milliseconds since 1 January 1970.
- * Returned to 3 decimal places, maintaining Postgres' microsecond precision.
- * Nullability is preserved: e.g `DateString | null` becomes `number | null`.
- */
-export const toUnixMs = dateStringConversion(d => {
-  const
-    microMatch = d.match(/[.]\d{3}(\d{3})(|Z|[-+][\d:]+)$/),
-    microPart = microMatch ? parseInt(microMatch[1], 10) / 1000 : 0;
-
-  return Date.parse(d) + microPart;
-});
-
-/**
  * Int8 to be represented as a string, which is how pg delivers them
  */
-export type Int8String = string;
+export type Int8String = `${number}`;
+
+/**
+ * A string holding an ISO8601-formatted date.
+ *
+ * You can use a `DateString` in a `Whereable`, `Insertable` or `Updatable`, or
+ * convert it using Zapatos' `toDate` or `toUnixMs` functions.
+ *
+ * If you use a date library like Luxon or Moment, you can create a custom
+ * conversion function using the `strict` function. For example, for Luxon:
+ *
+ * ```
+ * export const toDateTime = db.strict(DateTime.fromISO);
+ * const someDateTime = toDateTime(someDateString);
+ * ```
+ *
+ * Or for Moment:
+ *
+ * ```
+ * export const toMoment = db.strict((d: db.DateString) => moment(d, true));
+ * const someMoment = toMoment(someDateString);
+ * ```
+ */
+
+export type DateString = `${number}-${number}-${number}T${number}:${number}:${number}${string}`;
 
 /**
  * Compiles to a numbered query parameter (`$1`, `$2`, etc) and adds the wrapped value 

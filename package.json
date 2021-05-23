@@ -51,12 +51,12 @@
     "@types/pg": ">=7.14.3"
   },
   "devDependencies": {
-    "@types/pg": "^7.14.11",
-    "@typescript-eslint/eslint-plugin": "^4.23.0",
-    "@typescript-eslint/parser": "^4.23.0",
-    "eslint": "^7.26.0",
+    "@types/pg": "^8.6.0",
+    "@typescript-eslint/eslint-plugin": "^4.24.0",
+    "@typescript-eslint/parser": "^4.24.0",
+    "eslint": "^7.27.0",
     "eslint-config-prettier": "^8.3.0",
-    "eslint-plugin-import": "^2.22.1",
+    "eslint-plugin-import": "^2.23.3",
     "gen-esm-wrapper": "^1.1.1",
     "pg": "^8.6.0",
     "ts-node": "^9.1.1",
