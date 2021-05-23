@@ -71,7 +71,6 @@ export type Int8String = `${number}`;
  * const someMoment = toMoment(someDateString);
  * ```
  */
-
 export type DateString = `${number}-${number}-${number}T${number}:${number}:${number}${string}`;
 
 /**
