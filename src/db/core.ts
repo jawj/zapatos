@@ -53,11 +53,12 @@ export type Int8String = `${number}`;
 /**
  * A string holding an ISO8601-formatted date.
  *
- * You can use a `DateString` in a `Whereable`, `Insertable` or `Updatable`, or
- * convert it using Zapatos' `toDate` or `toUnixMs` functions.
+ * A `DateString` originates in a `JSONSelectable`. You can use it in a
+ * `Whereable`, `Insertable` or `Updatable`, or convert it using Zapatos'
+ * `toDate` or `toUnixMs` functions.
  *
  * If you use a date library like Luxon or Moment, you can create a custom
- * conversion function using the `strict` function. For example, for Luxon:
+ * conversion function by using the `strict` function. For example, for Luxon:
  *
  * ```
  * export const toDateTime = db.strict(DateTime.fromISO);
