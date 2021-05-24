@@ -46,7 +46,7 @@
   "author": "George MacKerron",
   "license": "MIT",
   "peerDependencies": {
-    "typescript": ">=3.8.3",
+    "typescript": ">=4.1",
     "pg": ">=7.18.2",
     "@types/pg": ">=7.14.3"
   },
@@ -60,6 +60,6 @@
     "gen-esm-wrapper": "^1.1.1",
     "pg": "^8.6.0",
     "ts-node": "^9.1.1",
-    "typescript": "^4.2.4"
+    "typescript": "^4.1"
   }
 }
