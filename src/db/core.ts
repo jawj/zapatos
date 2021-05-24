@@ -61,14 +61,14 @@ export type Int8String = `${number}`;
  * conversion function by using the `strict` function. For example, for Luxon:
  *
  * ```
- * export const toDateTime = db.strict(DateTime.fromISO);
+ * const toDateTime = db.strict<db.DateString, DateTime>(DateTime.fromISO);
  * const someDateTime = toDateTime(someDateString);
  * ```
  *
  * Or for Moment:
  *
  * ```
- * export const toMoment = db.strict((d: db.DateString) => moment(d, true));
+ * const toMoment = db.strict<db.DateString, moment.Moment>(moment);
  * const someMoment = toMoment(someDateString);
  * ```
  */

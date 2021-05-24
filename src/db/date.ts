@@ -9,7 +9,14 @@ import { DateString } from './core';
 /**
  * Make a function `STRICT` in the Postgres sense — where it's an alias for
  * `RETURNS NULL ON NULL INPUT` — with appropriate typing. See the `toDate` and
- * `toUnixMs` functions as examples.
+ * `toUnixMs` functions as examples. The generic input and output types `FnIn`
+ * and `FnOut` are inferred from `fn`, but can also be explicitly narrowed. For
+ * example, to strictly convert from `DateString` to Luxon's `DateTime`:
+ * 
+ * ```
+ * const toDateTime = db.strict<db.DateString, DateTime>(DateTime.fromISO);
+ * ```
+ * 
  * @param fn The transformation function to be made strict.
  */
 export function strict<FnIn, FnOut>(fn: (x: FnIn) => FnOut):
@@ -35,7 +42,7 @@ export const toDate = strict((d: DateString) => new Date(d));
  * truncated to the millisecond precision of a JavaScript `Date` here.
  * @param d A `DateString` (or `null`) for conversion.
  */
-export const toUnixMs = strict((d: DateString) => Date.parse(d));
+export const toUnixMs = strict<DateString, number>(Date.parse);
 
 /**
  * Convert a JavaScript `Date` or milliseconds since 1 January 1970 to a
