@@ -135,13 +135,21 @@ export class Parameter<T = any> { constructor(public value: T, public cast?: boo
 export function param<T = any>(x: T, cast?: boolean | string) { return new Parameter(x, cast); }
 
 /**
- * Compiles to the wrapped string value, as is. Dangerous: https://xkcd.com/327/.
+ * 💥💥💣 **DANGEROUS** 💣💥💥
+ * 
+ * Compiles to the wrapped string value, as is, which may enable SQL injection
+ * attacks.
  */
 export class DangerousRawString { constructor(public value: string) { } }
 /**
- * Returns a `DangerousRawString` instance, wrapping a string. 
- * `DangerousRawString` compiles to the wrapped string value, as is. 
- * Dangerous: https://xkcd.com/327/.
+ * 💥💥💣 **DANGEROUS** 💣💥💥
+ * 
+ * Remember [Little Bobby Tables](https://xkcd.com/327/). 
+ * Did you want `db.param` instead?
+ * ---
+ * Returns a `DangerousRawString` instance, wrapping a string.
+ * `DangerousRawString` compiles to the wrapped string value, as-is, which may
+ * enable SQL injection attacks.
  */
 export function raw(x: string) { return new DangerousRawString(x); }
 
