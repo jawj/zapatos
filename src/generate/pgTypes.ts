@@ -15,23 +15,42 @@ const baseTsTypeForBasePgType = (pgType: string, enums: EnumData, context: TypeC
       return context === 'JSONSelectable' ? 'number' :
         context === 'Selectable' ? 'db.Int8String' :
           '(number | db.Int8String)';
+    case 'bytea':
+      return context === 'JSONSelectable' ? 'db.ByteArrayString' :
+        context === 'Selectable' ? 'Buffer' :
+          '(db.ByteArrayString | Buffer)';
     case 'date':
-    case 'timestamp':
-    case 'timestamptz':
       return context === 'JSONSelectable' ? 'db.DateString' :
         context === 'Selectable' ? 'Date' :
-          '(Date | db.DateString)';
+          '(db.DateString | Date)';
+    case 'timestamp':
+      return context === 'JSONSelectable' ? 'db.TimestampString' :
+        context === 'Selectable' ? 'Date' :
+          '(db.TimestampString | Date)';
+    case 'timestamptz':
+      return context === 'JSONSelectable' ? 'db.TimestampTzString' :
+        context === 'Selectable' ? 'Date' :
+          '(db.TimestampTzString | Date)';
+    case 'time':
+      return 'db.TimeString';
+    case 'timetz':
+      return 'db.TimeTzString';
+    case "int4range":
+    case "int8range":
+    case "numrange":
+      return 'db.NumberRangeString';
+    case "tsrange":    // format depends on pg DateStyle, hence only string-typed bounds
+    case "tstzrange":  // ditto
+    case "daterange":  // ditto
+      return 'db.DateRangeString';
+    case 'interval':  // format depends on IntervalStyle, hence only string-typed
     case 'bpchar':
     case 'char':
     case 'varchar':
     case 'text':
     case 'citext':
     case 'uuid':
-    case 'bytea':
     case 'inet':
-    case 'time':
-    case 'timetz':
-    case 'interval':
     case 'name':
       return 'string';
     case 'int2':

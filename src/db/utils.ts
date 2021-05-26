@@ -7,6 +7,16 @@ Released under the MIT licence: see LICENCE file
 export type NoInfer<T> = [T][T extends any ? 0 : never];  // https://github.com/Microsoft/TypeScript/issues/14829
 
 /**
+ * Basic zero-padding for short, positive integers
+ * @param n The number to pad
+ * @param pad The minimum desired output string length: 2, 3 or 4
+ */
+export const pad = (n: number, pad: 2 | 3 | 4 = 2) => {
+  const s = String(n);
+  return '000'.slice(s.length + 3 - pad) + s;
+};
+
+/**
  * Simple promisification of setTimeout.
  * @param delayMs Time to wait, in milliseconds
  */

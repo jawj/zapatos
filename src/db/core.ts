@@ -46,33 +46,64 @@ export type JSONObject = { [k: string]: JSONValue };
 export type JSONArray = JSONValue[];
 
 /**
- * Int8 to be represented as a string, which is how pg delivers them
+ * `int8` value represented as a string
  */
 export type Int8String = `${number}`;
 
 /**
- * A string holding an ISO8601-formatted date.
- *
- * A `DateString` originates in a `JSONSelectable`. You can use it in a
- * `Whereable`, `Insertable` or `Updatable`, or convert it using Zapatos'
- * `toDate` or `toUnixMs` functions.
- *
- * If you use a date library like Luxon or Moment, you can create a custom
- * conversion function by using the `strict` function. For example, for Luxon:
- *
- * ```
- * const toDateTime = db.strict<db.DateString, DateTime>(DateTime.fromISO);
- * const someDateTime = toDateTime(someDateString);
- * ```
- *
- * Or for Moment:
- *
- * ```
- * const toMoment = db.strict<db.DateString, moment.Moment>(moment);
- * const someMoment = toMoment(someDateString);
- * ```
+ * Generic range value represented as a string
  */
-export type DateString = `${number}-${number}-${number}T${number}:${number}:${number}${string}`;
+export type RangeString<Bound extends string | number> = `${'[' | '('}${Bound},${Bound}${']' | ')'}`;
+
+/**
+ * `tsrange`, `tstzrange` or `daterange` value represented as a string. The 
+ * format of the upper and lower bound `date`, `timestamp` or `timestamptz`
+ * values depends on pg's `DateStyle` setting.
+ */
+export type DateRangeString = RangeString<string>;
+
+/**
+ * `int4range`, `int8range` or `numrange` value represented as a string
+ */
+export type NumberRangeString = RangeString<number | ''>;
+
+/**
+ * `bytea` value representated as a hex string. Note: for large objects, use
+ * something like https://www.npmjs.com/package/pg-large-object instead.
+ */
+export type ByteArrayString = `\\x${string}`;
+
+/**
+ * Make a function `STRICT` in the Postgres sense — where it's an alias for
+ * `RETURNS NULL ON NULL INPUT` — with appropriate typing.
+ * 
+ * The generic input and output types `FnIn` and `FnOut` are inferred from 
+ * `fn`, but can also be explicitly narrowed. For example, to convert from
+ * `TimestampTzString` to Luxon's `DateTime`, returning null on null input:
+ * 
+ * ```
+ * const toDateTime = db.strict<db.TimestampTzString, DateTime>(DateTime.fromISO);
+ * ```
+ * 
+ * See `toBuffer` as an additional example.
+ * 
+ * @param fn The transformation function to be made strict.
+ */
+export function strict<FnIn, FnOut>(fn: (x: FnIn) => FnOut):
+  <T extends FnIn | null>(d: T) => T extends FnIn ? Exclude<T, FnIn> | FnOut : T {
+  return function <T extends FnIn | null>(d: T) {
+    return (d === null ? null : fn(d as FnIn)) as any;
+  };
+}
+
+/**
+ * Convert a `bytea` hex representation to a JavaScript `Buffer`. Note: for
+ * large objects, use something like 
+ * https://www.npmjs.com/package/pg-large-object instead.
+ * 
+ * @param ba The `ByteArrayString` hex representation (or `null`)
+ */
+export const toBuffer = strict((ba: ByteArrayString) => Buffer.from(ba.slice(2), 'hex'));
 
 /**
  * Compiles to a numbered query parameter (`$1`, `$2`, etc) and adds the wrapped value 
