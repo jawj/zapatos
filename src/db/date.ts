@@ -78,7 +78,7 @@ export const toDate: ToDate = function (d: string, tzInterpretation?: TzLocalOrU
       // new Date() interprets 'yyyy-mm-dd' as UTC but 'yyyy-mm-ddT00:00' as local
       if ((dateMatch = d.match(/^([0-9]+)-([0-9]+)-([0-9]+)$/))) {
         const [, y, m, d] = dateMatch;
-        return new Date(parseInt(y, 10), parseInt(m, 10), parseInt(d, 10));
+        return new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
       }
       return new Date(d);
   }
