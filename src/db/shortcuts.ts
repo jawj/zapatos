@@ -519,9 +519,10 @@ export const select: SelectSignatures = function (
         if (o.nulls && !['FIRST', 'LAST'].includes(o.nulls)) throw new Error(`Nulls must be FIRST/LAST/undefined, not '${o.nulls}'`);
         return sql`${o.by} ${raw(o.direction)}${o.nulls ? sql` NULLS ${raw(o.nulls)}` : []}`;
       })}`,
-    offsetSQL = allOptions.offset === undefined ? [] : sql` OFFSET ${param(allOptions.offset)} ROWS`,
     limitSQL = allOptions.limit === undefined ? [] :
-      sql` FETCH FIRST ${param(allOptions.limit)} ROWS ${allOptions.withTies ? sql`WITH TIES` : sql`ONLY`}`,
+      allOptions.withTies ? sql` FETCH FIRST ${param(allOptions.limit)} ROWS WITH TIES` :
+        sql` LIMIT ${param(allOptions.limit)}`,  // compatibility with pg pre-10.5; and fewer bytes!
+    offsetSQL = allOptions.offset === undefined ? [] : sql` OFFSET ${param(allOptions.offset)}`,  // pg is lax about OFFSET following FETCH, and we exploit that
     lockSQL = lock === undefined ? [] : (lock as SelectLockingOptions[]).map(lock => {  // `as` clause is required when TS not strict
       const
         ofTables = lock.of === undefined || Array.isArray(lock.of) ? lock.of : [lock.of],
@@ -540,7 +541,7 @@ export const select: SelectSignatures = function (
         });
 
   const
-    rowsQuery = sql<SQL, any>`SELECT${distinctSQL} ${allColsSQL} AS result FROM ${table}${tableAliasSQL}${lateralSQL}${whereSQL}${groupBySQL}${havingSQL}${orderSQL}${offsetSQL}${limitSQL}${lockSQL}`,
+    rowsQuery = sql<SQL, any>`SELECT${distinctSQL} ${allColsSQL} AS result FROM ${table}${tableAliasSQL}${lateralSQL}${whereSQL}${groupBySQL}${havingSQL}${orderSQL}${limitSQL}${offsetSQL}${lockSQL}`,
     query = mode !== SelectResultMode.Many ? rowsQuery :
       // we need the aggregate to sit in a sub-SELECT in order to keep ORDER and LIMIT working as usual
       sql<SQL, any>`SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${raw(`"sq_${alias}"`)}`;
