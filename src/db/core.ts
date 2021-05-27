@@ -77,17 +77,22 @@ export type ByteArrayString = `\\x${string}`;
  * Make a function `STRICT` in the Postgres sense — where it's an alias for
  * `RETURNS NULL ON NULL INPUT` — with appropriate typing.
  * 
- * The generic input and output types `FnIn` and `FnOut` are inferred from 
- * `fn`, but can also be explicitly narrowed. For example, to convert from
- * `TimestampTzString` to Luxon's `DateTime`, returning null on null input:
+ * For example, Zapatos' `toBuffer()` function is defined as:
+ * 
+ * ```
+ * export const toBuffer = strict((ba: ByteArrayString) => Buffer.from(ba.slice(2), 'hex'));
+ * ```
+ * 
+ * The generic input and output types `FnIn` and `FnOut` can be inferred from
+ * `fn`, as seen above, but can also be explicitly narrowed. For example, to
+ * convert specifically from `TimestampTzString` to Luxon's `DateTime`, but 
+ * pass through `null`s unchanged:
  * 
  * ```
  * const toDateTime = db.strict<db.TimestampTzString, DateTime>(DateTime.fromISO);
  * ```
  * 
- * See `toBuffer` as an additional example.
- * 
- * @param fn The transformation function to be made strict.
+ * @param fn The single-argument transformation function to be made strict.
  */
 export function strict<FnIn, FnOut>(fn: (x: FnIn) => FnOut):
   <T extends FnIn | null>(d: T) => T extends FnIn ? Exclude<T, FnIn> | FnOut : T {
@@ -99,7 +104,7 @@ export function strict<FnIn, FnOut>(fn: (x: FnIn) => FnOut):
 /**
  * Convert a `bytea` hex representation to a JavaScript `Buffer`. Note: for
  * large objects, use something like 
- * https://www.npmjs.com/package/pg-large-object instead.
+ * [pg-large-object](https://www.npmjs.com/package/pg-large-object) instead.
  * 
  * @param ba The `ByteArrayString` hex representation (or `null`)
  */

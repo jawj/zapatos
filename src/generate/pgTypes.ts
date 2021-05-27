@@ -39,7 +39,7 @@ const baseTsTypeForBasePgType = (pgType: string, enums: EnumData, context: TypeC
     case "int8range":
     case "numrange":
       return 'db.NumberRangeString';
-    case "tsrange":    // format depends on pg DateStyle, hence only string-typed bounds
+    case "tsrange":    // bounds format depends on pg DateStyle, hence only string-typed
     case "tstzrange":  // ditto
     case "daterange":  // ditto
       return 'db.DateRangeString';

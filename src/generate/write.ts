@@ -11,6 +11,7 @@ import * as legacy from './legacy';
 import { tsForConfig } from './tsOutput';
 import { header } from './header';
 
+
 /**
  * Generate a schema and supporting files and folders given a configuration.
  * @param suppliedConfig An object approximately matching `zapatosconfig.json`.

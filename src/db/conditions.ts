@@ -17,6 +17,7 @@ import {
 
 import { mapWithSeparator } from './utils';
 
+
 const conditionalParam = (a: any) => a instanceof SQLFragment || a instanceof ParentColumn || a instanceof Parameter ? a : param(a);
 
 export const isNull = sql<SQL, boolean>`${self} IS NULL`;

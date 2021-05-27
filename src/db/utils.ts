@@ -7,8 +7,8 @@ Released under the MIT licence: see LICENCE file
 export type NoInfer<T> = [T][T extends any ? 0 : never];  // https://github.com/Microsoft/TypeScript/issues/14829
 
 /**
- * Basic zero-padding for short, positive integers
- * @param n The number to pad
+ * Basic zero-padding for small, positive integers
+ * @param n The integer to pad
  * @param pad The minimum desired output string length: 2, 3 or 4
  */
 export const pad = (n: number, pad: 2 | 3 | 4 = 2) => {
@@ -32,7 +32,7 @@ export const wait = (delayMs: number) => new Promise(resolve => setTimeout(resol
 export const mapWithSeparator = <TIn, TSep, TOut>(
   arr: TIn[],
   separator: TSep,
-  cb: (x: TIn, i: number, a: typeof arr) => TOut
+  cb: (x: TIn, i: number, a: TIn[]) => TOut
 ): (TOut | TSep)[] => {
 
   const result: (TOut | TSep)[] = [];

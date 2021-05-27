@@ -68,8 +68,11 @@ export async function transaction<T, M extends IsolationLevel>(
 ): Promise<T> {
 
   if (Object.prototype.hasOwnProperty.call(txnClientOrPool, '_zapatos')) {
+    // if txnClientOrPool is a TxnClient, just pass it through
     return callback(txnClientOrPool as TxnClient<IsolationSatisfying<M>>);
   }
+
+  if (txnSeq >= Number.MAX_SAFE_INTEGER - 1) txnSeq = 0;  // wrap around
 
   const
     txnId = txnSeq++,

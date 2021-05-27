@@ -78,7 +78,7 @@ export const toDate: ToDate = function (d: string, tzInterpretation?: TzLocalOrU
       // new Date() interprets 'yyyy-mm-dd' as UTC but 'yyyy-mm-ddT00:00' as local
       if ((dateMatch = d.match(/^([0-9]+)-([0-9]+)-([0-9]+)$/))) {
         const [, y, m, d] = dateMatch;
-        return new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10));
+        return new Date(parseInt(y, 10), parseInt(m, 10) - /* cRaZY jS */ 1, parseInt(d, 10));
       }
       return new Date(d);
   }
@@ -118,7 +118,7 @@ export const toString: ToString = function (d: Date | null, stringTypeTz: 'times
     [stringType, tz] = stringTypeTz.split(':'),
     utc = tz === 'UTC',
     year = pad(utc ? d.getUTCFullYear() : d.getFullYear(), 4),
-    month = pad(1 + (utc ? d.getUTCMonth() : d.getMonth())),
+    month = pad((utc ? d.getUTCMonth() : d.getMonth()) + /* cRaZY jS */ 1),
     day = pad(utc ? d.getUTCDate() : d.getDate());
 
   if (stringType === 'date') return `${year}-${month}-${day}`;

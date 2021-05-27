@@ -207,7 +207,7 @@ interface UpsertSignatures {
   ): SQLFragment<UpsertReturnableForTable<T, C, E, RA>[]>;
 }
 
-export const doNothing = [];
+export const doNothing = [] as const;
 
 /**
  * Generate an 'upsert' (`INSERT ... ON CONFLICT ...`) query `SQLFragment`.

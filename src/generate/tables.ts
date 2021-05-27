@@ -10,6 +10,7 @@ import type { EnumData } from './enums';
 import type { CustomTypes } from './tsOutput';
 import { CompleteConfig } from './config';
 
+
 export interface Relation {
   name: string;
   type: 'table' | 'mview';
