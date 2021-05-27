@@ -77,9 +77,11 @@ var
   hideImportsMsg = '▾ Hide imports';
 
 runnables.forEach(function (runnable) {
+  const hasImports = runnable.getElementsByClassName('imports').length > 0;
   runnable.insertAdjacentHTML('afterbegin',
     '<a class="openmonaco" href="#" title="See this in embedded VS Code">Explore types »</a>' +
-    '<a class="toggleimports" href="#">' + showImportsMsg + '</a>');
+    '<a class="toggleimports" href="#" style="visibility: ' + (hasImports ? 'visible' : 'hidden') + ';">' + showImportsMsg + '</a>'
+  );
 });
 
 document.body.insertAdjacentHTML('afterbegin',
@@ -91,9 +93,11 @@ document.addEventListener('click', function (e) {
   if (target.className === 'openmonaco') {
     e.preventDefault();
     var
-      importsElement = target.nextElementSibling.nextElementSibling,
-      codeElement = target.nextElementSibling.nextElementSibling.nextElementSibling,
-      code = importsElement.innerText.trim() + '\n\n' + codeElement.innerText.trim() + '\n';
+      firstElement = target.nextElementSibling.nextElementSibling,
+      secondElement = target.nextElementSibling.nextElementSibling.nextElementSibling,
+      code = secondElement ?  // TODO: this should be much less hacky
+        firstElement.innerText.trim() + '\n\n' + secondElement.innerText.trim() + '\n' :
+        firstElement.innerText.trim() + '\n';
 
     if (!window.monaco) require(['vs/editor/editor.main'], function () {
       var
