@@ -46,22 +46,35 @@ const sourceFilesForCustomTypes = (customTypes: CustomTypes) =>
       )
     ]));
 
-export const tsForConfig = async (config: CompleteConfig) => {
+export const tsForConfig = async (config: CompleteConfig, debug: (s: string) => void) => {
+  let querySeq = 0;
   const
     { schemas, db } = config,
     pool = new pg.Pool(db),
+    queryFn = async (query: pg.QueryConfig, seq = querySeq++) => {
+      try {
+        debug(`>>> query ${seq} >>>\n${query.text.replace(/^\s+|\s+$/mg, '')}\n+ ${JSON.stringify(query.values)}\n`);
+        const result = await pool.query(query);
+        debug(`<<< result ${seq} <<<\n${JSON.stringify(result, null, 2)}\n`);
+        return result;
+
+      } catch (e) {
+        console.log(`*** error ${seq} ***`, e);
+        process.exit(1);
+      }
+    },
     customTypes = {},
     schemaData = (await Promise.all(
       Object.keys(schemas).map(async schema => {
         const
           rules = schemas[schema],
           tables = rules.exclude === '*' ? [] :  // exclude takes precedence
-            (await relationsInSchema(schema, pool))
+            (await relationsInSchema(schema, queryFn))
               .filter(rel => rules.include === '*' || rules.include.indexOf(rel.name) >= 0)
               .filter(rel => rules.exclude.indexOf(rel.name) < 0),
-          enums = await enumDataForSchema(schema, pool),
+          enums = await enumDataForSchema(schema, queryFn),
           tableDefs = await Promise.all(tables.map(async table =>
-            definitionForRelationInSchema(table, schema, enums, customTypes, config, pool))),
+            definitionForRelationInSchema(table, schema, enums, customTypes, config, queryFn))),
           schemaDef = `\n/* === schema: ${schema} === */\n` +
             `\n/* --- enums --- */\n` +
             enumTypesForEnumData(enums) +

@@ -9,9 +9,9 @@ import * as pg from 'pg';
 
 export type EnumData = { [k: string]: string[] };
 
-export const enumDataForSchema = async (schemaName: string, pool: pg.Pool) => {
+export const enumDataForSchema = async (schemaName: string, queryFn: (q: pg.QueryConfig) => Promise<pg.QueryResult<any>>) => {
   const
-    { rows } = await pool.query({
+    { rows } = await queryFn({
       text: `
         SELECT n."nspname" AS "schema", t."typname" AS "name", e."enumlabel" AS value
         FROM "pg_type" t

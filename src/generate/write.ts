@@ -23,8 +23,10 @@ export const generate = async (suppliedConfig: Config) => {
       config.progressListener || (() => void 0),
     warn = config.warningListener === true ? console.log :
       config.warningListener || (() => void 0),
+    debug = config.debugListener === true ? console.log :
+      config.debugListener || (() => void 0),
 
-    { ts, customTypeSourceFiles } = await tsForConfig(config),
+    { ts, customTypeSourceFiles } = await tsForConfig(config, debug),
 
     folderName = 'zapatos',
     schemaName = 'schema' + config.outExt,

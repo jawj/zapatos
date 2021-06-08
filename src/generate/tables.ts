@@ -16,8 +16,8 @@ export interface Relation {
   type: 'table' | 'mview';
 }
 
-export const relationsInSchema = async (schemaName: string, pool: pg.Pool): Promise<Relation[]> => {
-  const { rows } = await pool.query({
+export const relationsInSchema = async (schemaName: string, queryFn: (q: pg.QueryConfig) => Promise<pg.QueryResult<any>>): Promise<Relation[]> => {
+  const { rows } = await queryFn({
     text: `
       SELECT 
         "table_name" AS "name"
@@ -42,25 +42,24 @@ export const relationsInSchema = async (schemaName: string, pool: pg.Pool): Prom
   return rows;
 };
 
-const columnsForRelation = async (rel: Relation, schemaName: string, pool: pg.Pool) => {
-  const { rows } = await pool.query({
+const columnsForRelation = async (rel: Relation, schemaName: string, queryFn: (q: pg.QueryConfig) => Promise<pg.QueryResult<any>>) => {
+  const { rows } = await queryFn({
     text:
       rel.type === "table"
         ? `
         SELECT
-          "column_name" AS "column"
-        , "is_nullable" = 'YES' AS "isNullable"
-        , "is_generated" = 'ALWAYS' OR "identity_generation" = 'ALWAYS' AS "isGenerated"
-        , "column_default" IS NOT NULL OR "identity_generation" = 'BY DEFAULT' AS "hasDefault"
-        , "column_default"::text AS "defaultValue"
-        , "udt_name" AS "udtName"
-        , "domain_name" AS "domainName"
-        , ( SELECT description 
-            FROM pg_description AS d 
-            WHERE objoid = $3::regclass AND d.objsubid = c.ordinal_position
-          ) AS "description"
-        FROM "information_schema"."columns" AS c
-        WHERE "table_name" = $1 AND "table_schema" = $2`
+          column_name AS "column"
+        , is_nullable = 'YES' AS "isNullable"
+        , is_generated = 'ALWAYS' OR identity_generation = 'ALWAYS' AS "isGenerated"
+        , column_default IS NOT NULL OR identity_generation = 'BY DEFAULT' AS "hasDefault"
+        , column_default::text AS "defaultValue"
+        , udt_name AS "udtName"
+        , domain_name AS "domainName"
+        , d.description AS "description"
+        FROM information_schema.columns AS c
+        LEFT JOIN pg_catalog.pg_class cl ON cl.relkind = 'r' AND cl.relname = c.table_name
+        LEFT JOIN pg_catalog.pg_description d ON d.objoid = cl.oid AND d.objsubid = c.ordinal_position
+        WHERE table_name = $1 AND table_schema = $2`
         : `
         SELECT
           a.attname AS "column"
@@ -70,17 +69,15 @@ const columnsForRelation = async (rel: Relation, schemaName: string, pool: pg.Po
         , NULL as "defaultValue"
         , CASE WHEN t1.typtype = 'd' THEN t2.typname ELSE t1.typname END AS "udtName"
         , CASE WHEN t1.typtype = 'd' THEN t1.typname ELSE NULL END AS "domainName"
-        , ( SELECT description 
-            FROM pg_description AS d 
-            WHERE objoid = $3::regclass AND d.objsubid = a.attnum
-          ) AS "description"        
+        , d.description AS "description"     
         FROM pg_catalog.pg_class c
         INNER JOIN pg_catalog.pg_attribute a ON c.oid = a.attrelid
         INNER JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
         INNER JOIN pg_catalog.pg_type t1 ON t1.oid = a.atttypid
         LEFT JOIN pg_catalog.pg_type t2 ON t2.oid = t1.typbasetype
+        LEFT JOIN pg_catalog.pg_description d ON d.objoid = c.oid AND d.objsubid = a.attnum
         WHERE c.relkind = 'm' AND a.attnum >= 1 AND c.relname = $1 AND n.nspname = $2`,
-    values: [rel.name, schemaName, `"${schemaName}"."${rel.name}"`],
+    values: [rel.name, schemaName],
   });
 
   return rows;
@@ -92,10 +89,10 @@ export const definitionForRelationInSchema = async (
   enums: EnumData,
   customTypes: CustomTypes,  // an 'out' parameter
   config: CompleteConfig,
-  pool: pg.Pool,
+  queryFn: (q: pg.QueryConfig) => Promise<pg.QueryResult<any>>,
 ) => {
   const
-    rows = await columnsForRelation(rel, schemaName, pool),
+    rows = await columnsForRelation(rel, schemaName, queryFn),
     selectables: string[] = [],
     JSONSelectables: string[] = [],
     whereables: string[] = [],
@@ -154,7 +151,7 @@ export const definitionForRelationInSchema = async (
   });
 
   const
-    result = await pool.query({
+    result = await queryFn({
       text: `
         SELECT i."indexname"
         FROM "pg_indexes" i 

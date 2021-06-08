@@ -17,6 +17,7 @@ export interface OptionalConfig {
   outDir: string;
   outExt: string;
   schemas: SchemaRules;
+  debugListener: boolean | ((s: string) => void);
   progressListener: boolean | ((s: string) => void);
   warningListener: boolean | ((s: string) => void);
   customTypesTransform: 'PgMy_type' | 'my_type' | 'PgMyType' | ((s: string) => string);
@@ -47,6 +48,7 @@ const defaultConfig: OptionalConfig = {
   outDir: '.',
   outExt: '.d.ts',
   schemas: { public: { include: '*', exclude: [] } },
+  debugListener: false,
   progressListener: false,
   warningListener: true,
   customTypesTransform: 'PgMy_type',
