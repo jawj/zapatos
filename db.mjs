@@ -12,7 +12,6 @@ export const Parameter = mod.Parameter;
 export const ParentColumn = mod.ParentColumn;
 export const SQLFragment = mod.SQLFragment;
 export const SelectResultMode = mod.SelectResultMode;
-export const __esModule = mod.__esModule;
 export const all = mod.all;
 export const cols = mod.cols;
 export const conditions = mod.conditions;
