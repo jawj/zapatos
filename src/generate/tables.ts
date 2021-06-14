@@ -20,19 +20,19 @@ export const relationsInSchema = async (schemaName: string, queryFn: (q: pg.Quer
   const { rows } = await queryFn({
     text: `
       SELECT 
-        "table_name" AS "name"
-      , lower("table_name") AS "lname"  -- because you can't order by a function in a UNION query
+        table_name AS "name"
+      , lower(table_name) AS "lname"  -- because you can't order by a function in a UNION query
       , 'table'::text AS "type"
-      FROM "information_schema"."columns"
-      WHERE "table_schema" = $1 
-      GROUP BY "name"
+      FROM information_schema.columns
+      WHERE table_schema = $1 
+      GROUP BY name
       UNION ALL
       SELECT
         pg_class.relname AS "name"
       , lower(pg_class.relname) AS "lname"
       , 'mview'::text AS "type"
       FROM pg_catalog.pg_class
-      INNER JOIN pg_catalog.pg_namespace ON pg_class.relnamespace = pg_namespace.oid
+      JOIN pg_catalog.pg_namespace ON pg_class.relnamespace = pg_namespace.oid
       WHERE pg_class.relkind = 'm' AND pg_namespace.nspname = $1
       GROUP BY "name"
       ORDER BY "lname", "name"`,
@@ -57,9 +57,10 @@ const columnsForRelation = async (rel: Relation, schemaName: string, queryFn: (q
         , domain_name AS "domainName"
         , d.description AS "description"
         FROM information_schema.columns AS c
-        LEFT JOIN pg_catalog.pg_class cl ON cl.relkind = 'r' AND cl.relname = c.table_name
+        JOIN pg_catalog.pg_namespace ns ON ns.nspname = c.table_schema
+        JOIN pg_catalog.pg_class cl ON cl.relkind = 'r' AND cl.relname = c.table_name AND cl.relnamespace = ns.oid
         LEFT JOIN pg_catalog.pg_description d ON d.objoid = cl.oid AND d.objsubid = c.ordinal_position
-        WHERE table_name = $1 AND table_schema = $2`
+        WHERE c.table_name = $1 AND c.table_schema = $2`
         : `
         SELECT
           a.attname AS "column"
@@ -71,9 +72,9 @@ const columnsForRelation = async (rel: Relation, schemaName: string, queryFn: (q
         , CASE WHEN t1.typtype = 'd' THEN t1.typname ELSE NULL END AS "domainName"
         , d.description AS "description"     
         FROM pg_catalog.pg_class c
-        INNER JOIN pg_catalog.pg_attribute a ON c.oid = a.attrelid
-        INNER JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
-        INNER JOIN pg_catalog.pg_type t1 ON t1.oid = a.atttypid
+        JOIN pg_catalog.pg_attribute a ON c.oid = a.attrelid
+        JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+        JOIN pg_catalog.pg_type t1 ON t1.oid = a.atttypid
         LEFT JOIN pg_catalog.pg_type t2 ON t2.oid = t1.typbasetype
         LEFT JOIN pg_catalog.pg_description d ON d.objoid = c.oid AND d.objsubid = a.attnum
         WHERE c.relkind = 'm' AND a.attnum >= 1 AND c.relname = $1 AND n.nspname = $2`,
@@ -153,13 +154,13 @@ export const definitionForRelationInSchema = async (
   const
     result = await queryFn({
       text: `
-        SELECT i."indexname"
-        FROM "pg_indexes" i 
-        JOIN "pg_class" c ON c."relname" = i."indexname" 
-        JOIN "pg_index" idx ON idx."indexrelid" = c."oid" AND idx."indisunique" 
-        WHERE i."tablename" = $1
-        ORDER BY i."indexname"`,
-      values: [rel.name]
+        SELECT i.indexname
+        FROM pg_catalog.pg_indexes i
+        JOIN pg_catalog.pg_class c ON c.relname = i.indexname
+        JOIN pg_catalog.pg_index idx ON idx.indexrelid = c.oid AND idx.indisunique
+        WHERE i.tablename = $1 AND i.schemaname = $2
+        ORDER BY i.indexname`,
+      values: [rel.name, schemaName]
     }),
     uniqueIndexes = result.rows;
 
