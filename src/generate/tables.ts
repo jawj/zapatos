@@ -13,29 +13,33 @@ import { CompleteConfig } from './config';
 
 export interface Relation {
   name: string;
-  type: 'table' | 'mview';
+  type: 'table' | 'view' | 'fdw' | 'mview';
+  insertable: boolean;
 }
 
 export const relationsInSchema = async (schemaName: string, queryFn: (q: pg.QueryConfig) => Promise<pg.QueryResult<any>>): Promise<Relation[]> => {
   const { rows } = await queryFn({
     text: `
-      SELECT 
-        table_name AS "name"
-      , lower(table_name) AS "lname"  -- because you can't order by a function in a UNION query
-      , 'table'::text AS "type"
-      FROM information_schema.columns
-      WHERE table_schema = $1 
-      GROUP BY name
-      UNION ALL
       SELECT
-        pg_class.relname AS "name"
-      , lower(pg_class.relname) AS "lname"
-      , 'mview'::text AS "type"
-      FROM pg_catalog.pg_class
-      JOIN pg_catalog.pg_namespace ON pg_class.relnamespace = pg_namespace.oid
-      WHERE pg_class.relkind = 'm' AND pg_namespace.nspname = $1
-      GROUP BY "name"
-      ORDER BY "lname", "name"`,
+        table_name AS name
+      , lower(table_name) AS lname  -- using a case-insensitive sort, but you can't order by a function in a UNION query
+      , CASE table_type WHEN 'VIEW' THEN 'view' WHEN 'FOREIGN' THEN 'fdw' ELSE 'table' END AS type
+      , CASE WHEN is_insertable_into = 'YES' THEN true ELSE false END AS insertable
+      FROM information_schema.tables
+      WHERE table_schema = $1 AND table_type != 'LOCAL TEMPORARY'
+
+      UNION ALL
+
+      SELECT
+        matviewname AS name
+      , lower(matviewname) AS lname
+      , 'mview'::text AS type
+      , false AS insertable
+      FROM pg_catalog.pg_matviews
+      WHERE schemaname = $1
+
+      ORDER BY lname, name
+    `,
     values: [schemaName]
   });
 
@@ -45,23 +49,8 @@ export const relationsInSchema = async (schemaName: string, queryFn: (q: pg.Quer
 const columnsForRelation = async (rel: Relation, schemaName: string, queryFn: (q: pg.QueryConfig) => Promise<pg.QueryResult<any>>) => {
   const { rows } = await queryFn({
     text:
-      rel.type === "table"
+      rel.type === 'mview'
         ? `
-        SELECT
-          column_name AS "column"
-        , is_nullable = 'YES' AS "isNullable"
-        , is_generated = 'ALWAYS' OR identity_generation = 'ALWAYS' AS "isGenerated"
-        , column_default IS NOT NULL OR identity_generation = 'BY DEFAULT' AS "hasDefault"
-        , column_default::text AS "defaultValue"
-        , udt_name AS "udtName"
-        , domain_name AS "domainName"
-        , d.description AS "description"
-        FROM information_schema.columns AS c
-        JOIN pg_catalog.pg_namespace ns ON ns.nspname = c.table_schema
-        JOIN pg_catalog.pg_class cl ON cl.relkind = 'r' AND cl.relname = c.table_name AND cl.relnamespace = ns.oid
-        LEFT JOIN pg_catalog.pg_description d ON d.objoid = cl.oid AND d.objsubid = c.ordinal_position
-        WHERE c.table_name = $1 AND c.table_schema = $2`
-        : `
         SELECT
           a.attname AS "column"
         , a.attnotnull = 'f' AS "isNullable"
@@ -72,12 +61,27 @@ const columnsForRelation = async (rel: Relation, schemaName: string, queryFn: (q
         , CASE WHEN t1.typtype = 'd' THEN t1.typname ELSE NULL END AS "domainName"
         , d.description AS "description"     
         FROM pg_catalog.pg_class c
-        JOIN pg_catalog.pg_attribute a ON c.oid = a.attrelid
-        JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
-        JOIN pg_catalog.pg_type t1 ON t1.oid = a.atttypid
+        LEFT JOIN pg_catalog.pg_attribute a ON c.oid = a.attrelid
+        LEFT JOIN pg_catalog.pg_namespace n ON c.relnamespace = n.oid
+        LEFT JOIN pg_catalog.pg_type t1 ON t1.oid = a.atttypid
         LEFT JOIN pg_catalog.pg_type t2 ON t2.oid = t1.typbasetype
         LEFT JOIN pg_catalog.pg_description d ON d.objoid = c.oid AND d.objsubid = a.attnum
-        WHERE c.relkind = 'm' AND a.attnum >= 1 AND c.relname = $1 AND n.nspname = $2`,
+        WHERE c.relkind = 'm' AND a.attnum >= 1 AND c.relname = $1 AND n.nspname = $2`
+        : `
+        SELECT
+          column_name AS "column"
+        , is_nullable = 'YES' AS "isNullable"
+        , is_generated = 'ALWAYS' OR identity_generation = 'ALWAYS' AS "isGenerated"
+        , column_default IS NOT NULL OR identity_generation = 'BY DEFAULT' AS "hasDefault"
+        , column_default::text AS "defaultValue"
+        , udt_name AS "udtName"
+        , domain_name AS "domainName"
+        , d.description AS "description"
+        FROM information_schema.columns AS c
+        LEFT JOIN pg_catalog.pg_namespace ns ON ns.nspname = c.table_schema
+        LEFT JOIN pg_catalog.pg_class cl ON cl.relkind = 'r' AND cl.relname = c.table_name AND cl.relnamespace = ns.oid
+        LEFT JOIN pg_catalog.pg_description d ON d.objoid = cl.oid AND d.objsubid = c.ordinal_position
+        WHERE c.table_name = $1 AND c.table_schema = $2`,
     values: [rel.name, schemaName],
   });
 
@@ -114,8 +118,8 @@ export const definitionForRelationInSchema = async (
       columnOptions =
         (config.columnOptions[rel.name] && config.columnOptions[rel.name][column]) ??
         (config.columnOptions["*"] && config.columnOptions["*"][column]),
-      isInsertable = !isGenerated && columnOptions?.insert !== 'excluded',
-      isUpdatable = !isGenerated && columnOptions?.update !== 'excluded',
+      isInsertable = rel.insertable && !isGenerated && columnOptions?.insert !== 'excluded',
+      isUpdatable = rel.insertable && !isGenerated && columnOptions?.update !== 'excluded',
       insertablyOptional = isNullable || hasDefault || columnOptions?.insert === 'optional' ? '?' : '',
       orNull = isNullable ? ' | null' : '',
       orDefault = isNullable || hasDefault ? ' | db.DefaultType' : '';
@@ -154,7 +158,7 @@ export const definitionForRelationInSchema = async (
   const
     result = await queryFn({
       text: `
-        SELECT i.indexname
+        SELECT DISTINCT i.indexname
         FROM pg_catalog.pg_indexes i
         JOIN pg_catalog.pg_class c ON c.relname = i.indexname
         JOIN pg_catalog.pg_index idx ON idx.indexrelid = c.oid AND idx.indisunique
@@ -164,7 +168,20 @@ export const definitionForRelationInSchema = async (
     }),
     uniqueIndexes = result.rows;
 
-  const tableDef = `
+  const
+    friendlyRelTypes: Record<Relation['type'], string> = {
+      table: 'Table',
+      fdw: 'Foreign table',
+      view: 'View',
+      mview: 'Materialized view',
+    },
+    friendlyRelType = friendlyRelTypes[rel.type],
+    tableComment = config.schemaJSDoc ? `
+/**
+ * **${rel.name}**
+ * - ${friendlyRelType} in database
+ */` : ``,
+    tableDef = `${tableComment}
 export namespace ${rel.name} {
   export type Table = '${rel.name}';
   export interface Selectable {
@@ -177,14 +194,14 @@ export namespace ${rel.name} {
     ${whereables.join('\n    ')}
   }
   export interface Insertable {
-    ${insertables.join('\n    ')}
+    ${insertables.length > 0 ? insertables.join('\n    ') : `[key: string]: never;`}
   }
   export interface Updatable {
-    ${updatables.join('\n    ')}
+    ${updatables.length > 0 ? updatables.join('\n    ') : `[key: string]: never;`}
   }
   export type UniqueIndex = ${uniqueIndexes.length > 0 ?
-      uniqueIndexes.map(ui => "'" + ui.indexname + "'").join(' | ') :
-      'never'};
+        uniqueIndexes.map(ui => "'" + ui.indexname + "'").join(' | ') :
+        'never'};
   export type Column = keyof Selectable;
   export type OnlyCols<T extends readonly Column[]> = Pick<Selectable, T[number]>;
   export type SQLExpression = db.GenericSQLExpression | db.ColumnNames<Updatable | (keyof Updatable)[]> | db.ColumnValues<Updatable> | Table | Whereable | Column;
@@ -219,7 +236,10 @@ export type Insertable = ${mappedUnion(relations, name => `${name}.Insertable`)}
 export type Updatable = ${mappedUnion(relations, name => `${name}.Updatable`)};
 export type UniqueIndex = ${mappedUnion(relations, name => `${name}.UniqueIndex`)};
 export type Column = ${mappedUnion(relations, name => `${name}.Column`)};
-export type AllTables = [${relations.filter(rel => rel.type === 'table').map(rel => `${rel.name}.Table`).join(', ')}];
+export type AllTablesAndViews = [${relations.map(rel => `${rel.name}.Table`).join(', ')}];
+export type AllBaseTables = [${relations.filter(rel => rel.type === 'table').map(rel => `${rel.name}.Table`).join(', ')}];
+export type AllForeignTables = [${relations.filter(rel => rel.type === 'fdw').map(rel => `${rel.name}.Table`).join(', ')}];
+export type AllStandardViews = [${relations.filter(rel => rel.type === 'view').map(rel => `${rel.name}.Table`).join(', ')}];
 export type AllMaterializedViews = [${relations.filter(rel => rel.type === 'mview').map(rel => `${rel.name}.Table`).join(', ')}];
 
 ${['Selectable', 'JSONSelectable', 'Whereable', 'Insertable', 'Updatable', 'UniqueIndex', 'Column', 'SQL'].map(thingable => `
