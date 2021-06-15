@@ -54,8 +54,8 @@ const columnsForRelation = async (rel: Relation, schemaName: string, queryFn: (q
         SELECT
           a.attname AS "column"
         , a.attnotnull = 'f' AS "isNullable"
-        , 't' AS "isGenerated"  -- true, to reflect that we can't write to materalized views
-        , 'f' AS "hasDefault"   -- irrelevant, since we can't write to materalized views
+        , true AS "isGenerated"  -- true, to reflect that we can't write to materalized views
+        , false AS "hasDefault"   -- irrelevant, since we can't write to materalized views
         , NULL as "defaultValue"
         , CASE WHEN t1.typtype = 'd' THEN t2.typname ELSE t1.typname END AS "udtName"
         , CASE WHEN t1.typtype = 'd' THEN t1.typname ELSE NULL END AS "domainName"
