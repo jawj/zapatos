@@ -236,11 +236,11 @@ export type Insertable = ${mappedUnion(relations, name => `${name}.Insertable`)}
 export type Updatable = ${mappedUnion(relations, name => `${name}.Updatable`)};
 export type UniqueIndex = ${mappedUnion(relations, name => `${name}.UniqueIndex`)};
 export type Column = ${mappedUnion(relations, name => `${name}.Column`)};
-export type AllTablesAndViews = [${relations.map(rel => `${rel.name}.Table`).join(', ')}];
 export type AllBaseTables = [${relations.filter(rel => rel.type === 'table').map(rel => `${rel.name}.Table`).join(', ')}];
 export type AllForeignTables = [${relations.filter(rel => rel.type === 'fdw').map(rel => `${rel.name}.Table`).join(', ')}];
-export type AllStandardViews = [${relations.filter(rel => rel.type === 'view').map(rel => `${rel.name}.Table`).join(', ')}];
+export type AllViews = [${relations.filter(rel => rel.type === 'view').map(rel => `${rel.name}.Table`).join(', ')}];
 export type AllMaterializedViews = [${relations.filter(rel => rel.type === 'mview').map(rel => `${rel.name}.Table`).join(', ')}];
+export type AllTablesAndViews = [${relations.map(rel => `${rel.name}.Table`).join(', ')}];
 
 ${['Selectable', 'JSONSelectable', 'Whereable', 'Insertable', 'Updatable', 'UniqueIndex', 'Column', 'SQL'].map(thingable => `
 export type ${thingable}ForTable<T extends Table> = ${relations.length === 0 ? 'any' : `{${relations.map(rel => `
