@@ -155,7 +155,7 @@
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  tags: tags.Selectable;</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  <span class="hljs-comment">/* ... */</span></span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">}[T];</span></code></pre>
-<p>Currently, ordinary tables and materialized views are supported. Enumerated types are catered for — e.g. <code>CREATE TYPE "ab" AS ENUM ('a', 'b');</code> becomes TypeScript type <code>'a' | 'b'</code>. <a href="https://www.postgresql.org/docs/current/domains.html">Domain types</a> start out aliased to their base types, but can be customised from there. This enables sub-schemas to be defined for <code>json</code> columns, amongst other things. User-defined types can be customised too.</p>
+<p>Zapatos supports tables, foreign tables, views and materialized views. It understands enumerated types: <code>CREATE TYPE "size" AS ENUM ('big', 'small');</code> comes to TypeScript as <code>'big' | 'small'</code>. And it lets you define the TypeScript treatment of <a href="https://www.postgresql.org/docs/current/domains.html">domain types</a> and user-defined types too.</p>
 <p><a href="#how-do-i-get-it">Tell me more about the command line tool »</a></p>
 <h4 id="arbitrary-sql">Arbitrary SQL</h4>
 <p><strong>Simple building blocks help you write arbitrary SQL using <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals#Tagged_templates">tagged templates</a>, and manually apply the right types to what goes in and what comes back.</strong></p>
@@ -278,7 +278,7 @@
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"isLiving"</span>: <span class="hljs-literal">true</span></span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    },</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.698051+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.758814+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1001</span>,</span>
@@ -299,7 +299,7 @@
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"isLiving"</span>: <span class="hljs-literal">true</span></span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    },</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.699574+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.762461+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1002</span>,</span>
@@ -320,7 +320,7 @@
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"isLiving"</span>: <span class="hljs-literal">true</span></span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    },</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.700405+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.763883+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1003</span>,</span>
@@ -337,7 +337,7 @@
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"isLiving"</span>: <span class="hljs-literal">true</span></span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    },</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1001</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.707068+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.770852+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1004</span>,</span>
@@ -354,7 +354,7 @@
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"isLiving"</span>: <span class="hljs-literal">true</span></span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    },</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1002</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.709193+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.772621+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
 </div>
@@ -672,10 +672,10 @@
 <pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">SELECT</span> random()</span></code></pre>
 <pre class="sqlresult"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">[</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"random"</span>: <span class="hljs-number">0.41254484792945334</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"random"</span>: <span class="hljs-number">0.7491309125146408</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
-<pre class="console"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">0.41254484792945334</span></code></pre>
+<pre class="console"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">0.7491309125146408</span></code></pre>
 </div>
 <p><code>Interpolations</code> is <code>never</code> because nothing needs to be interpolated in this query, and the <code>RunResult</code> type says that the query will return one row comprising one numeric column, named <code>random</code>. The <code>random</code> TypeScript variable we initialize will of course be typed as a <code>number</code>.</p>
 <p>If you’re happy to have your types tied down a little less tightly, it also works to wholly omit the type variables in this particular query, falling back on their defaults:</p>
@@ -815,7 +815,7 @@
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Northern Lights"</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T09:01:12.698Z"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T08:46:06.759Z"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
 </div>
@@ -841,7 +841,7 @@
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Northern Lights"</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T09:01:12.698Z"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T08:46:06.759Z"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
 </div>
@@ -867,7 +867,7 @@
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Northern Lights"</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T09:01:12.698Z"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T08:46:06.759Z"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
 </div>
@@ -980,7 +980,7 @@
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">const</span> dbNow = <span class="hljs-keyword">await</span> dbNowQuery().run(pool);</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-comment">// dbNow is a Date: the result you can toggle below has come via JSON.stringify</span></span></code></pre><div class="sqlstuff">
 <pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">SELECT</span> now()</span></code></pre>
-<pre class="sqlresult"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-string">"2021-06-16T09:01:25.124Z"</span></span></code></pre>
+<pre class="sqlresult"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-string">"2021-06-18T08:46:18.358Z"</span></span></code></pre>
 </div>
 <p>Note that the <code>RunResult</code> type variable on the <code>sql</code> template function (in this case, <code>Date</code>) must reflect the type of the <em>transformed</em> result, not what comes straight back from <code>pg</code> (which in this case is roughly <code>{ rows: [{ now: Date }] }</code>).</p>
 <p>If a <code>SQLFragment</code> does not have <code>run</code> called on it directly —&nbsp;for example, if it is instead interpolated into another <code>SQLFragment</code>, or given as the value of the <code>lateral</code> option to the <code>select</code> shortcut — then the <code>runResultTransform</code> function is never applied.</p>
@@ -1006,7 +1006,7 @@
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Northern Lights"</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T09:01:12.698Z"</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T08:46:06.759Z"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"author"</span>: {</span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"id"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"name"</span>: <span class="hljs-string">"Philip Pullman"</span>,</span>
@@ -1017,7 +1017,7 @@
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1001</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Subtle Knife"</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T09:01:12.700Z"</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T08:46:06.762Z"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"author"</span>: {</span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"id"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"name"</span>: <span class="hljs-string">"Philip Pullman"</span>,</span>
@@ -1028,7 +1028,7 @@
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1002</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Amber Spyglass"</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T09:01:12.700Z"</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T08:46:06.764Z"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"author"</span>: {</span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"id"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"name"</span>: <span class="hljs-string">"Philip Pullman"</span>,</span>
@@ -1039,7 +1039,7 @@
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1003</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1001</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Curious Incident of the Dog in the Night-Time"</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T09:01:12.707Z"</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T08:46:06.771Z"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"author"</span>: {</span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"id"</span>: <span class="hljs-number">1001</span>,</span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"name"</span>: <span class="hljs-string">"Mark Haddon"</span>,</span>
@@ -1050,7 +1050,7 @@
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1004</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1002</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Holes"</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T09:01:12.709Z"</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T08:46:06.773Z"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"author"</span>: {</span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"id"</span>: <span class="hljs-number">1002</span>,</span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"name"</span>: <span class="hljs-string">"Louis Sachar"</span>,</span>
@@ -1086,19 +1086,19 @@
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"id"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Northern Lights"</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.698051+01:00"</span></span>
+<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.758814+01:00"</span></span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      },</span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      {</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"id"</span>: <span class="hljs-number">1001</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Subtle Knife"</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.699574+01:00"</span></span>
+<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.762461+01:00"</span></span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      },</span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      {</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"id"</span>: <span class="hljs-number">1002</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Amber Spyglass"</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.700405+01:00"</span></span>
+<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.763883+01:00"</span></span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      }</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    ]</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
@@ -1111,7 +1111,7 @@
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"id"</span>: <span class="hljs-number">1003</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Curious Incident of the Dog in the Night-Time"</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1001</span>,</span>
-<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.707068+01:00"</span></span>
+<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.770852+01:00"</span></span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      }</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    ]</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
@@ -1124,7 +1124,7 @@
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"id"</span>: <span class="hljs-number">1004</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Holes"</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1002</span>,</span>
-<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.709193+01:00"</span></span>
+<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.772621+01:00"</span></span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      }</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    ]</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
@@ -1162,19 +1162,19 @@
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"id"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Northern Lights"</span>,</span>
-<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.698051+01:00"</span></span>
+<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.758814+01:00"</span></span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      },</span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      {</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"id"</span>: <span class="hljs-number">1001</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Subtle Knife"</span>,</span>
-<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.699574+01:00"</span></span>
+<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.762461+01:00"</span></span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      },</span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      {</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"id"</span>: <span class="hljs-number">1002</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Amber Spyglass"</span>,</span>
-<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.700405+01:00"</span></span>
+<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.763883+01:00"</span></span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      }</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    ]</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
@@ -1187,7 +1187,7 @@
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"id"</span>: <span class="hljs-number">1003</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1001</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Curious Incident of the Dog in the Night-Time"</span>,</span>
-<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.707068+01:00"</span></span>
+<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.770852+01:00"</span></span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      }</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    ]</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
@@ -1200,7 +1200,7 @@
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"id"</span>: <span class="hljs-number">1004</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1002</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Holes"</span>,</span>
-<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.709193+01:00"</span></span>
+<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.772621+01:00"</span></span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      }</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    ]</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
@@ -1304,13 +1304,13 @@
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"A Brief History of Time"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">2</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"My Brief History"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
 <pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">INSERT</span> <span class="hljs-keyword">INTO</span> "tags" ("bookId", "tag")</span>
@@ -1404,7 +1404,7 @@
 <pre class="sqlresult"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">[</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"email"</span>: <span class="hljs-string">"me@privacy.net"</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"lastFailedLogin"</span>: <span class="hljs-string">"2021-06-16T10:01:27.505381+01:00"</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"lastFailedLogin"</span>: <span class="hljs-string">"2021-06-18T09:46:20.57595+01:00"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"consecutiveFailedLogins"</span>: <span class="hljs-number">1</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
@@ -1552,7 +1552,7 @@
 <pre class="sqlresult"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">{</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  <span class="hljs-attr">"code"</span>: <span class="hljs-string">"XYE953ZVU767"</span>,</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  <span class="hljs-attr">"$action"</span>: <span class="hljs-string">"INSERT"</span>,</span>
-<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  <span class="hljs-attr">"redeemedAt"</span>: <span class="hljs-string">"2021-06-16T10:01:28.362689+01:00"</span></span>
+<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  <span class="hljs-attr">"redeemedAt"</span>: <span class="hljs-string">"2021-06-18T09:46:21.355451+01:00"</span></span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">}</span></code></pre>
 <pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">INSERT</span> <span class="hljs-keyword">INTO</span> "usedVoucherCodes" ("code")</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  <span class="hljs-keyword">VALUES</span> ($<span class="hljs-number">1</span>)</span>
@@ -1685,43 +1685,43 @@
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Northern Lights"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.698051+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.758814+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1001</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Subtle Knife"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.699574+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.762461+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1002</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Amber Spyglass"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.700405+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.763883+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1003</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Curious Incident of the Dog in the Night-Time"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1001</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.707068+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.770852+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"A Brief History of Time"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">2</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"My Brief History"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">3</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Universe in a Nutshell"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.2162+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.39632+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
 </div>
@@ -1739,19 +1739,19 @@
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Northern Lights"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.698051+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.758814+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1001</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Subtle Knife"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.699574+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.762461+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1002</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Amber Spyglass"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.700405+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.763883+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
 </div>
@@ -1812,7 +1812,7 @@
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1003</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Curious Incident of the Dog in the Night-Time"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1001</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.707068+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.770852+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
 </div>
@@ -1835,7 +1835,7 @@
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1003</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Curious Incident of the Dog in the Night-Time"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1001</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.707068+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.770852+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
 </div>
@@ -1857,7 +1857,7 @@
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"A Brief History of Time"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
 </div>
@@ -1925,7 +1925,7 @@
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"A Brief History of Time"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
 </div>
@@ -1945,7 +1945,7 @@
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  <span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>,</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  <span class="hljs-attr">"title"</span>: <span class="hljs-string">"A Brief History of Time"</span>,</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
+<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">}</span></code></pre>
 </div>
 <p>The <code>{ limit: 1 }</code> option is now applied automatically. And the return type following <code>await</code> needs no destructuring and is now, correctly, <code>JSONSelectable | undefined</code>.</p>
@@ -1998,7 +1998,7 @@
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"isLiving"</span>: <span class="hljs-literal">true</span></span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    },</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.698051+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.758814+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1001</span>,</span>
@@ -2019,7 +2019,7 @@
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"isLiving"</span>: <span class="hljs-literal">true</span></span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    },</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.699574+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.762461+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1002</span>,</span>
@@ -2040,7 +2040,7 @@
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"isLiving"</span>: <span class="hljs-literal">true</span></span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    },</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.700405+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.763883+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1003</span>,</span>
@@ -2057,7 +2057,7 @@
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"isLiving"</span>: <span class="hljs-literal">true</span></span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    },</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1001</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.707068+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.770852+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>,</span>
@@ -2074,7 +2074,7 @@
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"isLiving"</span>: <span class="hljs-literal">false</span></span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    },</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">2</span>,</span>
@@ -2095,7 +2095,7 @@
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"isLiving"</span>: <span class="hljs-literal">false</span></span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    },</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">3</span>,</span>
@@ -2107,7 +2107,7 @@
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      <span class="hljs-attr">"isLiving"</span>: <span class="hljs-literal">false</span></span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    },</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.2162+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.39632+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
 </div>
@@ -2158,7 +2158,7 @@
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        ],</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Northern Lights"</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.698051+01:00"</span></span>
+<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.758814+01:00"</span></span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      },</span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      {</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"id"</span>: <span class="hljs-number">1001</span>,</span>
@@ -2172,7 +2172,7 @@
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        ],</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Subtle Knife"</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.699574+01:00"</span></span>
+<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.762461+01:00"</span></span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      },</span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      {</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"id"</span>: <span class="hljs-number">1002</span>,</span>
@@ -2186,7 +2186,7 @@
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        ],</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Amber Spyglass"</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.700405+01:00"</span></span>
+<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.763883+01:00"</span></span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      }</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    ],</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"isLiving"</span>: <span class="hljs-literal">true</span></span>
@@ -2204,7 +2204,7 @@
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        ],</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Curious Incident of the Dog in the Night-Time"</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1001</span>,</span>
-<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.707068+01:00"</span></span>
+<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.770852+01:00"</span></span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      }</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    ],</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"isLiving"</span>: <span class="hljs-literal">true</span></span>
@@ -2252,7 +2252,7 @@
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        ],</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"title"</span>: <span class="hljs-string">"A Brief History of Time"</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
+<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      },</span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      {</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"id"</span>: <span class="hljs-number">2</span>,</span>
@@ -2266,14 +2266,14 @@
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        ],</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"title"</span>: <span class="hljs-string">"My Brief History"</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
+<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      },</span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      {</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"id"</span>: <span class="hljs-number">3</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"tags"</span>: [],</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Universe in a Nutshell"</span>,</span>
 <span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.2162+01:00"</span></span>
+<span class="indent-line" style="padding-left: 12ch; text-indent: -12ch;">        <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.39632+01:00"</span></span>
 <span class="indent-line" style="padding-left: 10ch; text-indent: -10ch;">      }</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    ],</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"isLiving"</span>: <span class="hljs-literal">false</span></span>
@@ -2746,46 +2746,46 @@
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  <span class="hljs-keyword">FROM</span> "books") <span class="hljs-keyword">AS</span> "sq_books"</span></code></pre>
 <pre class="sqlresult"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">[</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"A Brief History of Time"</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
-<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
-<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1003</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Curious Incident of the Dog in the Night-Time"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1001</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.707068+01:00"</span></span>
-<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
-<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">3</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Universe in a Nutshell"</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.2162+01:00"</span></span>
-<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
-<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">2</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"My Brief History"</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
-<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
-<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Northern Lights"</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.698051+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.770852+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1002</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Amber Spyglass"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.700405+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.763883+01:00"</span></span>
+<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
+<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"A Brief History of Time"</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
+<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
+<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">3</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Universe in a Nutshell"</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.39632+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1001</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Subtle Knife"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.699574+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.762461+01:00"</span></span>
+<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
+<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1000</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Northern Lights"</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.758814+01:00"</span></span>
+<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
+<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">2</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"My Brief History"</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
 <pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">SELECT</span> <span class="hljs-built_in">coalesce</span>(jsonb_agg(<span class="hljs-keyword">result</span>), <span class="hljs-string">'[]'</span>) <span class="hljs-keyword">AS</span> <span class="hljs-keyword">result</span></span>
@@ -2797,43 +2797,43 @@
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"A Brief History of Time"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">2</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"My Brief History"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Northern Lights"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.698051+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.758814+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1002</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Amber Spyglass"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.700405+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.763883+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1003</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Curious Incident of the Dog in the Night-Time"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1001</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.707068+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.770852+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1001</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Subtle Knife"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.699574+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.762461+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">3</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Universe in a Nutshell"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.2162+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.39632+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
 <pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">SELECT</span> <span class="hljs-built_in">coalesce</span>(jsonb_agg(<span class="hljs-keyword">result</span>), <span class="hljs-string">'[]'</span>) <span class="hljs-keyword">AS</span> <span class="hljs-keyword">result</span></span>
@@ -2845,43 +2845,43 @@
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"A Brief History of Time"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">2</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"My Brief History"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Northern Lights"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.698051+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.758814+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1002</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Amber Spyglass"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.700405+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.763883+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1003</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Curious Incident of the Dog in the Night-Time"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1001</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.707068+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.770852+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1001</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Subtle Knife"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.699574+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.762461+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">3</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Universe in a Nutshell"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.2162+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.39632+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
 <pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">SELECT</span> <span class="hljs-built_in">coalesce</span>(jsonb_agg(<span class="hljs-keyword">result</span>), <span class="hljs-string">'[]'</span>) <span class="hljs-keyword">AS</span> <span class="hljs-keyword">result</span></span>
@@ -2893,43 +2893,43 @@
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"A Brief History of Time"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">2</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"My Brief History"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.211327+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.390778+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1000</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"Northern Lights"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.698051+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.758814+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1002</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Amber Spyglass"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.700405+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.763883+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1003</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Curious Incident of the Dog in the Night-Time"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1001</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.707068+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.770852+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">1001</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Subtle Knife"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">1000</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:12.699574+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:06.762461+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  },</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"id"</span>: <span class="hljs-number">3</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"title"</span>: <span class="hljs-string">"The Universe in a Nutshell"</span>,</span>
 <span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"authorId"</span>: <span class="hljs-number">5</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-16T10:01:26.2162+01:00"</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"createdAt"</span>: <span class="hljs-string">"2021-06-18T09:46:19.39632+01:00"</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
 </div>
@@ -3072,13 +3072,13 @@
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  d1: 2012-06-01T12:34:00.000Z,</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  d2: 2012-05-31T23:00:00.000Z,</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  d3: 2012-06-01T00:00:00.000Z,</span>
-<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  d4: null</span>
+<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  d4: 2012-10-09T02:34:00.000Z</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">}</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">{</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  s1: '2012-06-01T12:34:00.000Z',</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  s2: '2012-06-01T00:00:00.000',</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  s3: '2012-06-01',</span>
-<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  s4: null</span>
+<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  s4: '2012-10-09T02:34:00.000Z'</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">}</span></code></pre>
 </div>
 <ul>
@@ -3283,16 +3283,10 @@
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-built_in">console</span>.log(<span class="hljs-string">`Leave booked for:</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;"><span class="hljs-string">  Annabel – <span class="hljs-subst">${leaveBookedForAnnabel}</span></span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;"><span class="hljs-string">  Brian – <span class="hljs-subst">${leaveBookedForBrian}</span>`</span>);</span></code></pre><div class="sqlstuff">
-<pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 1</span></code></pre>
-<pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">START</span> TRANSACTION ISOLATION LEVEL SERIALIZABLE</span></code></pre>
 <pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 0</span></code></pre>
 <pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">START</span> TRANSACTION ISOLATION LEVEL SERIALIZABLE</span></code></pre>
 <pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 1</span></code></pre>
-<pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">SELECT</span> <span class="hljs-built_in">count</span>("shifts".<span class="hljs-operator">*</span>) <span class="hljs-keyword">AS</span> <span class="hljs-keyword">result</span></span>
-<span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">FROM</span> "shifts"</span>
-<span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">WHERE</span> ("day" <span class="hljs-operator">=</span> $<span class="hljs-number">1</span></span>
-<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  <span class="hljs-keyword">AND</span> ("doctorId" <span class="hljs-operator">!=</span> $<span class="hljs-number">2</span>))</span></code></pre>
-<pre class="sqlvalues"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">[<span class="hljs-string">"2020-12-25"</span>, <span class="hljs-number">2</span>]</span></code></pre>
+<pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">START</span> TRANSACTION ISOLATION LEVEL SERIALIZABLE</span></code></pre>
 <pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 0</span></code></pre>
 <pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">SELECT</span> <span class="hljs-built_in">count</span>("shifts".<span class="hljs-operator">*</span>) <span class="hljs-keyword">AS</span> <span class="hljs-keyword">result</span></span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">FROM</span> "shifts"</span>
@@ -3300,12 +3294,10 @@
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  <span class="hljs-keyword">AND</span> ("doctorId" <span class="hljs-operator">!=</span> $<span class="hljs-number">2</span>))</span></code></pre>
 <pre class="sqlvalues"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">[<span class="hljs-string">"2020-12-25"</span>, <span class="hljs-number">1</span>]</span></code></pre>
 <pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 1</span></code></pre>
-<pre class="sqlresult"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-number">1</span></span></code></pre>
-<pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 1</span></code></pre>
-<pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">DELETE</span> <span class="hljs-keyword">FROM</span> "shifts"</span>
+<pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">SELECT</span> <span class="hljs-built_in">count</span>("shifts".<span class="hljs-operator">*</span>) <span class="hljs-keyword">AS</span> <span class="hljs-keyword">result</span></span>
+<span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">FROM</span> "shifts"</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">WHERE</span> ("day" <span class="hljs-operator">=</span> $<span class="hljs-number">1</span></span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-keyword">AND</span> "doctorId" <span class="hljs-operator">=</span> $<span class="hljs-number">2</span>)</span>
-<span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">RETURNING to_jsonb ("shifts".<span class="hljs-operator">*</span>) <span class="hljs-keyword">AS</span> <span class="hljs-keyword">result</span></span></code></pre>
+<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  <span class="hljs-keyword">AND</span> ("doctorId" <span class="hljs-operator">!=</span> $<span class="hljs-number">2</span>))</span></code></pre>
 <pre class="sqlvalues"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">[<span class="hljs-string">"2020-12-25"</span>, <span class="hljs-number">2</span>]</span></code></pre>
 <pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 0</span></code></pre>
 <pre class="sqlresult"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-number">1</span></span></code></pre>
@@ -3316,14 +3308,13 @@
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">RETURNING to_jsonb ("shifts".<span class="hljs-operator">*</span>) <span class="hljs-keyword">AS</span> <span class="hljs-keyword">result</span></span></code></pre>
 <pre class="sqlvalues"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">[<span class="hljs-string">"2020-12-25"</span>, <span class="hljs-number">1</span>]</span></code></pre>
 <pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 1</span></code></pre>
-<pre class="sqlresult"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">[</span>
-<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"day"</span>: <span class="hljs-string">"2020-12-25"</span>,</span>
-<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"doctorId"</span>: <span class="hljs-number">2</span></span>
-<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
-<span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
+<pre class="sqlresult"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-number">1</span></span></code></pre>
 <pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 1</span></code></pre>
-<pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">COMMIT</span></span></code></pre>
+<pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">DELETE</span> <span class="hljs-keyword">FROM</span> "shifts"</span>
+<span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">WHERE</span> ("day" <span class="hljs-operator">=</span> $<span class="hljs-number">1</span></span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-keyword">AND</span> "doctorId" <span class="hljs-operator">=</span> $<span class="hljs-number">2</span>)</span>
+<span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">RETURNING to_jsonb ("shifts".<span class="hljs-operator">*</span>) <span class="hljs-keyword">AS</span> <span class="hljs-keyword">result</span></span></code></pre>
+<pre class="sqlvalues"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">[<span class="hljs-string">"2020-12-25"</span>, <span class="hljs-number">2</span>]</span></code></pre>
 <pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 0</span></code></pre>
 <pre class="sqlresult"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">[</span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
@@ -3333,27 +3324,36 @@
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
 <pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 0</span></code></pre>
 <pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">COMMIT</span></span></code></pre>
-<pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 0</span></code></pre>
+<pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 1</span></code></pre>
+<pre class="sqlresult"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">[</span>
+<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  {</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"day"</span>: <span class="hljs-string">"2020-12-25"</span>,</span>
+<span class="indent-line" style="padding-left: 8ch; text-indent: -8ch;">    <span class="hljs-attr">"doctorId"</span>: <span class="hljs-number">2</span></span>
+<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  }</span>
+<span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">]</span></code></pre>
+<pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 1</span></code></pre>
+<pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">COMMIT</span></span></code></pre>
+<pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 1</span></code></pre>
 <pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">ROLLBACK</span></span></code></pre>
-<pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 0</span></code></pre>
-<pre class="transactionlog"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction rollback (code 40001) on attempt 1 of 5, retrying in 109ms</span></code></pre>
-<pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 0</span></code></pre>
+<pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 1</span></code></pre>
+<pre class="transactionlog"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction rollback (code 40001) on attempt 1 of 5, retrying in 160ms</span></code></pre>
+<pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 1</span></code></pre>
 <pre class="transactionlog"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Retrying transaction, attempt 2 of 5</span></code></pre>
-<pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 0</span></code></pre>
+<pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 1</span></code></pre>
 <pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">START</span> TRANSACTION ISOLATION LEVEL SERIALIZABLE</span></code></pre>
-<pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 0</span></code></pre>
+<pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 1</span></code></pre>
 <pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">SELECT</span> <span class="hljs-built_in">count</span>("shifts".<span class="hljs-operator">*</span>) <span class="hljs-keyword">AS</span> <span class="hljs-keyword">result</span></span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">FROM</span> "shifts"</span>
 <span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">WHERE</span> ("day" <span class="hljs-operator">=</span> $<span class="hljs-number">1</span></span>
 <span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  <span class="hljs-keyword">AND</span> ("doctorId" <span class="hljs-operator">!=</span> $<span class="hljs-number">2</span>))</span></code></pre>
-<pre class="sqlvalues"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">[<span class="hljs-string">"2020-12-25"</span>, <span class="hljs-number">1</span>]</span></code></pre>
-<pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 0</span></code></pre>
+<pre class="sqlvalues"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">[<span class="hljs-string">"2020-12-25"</span>, <span class="hljs-number">2</span>]</span></code></pre>
+<pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 1</span></code></pre>
 <pre class="sqlresult"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-number">0</span></span></code></pre>
-<pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 0</span></code></pre>
+<pre class="transactionid"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Transaction 1</span></code></pre>
 <pre class="sqltext"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">COMMIT</span></span></code></pre>
 <pre class="console"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;">Leave booked for:</span>
-<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  Annabel – false</span>
-<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  Brian – true</span></code></pre>
+<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  Annabel – true</span>
+<span class="indent-line" style="padding-left: 6ch; text-indent: -6ch;">  Brian – false</span></code></pre>
 </div>
 <p>Expanding the results, we see that one of the requests is retried and then fails — as it must to retain one doctor on shift — thanks to the <code>SERIALIZABLE</code> isolation (<code>REPEATABLE READ</code>, which is one isolation level weaker, wouldn’t help).</p>
 <h4 id="transaction-isolation-shortcuts">Transaction isolation shortcuts</h4>
@@ -3689,6 +3689,17 @@
 <li><code>AllMaterializedViews</code>: materialized views, deriving from <code>CREATE MATERIALIZED VIEW</code></li>
 <li><code>AllTablesAndViews</code>: all of the above combined</li>
 </ul>
+<p>It also provides a number of type mappings allowing types to be accessed by table name, which are heavily used by the shortcut functions:</p>
+<ul>
+<li><code>SelectableForTable&lt;Table&gt;</code></li>
+<li><code>JSONSelectableForTable&lt;Table&gt;</code></li>
+<li><code>WhereableForTable&lt;Table&gt;</code></li>
+<li><code>InsertableForTable&lt;Table&gt;</code></li>
+<li><code>UpdatableForTable&lt;Table&gt;</code></li>
+<li><code>UniqueIndexForTable&lt;Table&gt;</code></li>
+<li><code>ColumnForTable&lt;Table&gt;</code></li>
+<li><code>SQLForTable&lt;Table&gt;</code></li>
+</ul>
 <h3 id="run-time-configuration">Run-time configuration</h3>
 <p>There are a few configuration options you can set at runtime:</p>
 <pre class="language-typescript norun"><code><span class="indent-line" style="padding-left: 4ch; text-indent: -4ch;"><span class="hljs-keyword">export</span> <span class="hljs-keyword">interface</span> Config {</span>
@@ -3811,7 +3822,9 @@
 <h4 id="50">5.0</h4>
 <p><em>Breaking change</em>: The <code>AllTables</code> type (which somewhat arbitrarily included tables, foreign tables, and views, but not materialized views) is gone. In its place you’ll a variety of more and less specific <a href="#utility-types">utility types</a>. Also, <code>Updatable</code> and <code>Insertable</code> interfaces for tables and views that aren’t writable are now <code>{ [key: string]: never }</code> instead of <code>{}</code>.</p>
 <h4 id="40">4.0</h4>
-<p><em>Breaking change</em>: Various types in <code>JSONSelectable</code>s are now assigned template string types instead of plain old <code>string</code>, including date and time types, range types, and <code>bytea</code>. For example, pg’s <code>date</code> maps to a new type <code>DateString</code>, now defined as <code>`${number}-${number}-${number}`</code>, and <code>bytea</code> maps to <code>ByteArrayString</code>, which is <code>`\\x${string}`</code>. This improves type safety, but some <code>string</code> values in existing code may need to be cast or replaced (e.g. with JS <code>Date</code> or <code>Buffer</code> instances). For the date and time types, new conversion functions <code>toDate</code> and <code>toString</code> are provided. Or you can roll your own conversions for date libraries such as Luxon and Moment with help from the new <code>strict</code> function.</p>
+<p><em>Breaking change</em>: Various types in <code>JSONSelectable</code>s are now assigned template string types instead of plain old <code>string</code>, including date and time types, range types, and <code>bytea</code>. For example, pg’s <code>date</code> maps to a new type <code>DateString</code>, now defined as <code>`${number}-${number}-${number}`</code>, and <code>bytea</code> maps to <code>ByteArrayString</code>, which is <code>`\\x${string}`</code>.</p>
+<p>This improves type safety, but some <code>string</code> values in existing code may need to be cast or replaced (e.g. with JS <code>Date</code> or <code>Buffer</code> instances). For the date and time types, new conversion functions <code>toDate</code> and <code>toString</code> are provided. Or you can roll your own conversions for date libraries such as Luxon and Moment with help from the new <code>strict</code> function.</p>
+<p>TypeScript 4.1 is now required, and 4.3 is recommended.</p>
 <h4 id="36">3.6</h4>
 <p><em>New feature</em>: The <code>extras</code> option object can now take column names as well as <code>SQLFragments</code> as its values, <a href="https://github.com/jawj/zapatos/issues/80">enabling straightforward column aliasing</a> (similar to <code>SELECT "column" AS "aliasedColumn"</code>) in shortcut functions.</p>
 <h4 id="35">3.5</h4>
@@ -3917,14 +3930,18 @@
 <p><strong>Small is beautiful.</strong>  I’m less likely to accept pull requests for features that significantly complicate the code base either to address niche use-cases or to eke out minor performance gains that are almost certainly swamped by network and database latencies.</p>
 <p><strong>Scratching my own itch.</strong>  I’m unlikely to put a lot of my own effort into features I don’t currently need …&nbsp;unless we’re talking about paid consultancy, which I’m more than happy to discuss.</p>
 <h3 id="whats-next">What’s next</h3>
-<p>Nice-to-haves would include:</p>
+<p>The roadmap includes:</p>
 <ul>
 <li>
 <p><strong>Tests.</strong>  The proprietary server API that’s the original consumer of this library, over at <a href="https://www.psyt.co.uk">Psychological Technologies</a>, has a test suite that exercises most of the code base at least a little. Nevertheless, a proper test suite is still kind of indispensable. It should test not just returned values but also inferred types — which is a little fiddly.</p>
 </li>
 <li>
-<p><strong>More complete typing of <code>lateral</code> queries.</strong>  It would be great to make use of foreign key relationships and suchlike in generated types and the shortcut functions that make use of them.</p>
+<p><strong>Alternative install mechanism.</strong> Older versions of Zapatos copied key source files into your source tree instead of using ambient type declarations. Not everyone liked that approach, but it did enable some advanced use-cases, such as interfacing with multiple databases. This approach is likely to return as a configurable option.</p>
 </li>
+</ul>
+<p>More speculative nice-to-haves would include:</p>
+<ul>
+<li><strong>More complete typing of <code>lateral</code> queries.</strong>  It would be great to make use of foreign key relationships and suchlike in generated types and the shortcut functions that make use of them.</li>
 </ul>
 <h3 id="alternatives">Alternatives</h3>
 <p>You may find <a href="https://phiresky.github.io/blog/2020/sql-libs-for-typescript/">this excellent overview of TypeScript SQL libraries</a> useful.</p>
