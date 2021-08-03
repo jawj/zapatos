@@ -421,7 +421,7 @@ type SelectReturnTypeForTable<
     L extends SQLFragment<any> ? RunResultForSQLFragment<L> :
     never);
 
-export enum SelectResultMode { Many, One, ExactlyOne, Count }
+export enum SelectResultMode { Many, One, ExactlyOne, Numeric }
 
 export type FullSelectReturnTypeForTable<
   T extends Table,
@@ -434,7 +434,7 @@ export type FullSelectReturnTypeForTable<
     [SelectResultMode.Many]: SelectReturnTypeForTable<T, C, L, E>[];
     [SelectResultMode.ExactlyOne]: SelectReturnTypeForTable<T, C, L, E>;
     [SelectResultMode.One]: SelectReturnTypeForTable<T, C, L, E> | undefined;
-    [SelectResultMode.Count]: number;
+    [SelectResultMode.Numeric]: number;
   }[M];
 
 export interface SelectSignatures {
@@ -448,6 +448,7 @@ export interface SelectSignatures {
     where: WhereableForTable<T> | SQLFragment | AllType,
     options?: SelectOptionsForTable<T, C, L, E>,
     mode?: M,
+    aggregate?: string,
   ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, M>>;
 }
 
@@ -488,6 +489,7 @@ export const select: SelectSignatures = function (
   where: Whereable | SQLFragment | AllType = all,
   options: SelectOptionsForTable<Table, ColumnsOption<Table>, LateralOption<ColumnsOption<Table>, ExtrasOption<Table>>, ExtrasOption<Table>> = {},
   mode: SelectResultMode = SelectResultMode.Many,
+  aggregate: string = 'count',
 ) {
 
   const
@@ -501,11 +503,11 @@ export const select: SelectSignatures = function (
     distinctSQL = !distinct ? [] : sql` DISTINCT${distinct instanceof SQLFragment || typeof distinct === 'string' ? sql` ON (${distinct})` :
       Array.isArray(distinct) ? sql` ON (${cols(distinct)})` : []}`,
     colsSQL = lateral instanceof SQLFragment ? [] :
-      mode === SelectResultMode.Count ?
-        (columns ? sql`count(${cols(columns)})` : sql<typeof alias>`count(${alias}.*)`) :
+      mode === SelectResultMode.Numeric ?
+        (columns ? sql`${raw(aggregate)}(${cols(columns)})` : sql`${raw(aggregate)}(${alias}.*)`) :
         SQLForColumnsOfTable(columns, alias as Table),
-    colsExtraSQL = lateral instanceof SQLFragment ? [] : SQLForExtras(extras),
-    colsLateralSQL = lateral === undefined ? [] :
+    colsExtraSQL = lateral instanceof SQLFragment || mode === SelectResultMode.Numeric ? [] : SQLForExtras(extras),
+    colsLateralSQL = lateral === undefined || mode === SelectResultMode.Numeric ? [] :
       lateral instanceof SQLFragment ? sql`"ljoin_passthru".result` :
         sql` || jsonb_build_object(${mapWithSeparator(
           Object.keys(lateral).sort(), sql`, `, (k, i) => sql`${param(k)}::text, "ljoin_${raw(String(i))}".result`)})`,
@@ -548,7 +550,7 @@ export const select: SelectSignatures = function (
 
   query.runResultTransform =
 
-    mode === SelectResultMode.Count ?
+    mode === SelectResultMode.Numeric ?
       // note: pg deliberately returns strings for int8 in case 64-bit numbers overflow
       // (see https://github.com/brianc/node-pg-types#use), but we assume our counts aren't that big
       (qr) => Number(qr.rows[0].result) :
@@ -558,7 +560,8 @@ export const select: SelectSignatures = function (
           const result = qr.rows[0]?.result;
           if (result === undefined) throw new NotExactlyOneError(query, 'One result expected but none returned (hint: check `.query.compile()` on this Error)');
           return result;
-        } : // SelectResultMode.One or SelectResultMode.Many
+        } :
+        // SelectResultMode.One or SelectResultMode.Many
         (qr) => qr.rows[0]?.result;
 
   return query;
@@ -632,13 +635,18 @@ export const selectExactlyOne: SelectExactlyOneSignatures = function (table, whe
 };
 
 
-/* === count === */
+/* === count, sum, avg === */
 
-export interface CountSignatures {
-  <T extends Table>(
+export interface NumericAggregateSignatures {
+  <
+    T extends Table,
+    C extends ColumnsOption<T>,
+    L extends LateralOption<C, E>,
+    E extends ExtrasOption<T>,
+    >(
     table: T,
     where: WhereableForTable<T> | SQLFragment | AllType,
-    options?: { columns?: ColumnsOption<T>; alias?: string },
+    options?: SelectOptionsForTable<T, C, L, E>,
   ): SQLFragment<number>;
 }
 
@@ -648,8 +656,59 @@ export interface CountSignatures {
  * @param table The table to count from
  * @param where A `Whereable` or `SQLFragment` defining the rows to be counted, 
  * or `all`
- * @param options Options object. Keys are: `columns`, `alias`.
+ * @param options Options object. Useful keys may be: `columns`, `alias`.
  */
-export const count: CountSignatures = function (table, where, options?) {
-  return select(table, where, options, SelectResultMode.Count);
+export const count: NumericAggregateSignatures = function (table, where, options?) {
+  return select(table, where, options, SelectResultMode.Numeric);
+};
+
+/**
+ * Generate a `SELECT` query `SQLFragment` that returns a sum. This can be 
+ * nested in other `select`/`selectOne` queries using their `lateral` option.
+ * @param table The table to aggregate from
+ * @param where A `Whereable` or `SQLFragment` defining the rows to be
+ * aggregated, or `all`
+ * @param options Options object. Useful keys may be: `columns`, `alias`.
+ */
+export const sum: NumericAggregateSignatures = function (table, where, options?) {
+  return select(table, where, options, SelectResultMode.Numeric, 'sum');
+};
+
+/**
+ * Generate a `SELECT` query `SQLFragment` that returns an arithmetic mean via
+ * the `avg` aggregate function. This can be nested in other `select`/
+ * `selectOne` queries using their `lateral` option.
+ * @param table The table to aggregate from
+ * @param where A `Whereable` or `SQLFragment` defining the rows to be
+ * aggregated, or `all`
+ * @param options Options object. Useful keys may be: `columns`, `alias`.
+ */
+export const avg: NumericAggregateSignatures = function (table, where, options?) {
+  return select(table, where, options, SelectResultMode.Numeric, 'avg');
+};
+
+/**
+ * Generate a `SELECT` query `SQLFragment` that returns a minimum via the `min`
+ * aggregate function. This can be nested in other `select`/`selectOne` queries
+ * using their `lateral` option.
+ * @param table The table to aggregate from
+ * @param where A `Whereable` or `SQLFragment` defining the rows to be 
+ * aggregated, or `all`
+ * @param options Options object. Useful keys may be: `columns`, `alias`.
+ */
+export const min: NumericAggregateSignatures = function (table, where, options?) {
+  return select(table, where, options, SelectResultMode.Numeric, 'min');
+};
+
+/**
+ * Generate a `SELECT` query `SQLFragment` that returns a maximum via the `max`
+ * aggregate function. This can be nested in other `select`/`selectOne` queries
+ * using their `lateral` option.
+ * @param table The table to aggregate from
+ * @param where A `Whereable` or `SQLFragment` defining the rows to be
+ * aggregated, or `all`
+ * @param options Options object. Useful keys may be: `columns`, `alias`.
+ */
+export const max: NumericAggregateSignatures = function (table, where, options?) {
+  return select(table, where, options, SelectResultMode.Numeric, 'max');
 };
