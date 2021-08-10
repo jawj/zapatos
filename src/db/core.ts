@@ -10,15 +10,12 @@ import { performance } from 'perf_hooks';
 import { getConfig, SQLQuery } from './config';
 import { isPOJO, NoInfer } from './utils';
 
-import type {
-  Updatable,
-  Whereable,
-  Table,
-  Column,
-} from 'zapatos/schema';
-
 
 // === symbols, types, wrapper classes and shortcuts ===
+
+/** Allows injection of additional structures to zapatos */
+export interface StructureMap {
+}
 
 /**
  * Compiles to `DEFAULT` for use in `INSERT`/`UPDATE` queries.
@@ -72,6 +69,8 @@ export type NumberRangeString = RangeString<number | ''>;
  * something like https://www.npmjs.com/package/pg-large-object instead.
  */
 export type ByteArrayString = `\\x${string}`;
+
+export type Column <S extends GenericSQLStructure> = Exclude<keyof S['Selectable'], number | symbol>;
 
 /**
  * Make a function `STRICT` in the Postgres sense — where it's an alias for
@@ -189,17 +188,43 @@ export function vals<T>(x: T) { return new ColumnValues<T>(x); }
  * Compiles to the name of the column it wraps in the table of the parent query.
  * @param value The column name
  */
-export class ParentColumn<T extends Column = Column> { constructor(public value: T) { } }
+export class ParentColumn<T extends Column<GenericSQLStructure> = Column<SQLStructure>> { constructor(public value: T) { } }
 /**
  * Returns a `ParentColumn` instance, wrapping a column name, which compiles to
  * that column name of the table of the parent query.
  */
-export function parent<T extends Column = Column>(x: T) { return new ParentColumn<T>(x); }
+export function parent<T extends Column<GenericSQLStructure> = Column<SQLStructure>>(x: T) { return new ParentColumn<T>(x); }
 
 
 export type GenericSQLExpression = SQLFragment<any, any> | Parameter | DefaultType | DangerousRawString | SelfType;
-export type SQLExpression = Table | ColumnNames<Updatable | (keyof Updatable)[]> | ColumnValues<Updatable | any[]> | Whereable | Column | GenericSQLExpression;
-export type SQL = SQLExpression | SQLExpression[];
+
+export interface GenericSQLStructure {
+  Schema: string;
+  Table: string;
+  Selectable: { [k: string]: any };
+  JSONSelectable: object;
+  Whereable: object;
+  Insertable: object;
+  Updatable: object;
+  UniqueIndex: string;
+}
+
+export type SQLExpressionForStructure <S extends GenericSQLStructure> = GenericSQLExpression | ColumnNames<S['Updatable'] | (keyof S['Updatable'])[] | readonly (keyof S['Updatable'])[]> | ColumnValues<S['Updatable'] | any[] | readonly any[]> | S['Table'] | S['Schema'] | S['Whereable'] | Column<S>;
+export type SQLForStructure <S extends GenericSQLStructure> = SQLExpressionForStructure<S> | Array<SQLExpressionForStructure<S>>;
+
+export type GenericSQL = 
+  | GenericSQLExpression
+  | ColumnNames<GenericSQLStructure['Updatable']
+  | (keyof GenericSQLStructure['Updatable'])[]>
+  | ColumnValues<GenericSQLStructure['Updatable'] | any[] | readonly any[]>
+  | GenericSQLStructure['Table']
+  | GenericSQLStructure['Schema']
+  | GenericSQLStructure['Whereable']
+  | Column<GenericSQLStructure>;
+
+export type SQLStructure = { [Key in keyof StructureMap]: StructureMap[Key] }[keyof StructureMap];
+
+export type SQL = SQLForStructure<SQLStructure>;
 
 export type Queryable = pg.ClientBase | pg.Pool;
 
@@ -212,13 +237,22 @@ export type Queryable = pg.ClientBase | pg.Pool;
  * defines what type the `SQLFragment` produces, where relevant (i.e. when
  * calling `.run(...)` on it, or using it as the value of an `extras` object).
  */
-export function sql<
-  Interpolations = SQL,
-  RunResult = pg.QueryResult['rows'],
-  Constraint = never,
-  >(literals: TemplateStringsArray, ...expressions: NoInfer<Interpolations>[]) {
-  return new SQLFragment<RunResult, Constraint>(Array.prototype.slice.apply(literals), expressions);
+interface SqlSignatures {
+  <
+    Interpolations = SQL,
+    RunResult = pg.QueryResult['rows'],
+    Constraint = never,
+  >(literals: TemplateStringsArray, ...expressions: NoInfer<Interpolations>[]): SQLFragment<RunResult, Constraint>;
+  <
+    Structure extends GenericSQLStructure = SQLStructure,
+    RunResult = pg.QueryResult['rows'],
+    Constraint = never,
+    >(literals: TemplateStringsArray, ...expressions: NoInfer<SQLForStructure<Structure>>[]): SQLFragment<RunResult, Constraint>;
 }
+
+export const sql: SqlSignatures = (literals: TemplateStringsArray, ...expressions: NoInfer<GenericSQL>[]) => {
+  return new SQLFragment<pg.QueryResult['rows'], never>(Array.prototype.slice.apply(literals), expressions);
+};
 
 let preparedNameSeq = 0;
 
@@ -239,7 +273,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
   noop = false;  // if true, bypass actually running the query unless forced to e.g. for empty INSERTs
   noopResult: any;  // if noop is true and DB is bypassed, what should be returned?
 
-  constructor(protected literals: string[], protected expressions: SQL[]) { }
+  constructor(protected literals: string[], protected expressions: GenericSQL[]) { }
 
   /**
    * Instruct Postgres to treat this as a prepared statement: see
@@ -286,7 +320,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
    * that could be passed to the `pg` query function. Arguments are generally
    * only passed when the function calls itself recursively.
    */
-  compile = (result: SQLQuery = { text: '', values: [] }, parentTable?: string, currentColumn?: Column) => {
+  compile = (result: SQLQuery = { text: '', values: [] }, parentTable?: string, currentColumn?: Column<GenericSQLStructure>) => {
     if (this.parentTable) parentTable = this.parentTable;
 
     if (this.noop) result.text += "/* marked no-op: won't hit DB unless forced -> */ ";
@@ -301,7 +335,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
     return result;
   };
 
-  compileExpression = (expression: SQL, result: SQLQuery = { text: '', values: [] }, parentTable?: string, currentColumn?: Column) => {
+  compileExpression = (expression: GenericSQL, result: SQLQuery = { text: '', values: [] }, parentTable?: string, currentColumn?: Column<GenericSQLStructure>) => {
     if (this.parentTable) parentTable = this.parentTable;
 
     if (expression instanceof SQLFragment) {
@@ -380,7 +414,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
 
       } else {
         const
-          columnNames = <Column[]>Object.keys(expression.value).sort(),
+          columnNames = <Column<GenericSQLStructure>[]>Object.keys(expression.value).sort(),
           columnValues = columnNames.map(k => (<any>expression.value)[k]);
 
         for (let i = 0, len = columnValues.length; i < len; i++) {
@@ -397,7 +431,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
 
     } else if (typeof expression === 'object') {
       // must be a Whereable object, so put together a WHERE clause
-      const columnNames = <Column[]>Object.keys(expression).sort();
+      const columnNames = <Column<GenericSQLStructure>[]>Object.keys(expression).sort();
 
       if (columnNames.length) {  // if the object is not empty
         result.text += '(';

@@ -23,6 +23,12 @@ export interface OptionalConfig {
   customTypesTransform: 'PgMy_type' | 'my_type' | 'PgMyType' | ((s: string) => string);
   columnOptions: ColumnOptions;
   schemaJSDoc: boolean;
+  /**
+   * Indicates if global structure names should be registered. If a function is
+   * passed, it determines whether an individual structure should be registered,
+   * and which name should it use
+   */
+  globalStructureName: boolean | ((table: string) => string | boolean);
 }
 
 interface SchemaRules {
@@ -46,7 +52,7 @@ export type CompleteConfig = RequiredConfig & OptionalConfig;
 
 const defaultConfig: OptionalConfig = {
   outDir: '.',
-  outExt: '.d.ts',
+  outExt: '.ts',
   schemas: { public: { include: '*', exclude: [] } },
   debugListener: false,
   progressListener: false,
@@ -54,6 +60,7 @@ const defaultConfig: OptionalConfig = {
   customTypesTransform: 'PgMy_type',
   columnOptions: {},
   schemaJSDoc: true,
+  globalStructureName: true
 };
 
 export const moduleRoot = () => {

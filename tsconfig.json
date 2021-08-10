@@ -10,11 +10,6 @@
     "module": "CommonJS",
     "strict": true,
     "declaration": true,
-    "noUnusedLocals": true,
-    "paths": {
-      "*": [
-        "src/typings/*"
-      ]
-    }
-  },
+    "noUnusedLocals": true
+  }
 }
