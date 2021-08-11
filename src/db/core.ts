@@ -122,7 +122,12 @@ export const toBuffer = strict((ba: ByteArrayString) => Buffer.from(ba.slice(2),
  * stringified or cast to `json` (again irrespective of the configuration 
  * parameters `castArrayParamsToJson` and `castObjectParamsToJson`).
  */
-export class Parameter<T = any> { constructor(public value: T, public cast?: boolean | string) { } }
+export class Parameter<T = any> {
+  // Make it a nominal type
+  // @ts-expect-error
+  private readonly name = 'Parameter';
+  constructor(public value: T, public cast?: boolean | string) { }
+}
 
 /**
  * Returns a `Parameter` instance, which compiles to a numbered query parameter 
@@ -145,7 +150,12 @@ export function param<T = any>(x: T, cast?: boolean | string) { return new Param
  * Compiles to the wrapped string value, as is, which may enable SQL injection
  * attacks.
  */
-export class DangerousRawString { constructor(public value: string) { } }
+export class DangerousRawString {
+  // Make it a nominal type
+  // @ts-expect-error
+  private readonly name = 'DangerousRawString';
+  constructor(public value: string) { }
+}
 
 /**
  * 💥💥💣 **DANGEROUS** 💣💥💥
@@ -164,7 +174,12 @@ export function raw(x: string) { return new DangerousRawString(x); }
  * list of array values (for use in a `SELECT` query) or object keys (for use
  * in an `INSERT`, `UPDATE` or `UPSERT` query, alongside `ColumnValues`).
  */
-export class ColumnNames<T> { constructor(public value: T) { } }
+export class ColumnNames<T> {
+  // Make it a nominal type
+  // @ts-expect-error
+  private readonly name = 'ColumnNames';
+  constructor(public value: T) { }
+}
 /**
  * Returns a `ColumnNames` instance, wrapping either an array or an object.
  * `ColumnNames` compiles to a quoted, comma-separated list of array values (for
@@ -177,7 +192,12 @@ export function cols<T>(x: T) { return new ColumnNames<T>(x); }
  * Compiles to a quoted, comma-separated list of object keys for use in an
  * `INSERT`, `UPDATE` or `UPSERT` query, alongside `ColumnNames`.
  */
-export class ColumnValues<T> { constructor(public value: T) { } }
+export class ColumnValues<T> {
+  // Make it a nominal type
+  // @ts-expect-error
+  private readonly name = 'ColumnValues';
+  constructor(public value: T) { }
+}
 /**
  * Returns a ColumnValues instance, wrapping an object. ColumnValues compiles to
  * a  quoted, comma-separated list of object keys for use in an INSERT, UPDATE
@@ -189,7 +209,12 @@ export function vals<T>(x: T) { return new ColumnValues<T>(x); }
  * Compiles to the name of the column it wraps in the table of the parent query.
  * @param value The column name
  */
-export class ParentColumn<T extends Column = Column> { constructor(public value: T) { } }
+export class ParentColumn<T extends Column = Column> {
+  // Make it a nominal type
+  // @ts-expect-error
+  private readonly name = 'ParentColumn';
+  constructor(public value: T) { }
+}
 /**
  * Returns a `ParentColumn` instance, wrapping a column name, which compiles to
  * that column name of the table of the parent query.
@@ -198,7 +223,7 @@ export function parent<T extends Column = Column>(x: T) { return new ParentColum
 
 
 export type GenericSQLExpression = SQLFragment<any, any> | Parameter | DefaultType | DangerousRawString | SelfType;
-export type SQLExpression = Table | ColumnNames<Updatable | (keyof Updatable)[]> | ColumnValues<Updatable | any[]> | Whereable | Column | GenericSQLExpression;
+export type SQLExpression = Table | ColumnNames<Updatable | (keyof Updatable)[] | readonly (keyof Updatable)[]> | ColumnValues<Updatable | any[]> | Whereable | Column | GenericSQLExpression;
 export type SQL = SQLExpression | SQLExpression[];
 
 export type Queryable = pg.ClientBase | pg.Pool;
@@ -223,6 +248,9 @@ export function sql<
 let preparedNameSeq = 0;
 
 export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never> {
+  // Make it a nominal type
+  // @ts-expect-error
+  private readonly name = 'SQLFragment';
   protected constraint?: Constraint;
 
   /**
