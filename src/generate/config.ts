@@ -20,6 +20,7 @@ export interface OptionalConfig {
   debugListener: boolean | ((s: string) => void);
   progressListener: boolean | ((s: string) => void);
   warningListener: boolean | ((s: string) => void);
+  customTypesStubs: 'all' | 'user' | 'none';
   customTypesTransform: 'PgMy_type' | 'my_type' | 'PgMyType' | ((s: string) => string);
   columnOptions: ColumnOptions;
   schemaJSDoc: boolean;
@@ -51,6 +52,7 @@ const defaultConfig: OptionalConfig = {
   debugListener: false,
   progressListener: false,
   warningListener: true,
+  customTypesStubs: 'user',
   customTypesTransform: 'PgMy_type',
   columnOptions: {},
   schemaJSDoc: true,

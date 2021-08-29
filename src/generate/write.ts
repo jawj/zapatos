@@ -26,9 +26,8 @@ export const generate = async (suppliedConfig: Config) => {
     debug = config.debugListener === true ? console.log :
       config.debugListener || (() => void 0),
 
-    { ts, customTypeSourceFiles } = await tsForConfig(config, debug),
-
     folderName = 'zapatos',
+    disaggExt = '.disagg',
     schemaName = 'schema' + config.outExt,
     customFolderName = 'custom',
     eslintrcName = '.eslintrc.json',
@@ -43,7 +42,20 @@ declare module 'zapatos/custom' { }
     schemaTargetPath = path.join(folderTargetPath, schemaName),
     customFolderTargetPath = path.join(folderTargetPath, customFolderName),
     eslintrcTargetPath = path.join(folderTargetPath, eslintrcName),
-    customTypesIndexTargetPath = path.join(customFolderTargetPath, customTypesIndexName);
+    customTypesIndexTargetPath = path.join(customFolderTargetPath, customTypesIndexName),
+
+    existingCustomTypeFiles = !fs.existsSync(customFolderTargetPath) ? [] :
+      fs.readdirSync(customFolderTargetPath)
+        .filter(f => f.endsWith(config.outExt))
+        .map(f => f.slice(0, f.length - config.outExt.length))
+        .filter(f => f !== 'index'),
+    existingCustomTypesDisagg = existingCustomTypeFiles
+      .filter(f => f.endsWith(disaggExt))
+      .map(f => f.slice(0, f.length - disaggExt.length)),
+    existingCustomTypesAgg = existingCustomTypeFiles
+      .filter(f => !f.endsWith(disaggExt)),
+
+    { ts, customTypeSourceFiles } = await tsForConfig(config, debug);
 
   log(`(Re)creating schema folder: ${schemaTargetPath}`);
   fs.mkdirSync(folderTargetPath, { recursive: true });

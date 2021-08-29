@@ -64,26 +64,24 @@ export const tsForConfig = async (config: CompleteConfig, debug: (s: string) => 
       }
     },
     customTypes = {},
-    schemaData = (await Promise.all(
-      Object.keys(schemas).map(async schema => {
-        const
-          rules = schemas[schema],
-          tables = rules.exclude === '*' ? [] :  // exclude takes precedence
-            (await relationsInSchema(schema, queryFn))
-              .filter(rel => rules.include === '*' || rules.include.indexOf(rel.name) >= 0)
-              .filter(rel => rules.exclude.indexOf(rel.name) < 0),
-          enums = await enumDataForSchema(schema, queryFn),
-          tableDefs = await Promise.all(tables.map(async table =>
-            definitionForRelationInSchema(table, schema, enums, customTypes, config, queryFn))),
-          schemaDef = `\n/* === schema: ${schema} === */\n` +
-            `\n/* --- enums --- */\n` +
-            enumTypesForEnumData(enums) +
-            `\n\n/* --- tables --- */\n` +
-            tableDefs.sort().join('\n');
+    schemaData = await Promise.all(Object.keys(schemas).map(async schema => {
+      const
+        rules = schemas[schema],
+        tables = rules.exclude === '*' ? [] :  // exclude takes precedence
+          (await relationsInSchema(schema, queryFn))
+            .filter(rel => rules.include === '*' || rules.include.indexOf(rel.name) >= 0)
+            .filter(rel => rules.exclude.indexOf(rel.name) < 0),
+        enums = await enumDataForSchema(schema, queryFn),
+        tableDefs = await Promise.all(tables.map(async table =>
+          definitionForRelationInSchema(table, schema, enums, customTypes, config, queryFn))),
+        schemaDef = `\n/* === schema: ${schema} === */\n` +
+          `\n/* --- enums --- */\n` +
+          enumTypesForEnumData(enums) +
+          `\n\n/* --- tables --- */\n` +
+          tableDefs.sort().join('\n');
 
-        return { schemaDef, tables };
-      }))
-    ),
+      return { schemaDef, tables };
+    })),
     schemaDefs = schemaData.map(r => r.schemaDef).sort(),
     schemaTables = schemaData.map(r => r.tables),
     allTables = ([] as Relation[]).concat(...schemaTables).sort((a, b) => a.name.localeCompare(b.name)),
