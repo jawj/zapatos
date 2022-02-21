@@ -508,9 +508,9 @@ export const select: SelectSignatures = function (
         SQLForColumnsOfTable(columns, alias as Table),
     colsExtraSQL = lateral instanceof SQLFragment || mode === SelectResultMode.Numeric ? [] : SQLForExtras(extras),
     colsLateralSQL = lateral === undefined || mode === SelectResultMode.Numeric ? [] :
-      lateral instanceof SQLFragment ? sql`"ljoin_passthru".result` :
+      lateral instanceof SQLFragment ? sql`"lateral_passthru".result` :
         sql` || jsonb_build_object(${mapWithSeparator(
-          Object.keys(lateral).sort(), sql`, `, (k, i) => sql`${param(k)}::text, "ljoin_${raw(String(i))}".result`)})`,
+          Object.keys(lateral).sort(), sql`, `, k => sql`${param(k)}::text, "lateral_${raw(k)}".result`)})`,
     allColsSQL = sql`${colsSQL}${colsExtraSQL}${colsLateralSQL}`,
     whereSQL = where === all ? [] : sql` WHERE ${where}`,
     groupBySQL = !groupBy ? [] : sql` GROUP BY ${groupBy instanceof SQLFragment || typeof groupBy === 'string' ? groupBy : cols(groupBy)}`,
@@ -534,12 +534,12 @@ export const select: SelectSignatures = function (
     lateralSQL = lateral === undefined ? [] :
       lateral instanceof SQLFragment ? (() => {
         lateral.parentTable = alias;
-        return sql` LEFT JOIN LATERAL (${lateral}) AS "ljoin_passthru" ON true`;
+        return sql` LEFT JOIN LATERAL (${lateral}) AS "lateral_passthru" ON true`;
       })() :
-        Object.keys(lateral).sort().map((k, i) => {
+        Object.keys(lateral).sort().map(k => {
           const subQ = lateral[k];
           subQ.parentTable = alias;  // enables `parent('column')` in subquery's Wherables
-          return sql` LEFT JOIN LATERAL (${subQ}) AS "ljoin_${raw(String(i))}" ON true`;
+          return sql` LEFT JOIN LATERAL (${subQ}) AS "lateral_${raw(k)}" ON true`;
         });
 
   const
