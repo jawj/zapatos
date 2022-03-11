@@ -4,25 +4,13 @@ Copyright (C) 2020 - 2021 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
-import type {
-  JSONSelectableForTable,
-  WhereableForTable,
-  InsertableForTable,
-  UpdatableForTable,
-  ColumnForTable,
-  UniqueIndexForTable,
-  SQLForTable,
-  Insertable,
-  Updatable,
-  Whereable,
-  Table,
-  Column,
-} from 'zapatos/schema';
-
 import {
   AllType,
   all,
-  SQL,
+  GenericSQL,
+  GenericSQLStructure,
+  SQLForStructure,
+  SQLStructure,
   SQLFragment,
   sql,
   cols,
@@ -30,6 +18,7 @@ import {
   raw,
   param,
   Default,
+  Column
 } from './core';
 
 import {
@@ -38,49 +27,50 @@ import {
 } from './utils';
 
 
-export type JSONOnlyColsForTable<T extends Table, C extends any[] /* `ColumnForTable<T>[]` gives errors here for reasons I haven't got to the bottom of */> =
-  Pick<JSONSelectableForTable<T>, C[number]>;
+export type JSONColumn <S extends GenericSQLStructure> = Exclude<keyof S['JSONSelectable'], number | symbol>;
+export type JSONOnlyColsForTable<S extends GenericSQLStructure, C extends JSONColumn<S>[]> =
+  Pick<S['JSONSelectable'], C[number]>;
 
 export interface SQLFragmentMap { [k: string]: SQLFragment<any> }
-export interface SQLFragmentOrColumnMap<T extends Table> { [k: string]: SQLFragment<any> | ColumnForTable<T> }
+export interface SQLFragmentOrColumnMap<S extends GenericSQLStructure> { [k: string]: SQLFragment<any> | Column<S> }
 export type RunResultForSQLFragment<T extends SQLFragment<any, any>> = T extends SQLFragment<infer RunResult, any> ? RunResult : never;
 
 export type LateralResult<L extends SQLFragmentMap> = { [K in keyof L]: RunResultForSQLFragment<L[K]> };
-export type ExtrasResult<T extends Table, E extends SQLFragmentOrColumnMap<T>> = { [K in keyof E]:
-  E[K] extends SQLFragment<any> ? RunResultForSQLFragment<E[K]> : E[K] extends keyof JSONSelectableForTable<T> ? JSONSelectableForTable<T>[E[K]] : never;
+export type ExtrasResult<S extends GenericSQLStructure, E extends SQLFragmentOrColumnMap<S>> = { [K in keyof E]:
+  E[K] extends SQLFragment<any> ? RunResultForSQLFragment<E[K]> : E[K] extends keyof S['JSONSelectable'] ? S['JSONSelectable'][E[K]] : never;
 };
 
-type ExtrasOption<T extends Table> = SQLFragmentOrColumnMap<T> | undefined;
-type ColumnsOption<T extends Table> = ColumnForTable<T>[] | undefined;
+type ExtrasOption<S extends GenericSQLStructure> = SQLFragmentOrColumnMap<S> | undefined;
+type ColumnsOption<S extends GenericSQLStructure> = Column<S>[] | undefined;
 
 type LimitedLateralOption = SQLFragmentMap | undefined;
 type FullLateralOption = LimitedLateralOption | SQLFragment<any>;
 type LateralOption<
-  C extends ColumnsOption<Table>,
-  E extends ExtrasOption<Table>,
+  C extends ColumnsOption<GenericSQLStructure>,
+  E extends ExtrasOption<GenericSQLStructure>,
   > =
   undefined extends C ? undefined extends E ? FullLateralOption : LimitedLateralOption : LimitedLateralOption;
 
-export interface ReturningOptionsForTable<T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>> {
+export interface ReturningOptionsForTable<S extends GenericSQLStructure, C extends ColumnsOption<S>, E extends ExtrasOption<S>> {
   returning?: C;
   extras?: E;
 };
 
-type ReturningTypeForTable<T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>> =
-  (undefined extends C ? JSONSelectableForTable<T> :
-    C extends ColumnForTable<T>[] ? JSONOnlyColsForTable<T, C> :
+type ReturningTypeForTable<S extends GenericSQLStructure, C extends JSONColumn<S>[] | undefined, E extends ExtrasOption<S>> =
+  (undefined extends C ? S['JSONSelectable'] :
+    C extends JSONColumn<S>[] ? JSONOnlyColsForTable<S, C> :
     never) &
   (undefined extends E ? {} :
-    E extends SQLFragmentOrColumnMap<T> ? ExtrasResult<T, E> :
+    E extends SQLFragmentOrColumnMap<S> ? ExtrasResult<S, E> :
     never);
 
 
-function SQLForColumnsOfTable(columns: Column[] | undefined, table: Table) {
+function SQLForColumnsOfTable(columns: Column<GenericSQLStructure>[] | undefined, table: GenericSQLStructure['Table']) {
   return columns === undefined ? sql`to_jsonb(${table}.*)` :
     sql`jsonb_build_object(${mapWithSeparator(columns, sql`, `, c => sql`${param(c)}::text, ${c}`)})`;
 }
 
-function SQLForExtras<T extends Table>(extras: ExtrasOption<T>) {
+function SQLForExtras<S extends GenericSQLStructure>(extras: ExtrasOption<S>) {
   return extras === undefined ? [] :
     sql` || jsonb_build_object(${mapWithSeparator(
       Object.keys(extras), sql`, `, k => sql`${param(k)}::text, ${extras[k]}`)})`;
@@ -89,30 +79,25 @@ function SQLForExtras<T extends Table>(extras: ExtrasOption<T>) {
 
 /* === insert === */
 
-interface InsertSignatures {
-  <T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>>(
+interface InsertSignatures <BaseSQLStructure extends GenericSQLStructure> {
+  <T extends BaseSQLStructure['Table'], S extends Extract<BaseSQLStructure, { Table: T }>, C extends ColumnsOption<S>, E extends ExtrasOption<S>>(
     table: T,
-    values: InsertableForTable<T>,
-    options?: ReturningOptionsForTable<T, C, E>
-  ): SQLFragment<ReturningTypeForTable<T, C, E>>;
+    values: S['Insertable'],
+    options?: ReturningOptionsForTable<S, C, E>
+  ): SQLFragment<ReturningTypeForTable<S, C, E>>;
 
-  <T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>>(
+  <T extends BaseSQLStructure['Table'], S extends Extract<BaseSQLStructure, { Table: T }>, C extends ColumnsOption<S>, E extends ExtrasOption<S>>(
     table: T,
-    values: InsertableForTable<T>[],
-    options?: ReturningOptionsForTable<T, C, E>
-  ): SQLFragment<ReturningTypeForTable<T, C, E>[]>;
+    values: S['Insertable'][],
+    options?: ReturningOptionsForTable<S, C, E>
+  ): SQLFragment<ReturningTypeForTable<S, C, E>[]>;
 }
 
-/**
- * Generate an `INSERT` query `SQLFragment`.
- * @param table The table into which to insert
- * @param values The `Insertable` values (or array thereof) to be inserted
- */
-export const insert: InsertSignatures = function (
-  table: Table,
-  values: Insertable | Insertable[],
-  options?: ReturningOptionsForTable<Table, ColumnsOption<Table>, ExtrasOption<Table>>
-): SQLFragment<any> {
+const genericInsert = (
+  table: GenericSQLStructure['Table'],
+  values: GenericSQLStructure['Insertable'] | GenericSQLStructure['Insertable'][],
+  options?: ReturningOptionsForTable<GenericSQLStructure, ColumnsOption<GenericSQLStructure>, ExtrasOption<GenericSQLStructure>>
+): SQLFragment<any> => {
 
   let query;
   if (Array.isArray(values) && values.length === 0) {
@@ -125,7 +110,7 @@ export const insert: InsertSignatures = function (
       completedValues = Array.isArray(values) ? completeKeysWithDefaultValue(values, Default) : values,
       colsSQL = cols(Array.isArray(completedValues) ? completedValues[0] : completedValues),
       valuesSQL = Array.isArray(completedValues) ?
-        mapWithSeparator(completedValues as Insertable[], sql`, `, v => sql`(${vals(v)})`) :
+        mapWithSeparator(completedValues as GenericSQLStructure['Insertable'][], sql`, `, v => sql`(${vals(v)})`) :
         sql`(${vals(completedValues)})`,
       returningSQL = SQLForColumnsOfTable(options?.returning, table),
       extrasSQL = SQLForExtras(options?.extras);
@@ -140,6 +125,13 @@ export const insert: InsertSignatures = function (
   return query;
 };
 
+/**
+ * Generate an `INSERT` query `SQLFragment`.
+ * @param table The table into which to insert
+ * @param values The `Insertable` values (or array thereof) to be inserted
+ */
+export const insert: InsertSignatures<SQLStructure> = genericInsert;
+
 
 /* === upsert === */
 
@@ -147,88 +139,78 @@ export const insert: InsertSignatures = function (
  * Wraps a unique index of the target table for use as the arbiter constraint
  * of an `upsert` shortcut query.
  */
-export class Constraint<T extends Table> { constructor(public value: UniqueIndexForTable<T>) { } }
+export class Constraint<S extends GenericSQLStructure> { constructor(public value: S['UniqueIndex']) { } }
 /**
  * Returns a `Constraint` instance, wrapping a unique index of the target table
  * for use as the arbiter constraint of an `upsert` shortcut query.
  */
-export function constraint<T extends Table>(x: UniqueIndexForTable<T>) { return new Constraint<T>(x); }
+export function constraint<S extends GenericSQLStructure>(x: S['UniqueIndex']) { return new Constraint<S>(x); }
 
 export interface UpsertAction { $action: 'INSERT' | 'UPDATE' }
 
 type UpsertReportAction = 'suppress';
 type UpsertReturnableForTable<
-  T extends Table,
-  C extends ColumnsOption<T>,
-  E extends ExtrasOption<T>,
+  S extends GenericSQLStructure,
+  C extends ColumnsOption<S>,
+  E extends ExtrasOption<S>,
   RA extends UpsertReportAction | undefined
   > =
-  ReturningTypeForTable<T, C, E> & (undefined extends RA ? UpsertAction : {});
+  ReturningTypeForTable<S, C, E> & (undefined extends RA ? UpsertAction : {});
 
-type UpsertConflictTargetForTable<T extends Table> = Constraint<T> | ColumnForTable<T> | ColumnForTable<T>[];
-type UpdateColumns<T extends Table> = ColumnForTable<T> | ColumnForTable<T>[];
+type UpsertConflictTargetForStructure<S extends GenericSQLStructure> = Constraint<S> | Column<S> | Column<S>[];
+type UpdateColumns<S extends GenericSQLStructure> = Column<S> | Column<S>[];
 
 interface UpsertOptions<
-  T extends Table,
-  C extends ColumnsOption<T>,
-  E extends ExtrasOption<T>,
-  UC extends UpdateColumns<T> | undefined,
+  S extends GenericSQLStructure,
+  C extends ColumnsOption<S>,
+  E extends ExtrasOption<S>,
+  UC extends UpdateColumns<S> | undefined,
   RA extends UpsertReportAction | undefined,
-  > extends ReturningOptionsForTable<T, C, E> {
-  updateValues?: UpdatableForTable<T>;
+  > extends ReturningOptionsForTable<S, C, E> {
+  updateValues?: S['Updatable'];
   updateColumns?: UC;
-  noNullUpdateColumns?: ColumnForTable<T> | ColumnForTable<T>[];
+  noNullUpdateColumns?: Column<S> | Column<S>[];
   reportAction?: RA;
 }
 
-interface UpsertSignatures {
-  <T extends Table,
-    C extends ColumnsOption<T>,
-    E extends ExtrasOption<T>,
-    UC extends UpdateColumns<T> | undefined,
+interface UpsertSignatures <BaseSQLStructure extends GenericSQLStructure> {
+  <T extends BaseSQLStructure['Table'],
+    S extends Extract<BaseSQLStructure, { Table: T }>,
+    C extends ColumnsOption<S>,
+    E extends ExtrasOption<S>,
+    UC extends UpdateColumns<S> | undefined,
     RA extends UpsertReportAction | undefined
     >(
     table: T,
-    values: InsertableForTable<T>,
-    conflictTarget: UpsertConflictTargetForTable<T>,
-    options?: UpsertOptions<T, C, E, UC, RA>
-  ): SQLFragment<UpsertReturnableForTable<T, C, E, RA> | (UC extends never[] ? undefined : never)>;
+    values: S['Insertable'],
+    conflictTarget: UpsertConflictTargetForStructure<S>,
+    options?: UpsertOptions<S, C, E, UC, RA>
+  ): SQLFragment<UpsertReturnableForTable<S, C, E, RA> | (UC extends never[] ? undefined : never)>;
 
-  <T extends Table,
-    C extends ColumnsOption<T>,
-    E extends ExtrasOption<T>,
-    UC extends UpdateColumns<T> | undefined,
+  <T extends BaseSQLStructure['Table'],
+    S extends Extract<BaseSQLStructure, { Table: T }>,
+    C extends ColumnsOption<S>,
+    E extends ExtrasOption<S>,
+    UC extends UpdateColumns<S> | undefined,
     RA extends UpsertReportAction | undefined
     >(
     table: T,
-    values: InsertableForTable<T>[],
-    conflictTarget: UpsertConflictTargetForTable<T>,
-    options?: UpsertOptions<T, C, E, UC, RA>
-  ): SQLFragment<UpsertReturnableForTable<T, C, E, RA>[]>;
+    values: S['Insertable'][],
+    conflictTarget: UpsertConflictTargetForStructure<S>,
+    options?: UpsertOptions<S, C, E, UC, RA>
+  ): SQLFragment<UpsertReturnableForTable<S, C, E, RA>[]>;
 }
 
 export const doNothing = [];
 
-/**
- * Generate an 'upsert' (`INSERT ... ON CONFLICT ...`) query `SQLFragment`.
- * @param table The table to update or insert into
- * @param values An `Insertable` of values (or an array thereof) to be inserted 
- * or updated
- * @param conflictTarget A `UNIQUE`-indexed column (or array thereof) or a 
- * `UNIQUE` index (wrapped in `db.constraint(...)`) that determines whether we
- * get an `UPDATE` (when there's a matching existing value) or an `INSERT`
- * (when there isn't)
- * @param options Optionally, an object with any of the keys `updateColumns`,
- * `noNullUpdateColumns` and `updateValues` (see documentation).
- */
-export const upsert: UpsertSignatures = function (
-  table: Table,
-  values: Insertable | Insertable[],
-  conflictTarget: Column | Column[] | Constraint<Table>,
-  options?: UpsertOptions<Table, ColumnsOption<Table>, ExtrasOption<Table>, UpdateColumns<Table>, UpsertReportAction>
+const genericUpsert = function (
+  table: GenericSQLStructure['Table'],
+  values: GenericSQLStructure['Insertable'] | GenericSQLStructure['Insertable'][],
+  conflictTarget: Column<GenericSQLStructure> | Column<GenericSQLStructure>[] | Constraint<GenericSQLStructure>,
+  options?: UpsertOptions<any, ColumnsOption<GenericSQLStructure>, ExtrasOption<GenericSQLStructure>, UpdateColumns<GenericSQLStructure>, UpsertReportAction>
 ): SQLFragment<any> {
 
-  if (Array.isArray(values) && values.length === 0) return insert(table, values);  // punt a no-op to plain insert
+  if (Array.isArray(values) && values.length === 0) return genericInsert(table, values);  // punt a no-op to plain insert
   if (typeof conflictTarget === 'string') conflictTarget = [conflictTarget];  // now either Column[] or Constraint
 
   let noNullUpdateColumns = options?.noNullUpdateColumns ?? [];
@@ -242,7 +224,7 @@ export const upsert: UpsertSignatures = function (
     firstRow = completedValues[0],
     insertColsSQL = cols(firstRow),
     insertValuesSQL = mapWithSeparator(completedValues, sql`, `, v => sql`(${vals(v)})`),
-    colNames = Object.keys(firstRow) as Column[],
+    colNames = Object.keys(firstRow) as Column<GenericSQLStructure>[],
     updateColumns = specifiedUpdateColumns as string[] ?? colNames,
     conflictTargetSQL = Array.isArray(conflictTarget) ?
       sql`(${mapWithSeparator(conflictTarget, sql`, `, c => c)})` :
@@ -250,9 +232,11 @@ export const upsert: UpsertSignatures = function (
     updateColsSQL = mapWithSeparator(updateColumns, sql`, `, c => c),
     updateValues = options?.updateValues ?? {},
     updateValuesSQL = mapWithSeparator(updateColumns, sql`, `, c =>
-      updateValues[c] !== undefined ? updateValues[c] :
-        noNullUpdateColumns.includes(c) ? sql`CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END` :
-          sql`EXCLUDED.${c}`),
+      (updateValues as { [k: string]: any })[c] !== undefined
+        ? (updateValues as { [k: string]: any })[c]
+        : noNullUpdateColumns.includes(c)
+          ? sql`CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END`
+          : sql`EXCLUDED.${c}`),
     returningSQL = SQLForColumnsOfTable(options?.returning, table),
     extrasSQL = SQLForExtras(options?.extras),
     suppressReport = options?.reportAction === 'suppress';
@@ -275,29 +259,37 @@ export const upsert: UpsertSignatures = function (
   return query;
 };
 
+/**
+ * Generate an 'upsert' (`INSERT ... ON CONFLICT ...`) query `SQLFragment`.
+ * @param table The table to update or insert into
+ * @param values An `Insertable` of values (or an array thereof) to be inserted 
+ * or updated
+ * @param conflictTarget A `UNIQUE`-indexed column (or array thereof) or a 
+ * `UNIQUE` index (wrapped in `db.constraint(...)`) that determines whether we
+ * get an `UPDATE` (when there's a matching existing value) or an `INSERT`
+ * (when there isn't)
+ * @param options Optionally, an object with any of the keys `updateColumns`,
+ * `noNullUpdateColumns` and `updateValues` (see documentation).
+ */
+export const upsert: UpsertSignatures<SQLStructure> = genericUpsert;
+
 
 /* === update === */
 
-interface UpdateSignatures {
-  <T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>>(
+interface UpdateSignatures <BaseSQLStructure extends GenericSQLStructure> {
+  <T extends BaseSQLStructure['Table'], S extends Extract<BaseSQLStructure, { Table: T }>, C extends ColumnsOption<S>, E extends ExtrasOption<S>>(
     table: T,
-    values: UpdatableForTable<T>,
-    where: WhereableForTable<T> | SQLFragment,
-    options?: ReturningOptionsForTable<T, C, E>
-  ): SQLFragment<ReturningTypeForTable<T, C, E>[]>;
+    values: S['Updatable'],
+    where: S['Whereable'] | SQLFragment,
+    options?: ReturningOptionsForTable<S, C, E>
+  ): SQLFragment<ReturningTypeForTable<S, C, E>[]>;
 }
 
-/**
- * Generate an `UPDATE` query `SQLFragment`.
- * @param table The table to update
- * @param values An `Updatable` of the new values with which to update the table
- * @param where A `Whereable` (or `SQLFragment`) defining which rows to update
- */
-export const update: UpdateSignatures = function (
-  table: Table,
-  values: Updatable,
-  where: Whereable | SQLFragment,
-  options?: ReturningOptionsForTable<Table, ColumnsOption<Table>, ExtrasOption<Table>>
+const genericUpdate = function (
+  table: GenericSQLStructure['Table'],
+  values: GenericSQLStructure['Updatable'],
+  where: GenericSQLStructure['Whereable'] | SQLFragment,
+  options?: ReturningOptionsForTable<GenericSQLStructure, ColumnsOption<GenericSQLStructure>, ExtrasOption<GenericSQLStructure>>
 ): SQLFragment {
 
   // note: the ROW() constructor below is required in Postgres 10+ if we're updating a single column
@@ -306,42 +298,52 @@ export const update: UpdateSignatures = function (
   const
     returningSQL = SQLForColumnsOfTable(options?.returning, table),
     extrasSQL = SQLForExtras(options?.extras),
-    query = sql`UPDATE ${table} SET (${cols(values)}) = ROW(${vals(values)}) WHERE ${where} RETURNING ${returningSQL}${extrasSQL} AS result`;
+    query = sql<GenericSQL>`UPDATE ${table} SET (${cols(values)}) = ROW(${vals(values)}) WHERE ${where} RETURNING ${returningSQL}${extrasSQL} AS result`;
 
   query.runResultTransform = (qr) => qr.rows.map(r => r.result);
   return query;
 };
 
+/**
+ * Generate an `UPDATE` query `SQLFragment`.
+ * @param table The table to update
+ * @param values An `Updatable` of the new values with which to update the table
+ * @param where A `Whereable` (or `SQLFragment`) defining which rows to update
+ */
+export const update: UpdateSignatures<SQLStructure> = genericUpdate;
+
 
 /* === delete === */
 
-export interface DeleteSignatures {
-  <T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>>(
+export interface DeleteSignatures <BaseSQLStructure extends GenericSQLStructure> {
+  <T extends BaseSQLStructure['Table'], S extends Extract<BaseSQLStructure, { Table: T }>, C extends ColumnsOption<S>, E extends ExtrasOption<S>>(
     table: T,
-    where: WhereableForTable<T> | SQLFragment,
-    options?: ReturningOptionsForTable<T, C, E>
-  ): SQLFragment<ReturningTypeForTable<T, C, E>[]>;
+    where: S['Whereable'] | SQLFragment,
+    options?: ReturningOptionsForTable<S, C, E>
+  ): SQLFragment<ReturningTypeForTable<S, C, E>[]>;
 }
+
+const genericDeletes = function (
+  table: GenericSQLStructure['Table'],
+  where: GenericSQLStructure['Whereable'] | SQLFragment,
+  options?: ReturningOptionsForTable<GenericSQLStructure, ColumnsOption<GenericSQLStructure>, ExtrasOption<GenericSQLStructure>>
+): SQLFragment {
+
+  const
+    returningSQL = SQLForColumnsOfTable(options?.returning, table),
+    extrasSQL = SQLForExtras(options?.extras),
+    query = sql<GenericSQL>`DELETE FROM ${table} WHERE ${where} RETURNING ${returningSQL}${extrasSQL} AS result`;
+
+  query.runResultTransform = (qr) => qr.rows.map(r => r.result);
+  return query;
+};
 
 /**
  * Generate an `DELETE` query `SQLFragment` (plain 'delete' is a reserved word)
  * @param table The table to delete from
  * @param where A `Whereable` (or `SQLFragment`) defining which rows to delete
  */
-export const deletes: DeleteSignatures = function (
-  table: Table,
-  where: Whereable | SQLFragment,
-  options?: ReturningOptionsForTable<Table, ColumnsOption<Table>, ExtrasOption<Table>>
-): SQLFragment {
-
-  const
-    returningSQL = SQLForColumnsOfTable(options?.returning, table),
-    extrasSQL = SQLForExtras(options?.extras),
-    query = sql`DELETE FROM ${table} WHERE ${where} RETURNING ${returningSQL}${extrasSQL} AS result`;
-
-  query.runResultTransform = (qr) => qr.rows.map(r => r.result);
-  return query;
-};
+export const deletes: DeleteSignatures<SQLStructure> = genericDeletes;
 
 
 /* === truncate === */
@@ -349,12 +351,25 @@ export const deletes: DeleteSignatures = function (
 type TruncateIdentityOpts = 'CONTINUE IDENTITY' | 'RESTART IDENTITY';
 type TruncateForeignKeyOpts = 'RESTRICT' | 'CASCADE';
 
-interface TruncateSignatures {
-  (table: Table | Table[]): SQLFragment<undefined>;
-  (table: Table | Table[], optId: TruncateIdentityOpts): SQLFragment<undefined>;
-  (table: Table | Table[], optFK: TruncateForeignKeyOpts): SQLFragment<undefined>;
-  (table: Table | Table[], optId: TruncateIdentityOpts, optFK: TruncateForeignKeyOpts): SQLFragment<undefined>;
+interface TruncateSignatures <BaseSQLStructure extends GenericSQLStructure> {
+  <T extends BaseSQLStructure['Table']>(table: T | readonly T[]): SQLFragment<undefined>;
+  <T extends BaseSQLStructure['Table']>(table: T | readonly T[], optId: TruncateIdentityOpts): SQLFragment<undefined>;
+  <T extends BaseSQLStructure['Table']>(table: T | readonly T[], optFK: TruncateForeignKeyOpts): SQLFragment<undefined>;
+  <T extends BaseSQLStructure['Table']>(table: T | readonly T[], optId: TruncateIdentityOpts, optFK: TruncateForeignKeyOpts): SQLFragment<undefined>;
 }
+
+const genericTruncate = function (
+  table: GenericSQLStructure['Table'] | readonly GenericSQLStructure['Table'][],
+  ...opts: string[]
+): SQLFragment<undefined> {
+
+  const tables = Array.isArray(table) ? table : [table];
+  const
+    formattedTables = mapWithSeparator(tables, sql`, `, t => t),
+    query = sql<GenericSQL, undefined>`TRUNCATE ${formattedTables}${raw((opts.length ? ' ' : '') + opts.join(' '))}`;
+
+  return query;
+};
 
 /**
  * Generate a `TRUNCATE` query `SQLFragment`.
@@ -362,94 +377,89 @@ interface TruncateSignatures {
  * @param opts Options: 'CONTINUE IDENTITY'/'RESTART IDENTITY' and/or 
  * 'RESTRICT'/'CASCADE'
  */
-export const truncate: TruncateSignatures = function (
-  table: Table | Table[],
-  ...opts: string[]
-): SQLFragment<undefined> {
-
-  if (!Array.isArray(table)) table = [table];
-  const
-    tables = mapWithSeparator(table, sql`, `, t => t),
-    query = sql<SQL, undefined>`TRUNCATE ${tables}${raw((opts.length ? ' ' : '') + opts.join(' '))}`;
-
-  return query;
-};
+export const truncate: TruncateSignatures<SQLStructure> = genericTruncate;
 
 
 /* === select === */
 
-interface OrderSpecForTable<T extends Table> {
-  by: SQLForTable<T>;
+interface OrderSpecForTable<S extends GenericSQLStructure> {
+  by: SQLForStructure<S>;
   direction: 'ASC' | 'DESC';
   nulls?: 'FIRST' | 'LAST';
 }
 
-export interface SelectLockingOptions {
+export interface SelectLockingOptions<O extends GenericSQLStructure> {
   for: 'UPDATE' | 'NO KEY UPDATE' | 'SHARE' | 'KEY SHARE';
-  of?: Table | Table[];
+  of?: O['Table'] | O['Table'][];
   wait?: 'NOWAIT' | 'SKIP LOCKED';
 }
 
 export interface SelectOptionsForTable<
-  T extends Table,
-  C extends ColumnsOption<T>,
+  S extends GenericSQLStructure,
+  O extends GenericSQLStructure,
+  C extends ColumnsOption<S>,
   L extends LateralOption<C, E>,
-  E extends ExtrasOption<T>,
+  E extends ExtrasOption<S>,
   > {
-  distinct?: boolean | ColumnForTable<T> | ColumnForTable<T>[] | SQLFragment<any>;
-  order?: OrderSpecForTable<T> | OrderSpecForTable<T>[];
+  distinct?: boolean | Column<S> | Column<S>[] | SQLFragment<any>;
+  order?: OrderSpecForTable<S> | OrderSpecForTable<S>[];
   limit?: number;
   offset?: number;
   withTies?: boolean;
   columns?: C;
   extras?: E;
-  groupBy?: ColumnForTable<T> | ColumnForTable<T>[] | SQLFragment<any>;
-  having?: WhereableForTable<T> | SQLFragment<any>;
+  groupBy?: Column<S> | Column<S>[] | SQLFragment<any>;
+  having?: S['Whereable'] | SQLFragment<any>;
   lateral?: L;
   alias?: string;
-  lock?: SelectLockingOptions | SelectLockingOptions[];
+  lock?: SelectLockingOptions<O> | SelectLockingOptions<O>[];
 };
 
 type SelectReturnTypeForTable<
-  T extends Table,
-  C extends ColumnsOption<T>,
+  S extends GenericSQLStructure,
+  C extends ColumnsOption<S>,
   L extends LateralOption<C, E>,
-  E extends ExtrasOption<T>,
+  E extends ExtrasOption<S>,
   > =
-  (undefined extends L ? ReturningTypeForTable<T, C, E> :
-    L extends SQLFragmentMap ? ReturningTypeForTable<T, C, E> & LateralResult<L> :
+  (undefined extends L ? ReturningTypeForTable<S, C, E> :
+    L extends SQLFragmentMap ? ReturningTypeForTable<S, C, E> & LateralResult<L> :
     L extends SQLFragment<any> ? RunResultForSQLFragment<L> :
     never);
 
 export enum SelectResultMode { Many, One, ExactlyOne, Numeric }
 
 export type FullSelectReturnTypeForTable<
-  T extends Table,
-  C extends ColumnsOption<T>,
+  S extends GenericSQLStructure,
+  C extends ColumnsOption<S>,
   L extends LateralOption<C, E>,
-  E extends ExtrasOption<T>,
+  E extends ExtrasOption<S>,
   M extends SelectResultMode,
   > =
   {
-    [SelectResultMode.Many]: SelectReturnTypeForTable<T, C, L, E>[];
-    [SelectResultMode.ExactlyOne]: SelectReturnTypeForTable<T, C, L, E>;
-    [SelectResultMode.One]: SelectReturnTypeForTable<T, C, L, E> | undefined;
+    [SelectResultMode.Many]: SelectReturnTypeForTable<S, C, L, E>[];
+    [SelectResultMode.ExactlyOne]: SelectReturnTypeForTable<S, C, L, E>;
+    [SelectResultMode.One]: SelectReturnTypeForTable<S, C, L, E> | undefined;
     [SelectResultMode.Numeric]: number;
   }[M];
 
-export interface SelectSignatures {
-  <T extends Table,
-    C extends ColumnsOption<T>,
+export interface SelectSignatures <
+  BaseSQLStructure extends GenericSQLStructure,
+  OtherSQLStructure extends GenericSQLStructure
+  > {
+  <T extends BaseSQLStructure['Table'],
+    S extends Extract<BaseSQLStructure, { Table: T }>,
+    O extends OtherSQLStructure,
+    C extends ColumnsOption<S>,
     L extends LateralOption<C, E>,
-    E extends ExtrasOption<T>,
+    E extends ExtrasOption<S>,
     M extends SelectResultMode = SelectResultMode.Many
     >(
     table: T,
-    where: WhereableForTable<T> | SQLFragment | AllType,
-    options?: SelectOptionsForTable<T, C, L, E>,
+    where: S['Whereable'] | SQLFragment | AllType,
+    options?: SelectOptionsForTable<S, O, C, L, E>,
     mode?: M,
     aggregate?: string,
-  ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, M>>;
+  ): SQLFragment<FullSelectReturnTypeForTable<S, C, L, E, M>>;
 }
 
 export class NotExactlyOneError extends Error {
@@ -462,6 +472,89 @@ export class NotExactlyOneError extends Error {
     this.query = query;  // custom property
   }
 }
+
+const genericSelect = function (
+  table: GenericSQLStructure['Table'],
+  where: GenericSQLStructure['Whereable'] | SQLFragment | AllType = all,
+  options: SelectOptionsForTable<any, GenericSQLStructure, ColumnsOption<GenericSQLStructure>, LateralOption<ColumnsOption<GenericSQLStructure>, ExtrasOption<GenericSQLStructure>>, ExtrasOption<GenericSQLStructure>> = {},
+  mode: SelectResultMode = SelectResultMode.Many,
+  aggregate: string = 'count',
+) {
+
+  const
+    limit1 = mode === SelectResultMode.One || mode === SelectResultMode.ExactlyOne,
+    allOptions = limit1 ? { ...options, limit: 1 } : options,
+    alias = allOptions.alias || table,
+    { distinct, groupBy, having, lateral, columns, extras } = allOptions,
+    lock = allOptions.lock === undefined || Array.isArray(allOptions.lock) ? allOptions.lock : [allOptions.lock],
+    order = allOptions.order === undefined || Array.isArray(allOptions.order) ? allOptions.order : [allOptions.order],
+    tableAliasSQL = alias === table ? [] : sql<string>` AS ${alias}`,
+    distinctSQL = !distinct ? [] : sql` DISTINCT${distinct instanceof SQLFragment || typeof distinct === 'string' ? sql` ON (${distinct})` :
+      Array.isArray(distinct) ? sql` ON (${cols(distinct)})` : []}`,
+    colsSQL = lateral instanceof SQLFragment ? [] :
+      mode === SelectResultMode.Numeric ?
+        (columns ? sql`${raw(aggregate)}(${cols(columns)})` : sql`${raw(aggregate)}(${alias}.*)`) :
+        SQLForColumnsOfTable(columns, alias as GenericSQLStructure['Table']),
+    colsExtraSQL = lateral instanceof SQLFragment || mode === SelectResultMode.Numeric ? [] : SQLForExtras(extras),
+    colsLateralSQL = lateral === undefined || mode === SelectResultMode.Numeric ? [] :
+      lateral instanceof SQLFragment ? sql`"lateral_passthru".result` :
+        sql` || jsonb_build_object(${mapWithSeparator(
+          Object.keys(lateral).sort(), sql`, `, k => sql`${param(k)}::text, "lateral_${raw(k)}".result`)})`,
+    allColsSQL = sql`${colsSQL}${colsExtraSQL}${colsLateralSQL}`,
+    whereSQL = where === all ? [] : sql<GenericSQL>` WHERE ${where}`,
+    groupBySQL = !groupBy ? [] : sql` GROUP BY ${groupBy instanceof SQLFragment || typeof groupBy === 'string' ? groupBy : cols(groupBy)}`,
+    havingSQL = !having ? [] : sql` HAVING ${having}`,
+    orderSQL = order === undefined ? [] :
+      sql` ORDER BY ${mapWithSeparator(order as OrderSpecForTable<GenericSQLStructure>[], sql`, `, o => {  // `as` clause is required when TS not strict
+        if (!['ASC', 'DESC'].includes(o.direction)) throw new Error(`Direction must be ASC/DESC, not '${o.direction}'`);
+        if (o.nulls && !['FIRST', 'LAST'].includes(o.nulls)) throw new Error(`Nulls must be FIRST/LAST/undefined, not '${o.nulls}'`);
+        return sql<GenericSQL>`${o.by} ${raw(o.direction)}${o.nulls ? sql` NULLS ${raw(o.nulls)}` : []}`;
+      })}`,
+    limitSQL = allOptions.limit === undefined ? [] :
+      allOptions.withTies ? sql` FETCH FIRST ${param(allOptions.limit)} ROWS WITH TIES` :
+        sql` LIMIT ${param(allOptions.limit)}`,  // compatibility with pg pre-10.5; and fewer bytes!
+    offsetSQL = allOptions.offset === undefined ? [] : sql` OFFSET ${param(allOptions.offset)}`,  // pg is lax about OFFSET following FETCH, and we exploit that
+    lockSQL = lock === undefined ? [] : (lock as SelectLockingOptions<GenericSQLStructure>[]).map(lock => {  // `as` clause is required when TS not strict
+      const
+        ofTables = lock.of === undefined || Array.isArray(lock.of) ? lock.of : [lock.of],
+        ofClause = ofTables === undefined ? [] : sql` OF ${mapWithSeparator(ofTables as GenericSQLStructure['Table'][], sql`, `, t => t)}`;  // `as` clause is required when TS not strict
+      return sql` FOR ${raw(lock.for)}${ofClause}${lock.wait ? sql` ${raw(lock.wait)}` : []}`;
+    }),
+    lateralSQL = lateral === undefined ? [] :
+      lateral instanceof SQLFragment ? (() => {
+        lateral.parentTable = alias;
+        return sql` LEFT JOIN LATERAL (${lateral}) AS "lateral_passthru" ON true`;
+      })() :
+        Object.keys(lateral).sort().map(k => {
+          const subQ = lateral[k];
+          subQ.parentTable = alias;  // enables `parent('column')` in subquery's Wherables
+          return sql` LEFT JOIN LATERAL (${subQ}) AS "lateral_${raw(k)}" ON true`;
+        });
+
+  const
+    rowsQuery = sql<GenericSQL, any>`SELECT${distinctSQL} ${allColsSQL} AS result FROM ${table}${tableAliasSQL}${lateralSQL}${whereSQL}${groupBySQL}${havingSQL}${orderSQL}${limitSQL}${offsetSQL}${lockSQL}`,
+    query = mode !== SelectResultMode.Many ? rowsQuery :
+      // we need the aggregate to sit in a sub-SELECT in order to keep ORDER and LIMIT working as usual
+      sql<GenericSQL, any>`SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${raw(`"sq_${alias}"`)}`;
+
+  query.runResultTransform =
+
+    mode === SelectResultMode.Numeric ?
+      // note: pg deliberately returns strings for int8 in case 64-bit numbers overflow
+      // (see https://github.com/brianc/node-pg-types#use), but we assume our counts aren't that big
+      (qr) => Number(qr.rows[0].result) :
+
+      mode === SelectResultMode.ExactlyOne ?
+        (qr) => {
+          const result = qr.rows[0]?.result;
+          if (result === undefined) throw new NotExactlyOneError(query, 'One result expected but none returned (hint: check `.query.compile()` on this Error)');
+          return result;
+        } :
+        // SelectResultMode.One or SelectResultMode.Many
+        (qr) => qr.rows[0]?.result;
+
+  return query;
+};
 
 /**
  * Generate a `SELECT` query `SQLFragment`. This can be nested with other 
@@ -484,104 +577,44 @@ export class NotExactlyOneError extends Error {
  * quantities can be included in the JSON result
  * @param mode (Used internally by `selectOne` and `count`)
  */
-export const select: SelectSignatures = function (
-  table: Table,
-  where: Whereable | SQLFragment | AllType = all,
-  options: SelectOptionsForTable<Table, ColumnsOption<Table>, LateralOption<ColumnsOption<Table>, ExtrasOption<Table>>, ExtrasOption<Table>> = {},
-  mode: SelectResultMode = SelectResultMode.Many,
-  aggregate: string = 'count',
-) {
 
-  const
-    limit1 = mode === SelectResultMode.One || mode === SelectResultMode.ExactlyOne,
-    allOptions = limit1 ? { ...options, limit: 1 } : options,
-    alias = allOptions.alias || table,
-    { distinct, groupBy, having, lateral, columns, extras } = allOptions,
-    lock = allOptions.lock === undefined || Array.isArray(allOptions.lock) ? allOptions.lock : [allOptions.lock],
-    order = allOptions.order === undefined || Array.isArray(allOptions.order) ? allOptions.order : [allOptions.order],
-    tableAliasSQL = alias === table ? [] : sql<string>` AS ${alias}`,
-    distinctSQL = !distinct ? [] : sql` DISTINCT${distinct instanceof SQLFragment || typeof distinct === 'string' ? sql` ON (${distinct})` :
-      Array.isArray(distinct) ? sql` ON (${cols(distinct)})` : []}`,
-    colsSQL = lateral instanceof SQLFragment ? [] :
-      mode === SelectResultMode.Numeric ?
-        (columns ? sql`${raw(aggregate)}(${cols(columns)})` : sql`${raw(aggregate)}(${alias}.*)`) :
-        SQLForColumnsOfTable(columns, alias as Table),
-    colsExtraSQL = lateral instanceof SQLFragment || mode === SelectResultMode.Numeric ? [] : SQLForExtras(extras),
-    colsLateralSQL = lateral === undefined || mode === SelectResultMode.Numeric ? [] :
-      lateral instanceof SQLFragment ? sql`"lateral_passthru".result` :
-        sql` || jsonb_build_object(${mapWithSeparator(
-          Object.keys(lateral).sort(), sql`, `, k => sql`${param(k)}::text, "lateral_${raw(k)}".result`)})`,
-    allColsSQL = sql`${colsSQL}${colsExtraSQL}${colsLateralSQL}`,
-    whereSQL = where === all ? [] : sql` WHERE ${where}`,
-    groupBySQL = !groupBy ? [] : sql` GROUP BY ${groupBy instanceof SQLFragment || typeof groupBy === 'string' ? groupBy : cols(groupBy)}`,
-    havingSQL = !having ? [] : sql` HAVING ${having}`,
-    orderSQL = order === undefined ? [] :
-      sql` ORDER BY ${mapWithSeparator(order as OrderSpecForTable<Table>[], sql`, `, o => {  // `as` clause is required when TS not strict
-        if (!['ASC', 'DESC'].includes(o.direction)) throw new Error(`Direction must be ASC/DESC, not '${o.direction}'`);
-        if (o.nulls && !['FIRST', 'LAST'].includes(o.nulls)) throw new Error(`Nulls must be FIRST/LAST/undefined, not '${o.nulls}'`);
-        return sql`${o.by} ${raw(o.direction)}${o.nulls ? sql` NULLS ${raw(o.nulls)}` : []}`;
-      })}`,
-    limitSQL = allOptions.limit === undefined ? [] :
-      allOptions.withTies ? sql` FETCH FIRST ${param(allOptions.limit)} ROWS WITH TIES` :
-        sql` LIMIT ${param(allOptions.limit)}`,  // compatibility with pg pre-10.5; and fewer bytes!
-    offsetSQL = allOptions.offset === undefined ? [] : sql` OFFSET ${param(allOptions.offset)}`,  // pg is lax about OFFSET following FETCH, and we exploit that
-    lockSQL = lock === undefined ? [] : (lock as SelectLockingOptions[]).map(lock => {  // `as` clause is required when TS not strict
-      const
-        ofTables = lock.of === undefined || Array.isArray(lock.of) ? lock.of : [lock.of],
-        ofClause = ofTables === undefined ? [] : sql` OF ${mapWithSeparator(ofTables as Table[], sql`, `, t => t)}`;  // `as` clause is required when TS not strict
-      return sql` FOR ${raw(lock.for)}${ofClause}${lock.wait ? sql` ${raw(lock.wait)}` : []}`;
-    }),
-    lateralSQL = lateral === undefined ? [] :
-      lateral instanceof SQLFragment ? (() => {
-        lateral.parentTable = alias;
-        return sql` LEFT JOIN LATERAL (${lateral}) AS "lateral_passthru" ON true`;
-      })() :
-        Object.keys(lateral).sort().map(k => {
-          const subQ = lateral[k];
-          subQ.parentTable = alias;  // enables `parent('column')` in subquery's Wherables
-          return sql` LEFT JOIN LATERAL (${subQ}) AS "lateral_${raw(k)}" ON true`;
-        });
-
-  const
-    rowsQuery = sql<SQL, any>`SELECT${distinctSQL} ${allColsSQL} AS result FROM ${table}${tableAliasSQL}${lateralSQL}${whereSQL}${groupBySQL}${havingSQL}${orderSQL}${limitSQL}${offsetSQL}${lockSQL}`,
-    query = mode !== SelectResultMode.Many ? rowsQuery :
-      // we need the aggregate to sit in a sub-SELECT in order to keep ORDER and LIMIT working as usual
-      sql<SQL, any>`SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${raw(`"sq_${alias}"`)}`;
-
-  query.runResultTransform =
-
-    mode === SelectResultMode.Numeric ?
-      // note: pg deliberately returns strings for int8 in case 64-bit numbers overflow
-      // (see https://github.com/brianc/node-pg-types#use), but we assume our counts aren't that big
-      (qr) => Number(qr.rows[0].result) :
-
-      mode === SelectResultMode.ExactlyOne ?
-        (qr) => {
-          const result = qr.rows[0]?.result;
-          if (result === undefined) throw new NotExactlyOneError(query, 'One result expected but none returned (hint: check `.query.compile()` on this Error)');
-          return result;
-        } :
-        // SelectResultMode.One or SelectResultMode.Many
-        (qr) => qr.rows[0]?.result;
-
-  return query;
-};
+export const select: SelectSignatures<SQLStructure, SQLStructure> = genericSelect;
 
 
 /* === selectOne === */
 
-export interface SelectOneSignatures {
+export interface SelectOneSignatures <
+  BaseSQLStructure extends GenericSQLStructure,
+  OtherSQLStructure extends GenericSQLStructure
+  > {
   <
-    T extends Table,
-    C extends ColumnsOption<T>,
+    T extends BaseSQLStructure['Table'],
+    S extends Extract<BaseSQLStructure, { Table: T }>,
+    O extends OtherSQLStructure,
+    C extends ColumnsOption<S>,
     L extends LateralOption<C, E>,
-    E extends ExtrasOption<T>,
+    E extends ExtrasOption<S>,
     >(
     table: T,
-    where: WhereableForTable<T> | SQLFragment | AllType,
-    options?: SelectOptionsForTable<T, C, L, E>,
-  ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, SelectResultMode.One>>;
+    where: S['Whereable'] | SQLFragment | AllType,
+    options?: SelectOptionsForTable<S, O, C, L, E>,
+  ): SQLFragment<FullSelectReturnTypeForTable<S, C, L, E, SelectResultMode.One>>;
 }
+
+const genericSelectOne = function (
+  table: GenericSQLStructure['Table'],
+  where: GenericSQLStructure['Whereable'] | SQLFragment | AllType,
+  options: SelectOptionsForTable<any, GenericSQLStructure, ColumnsOption<GenericSQLStructure>, LateralOption<ColumnsOption<GenericSQLStructure>, ExtrasOption<GenericSQLStructure>>, ExtrasOption<GenericSQLStructure>> = {}
+): SQLFragment<any> {
+  // you might argue that 'selectOne' offers little that you can't get with 
+  // destructuring assignment and plain 'select' 
+  // -- e.g.let[x] = async select(...).run(pool); -- but something worth having
+  // is '| undefined' in the return signature, because the result of indexing 
+  // never includes undefined (until 4.1 and --noUncheckedIndexedAccess)
+  // (see https://github.com/Microsoft/TypeScript/issues/13778)
+
+  return genericSelect(table, where, options, SelectResultMode.One);
+};
 
 /**
  * Generate a `SELECT` query `SQLFragment` that returns only a single result (or 
@@ -592,32 +625,36 @@ export interface SelectOneSignatures {
  * or `all`
  * @param options Options object. See documentation for `select` for details.
  */
-export const selectOne: SelectOneSignatures = function (table, where, options = {}) {
-  // you might argue that 'selectOne' offers little that you can't get with 
-  // destructuring assignment and plain 'select' 
-  // -- e.g.let[x] = async select(...).run(pool); -- but something worth having
-  // is '| undefined' in the return signature, because the result of indexing 
-  // never includes undefined (until 4.1 and --noUncheckedIndexedAccess)
-  // (see https://github.com/Microsoft/TypeScript/issues/13778)
-
-  return select(table, where, options, SelectResultMode.One);
-};
+export const selectOne: SelectOneSignatures<SQLStructure, SQLStructure> = genericSelectOne;
 
 
 /* === selectExactlyOne === */
 
-export interface SelectExactlyOneSignatures {
+export interface SelectExactlyOneSignatures <
+  BaseSQLStructure extends GenericSQLStructure,
+  OtherSQLStructure extends GenericSQLStructure
+  > {
   <
-    T extends Table,
-    C extends ColumnsOption<T>,
+    T extends BaseSQLStructure['Table'],
+    S extends Extract<BaseSQLStructure, { Table: T }>,
+    O extends OtherSQLStructure,
+    C extends ColumnsOption<S>,
     L extends LateralOption<C, E>,
-    E extends ExtrasOption<T>,
+    E extends ExtrasOption<S>,
     >(
     table: T,
-    where: WhereableForTable<T> | SQLFragment | AllType,
-    options?: SelectOptionsForTable<T, C, L, E>,
-  ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, SelectResultMode.ExactlyOne>>;
+    where: S['Whereable'] | SQLFragment | AllType,
+    options?: SelectOptionsForTable<S, O, C, L, E>,
+  ): SQLFragment<FullSelectReturnTypeForTable<S, C, L, E, SelectResultMode.ExactlyOne>>;
 }
+
+export const genericSelectExactlyOne = function (
+  table: GenericSQLStructure['Table'],
+  where: GenericSQLStructure['Whereable'] | SQLFragment | AllType,
+  options: SelectOptionsForTable<any, GenericSQLStructure, ColumnsOption<GenericSQLStructure>, LateralOption<ColumnsOption<GenericSQLStructure>, ExtrasOption<GenericSQLStructure>>, ExtrasOption<GenericSQLStructure>> = {}
+): SQLFragment<any> {
+  return genericSelect(table, where, options, SelectResultMode.ExactlyOne);
+};
 
 /**
  * Generate a `SELECT` query `SQLFragment` that returns a single result or 
@@ -630,25 +667,36 @@ export interface SelectExactlyOneSignatures {
  * @param options Options object. See documentation for `select` for details.
  */
 
-export const selectExactlyOne: SelectExactlyOneSignatures = function (table, where, options = {}) {
-  return select(table, where, options, SelectResultMode.ExactlyOne);
-};
+export const selectExactlyOne: SelectExactlyOneSignatures<SQLStructure, SQLStructure> = genericSelectExactlyOne;
 
 
 /* === count, sum, avg === */
 
-export interface NumericAggregateSignatures {
+export interface NumericAggregateSignatures <
+  BaseSQLStructure extends GenericSQLStructure,
+  OtherSQLStructure extends GenericSQLStructure
+  > {
   <
-    T extends Table,
-    C extends ColumnsOption<T>,
+    T extends BaseSQLStructure['Table'],
+    S extends Extract<BaseSQLStructure, { Table: T }>,
+    O extends OtherSQLStructure,
+    C extends ColumnsOption<S>,
     L extends LateralOption<C, E>,
-    E extends ExtrasOption<T>,
+    E extends ExtrasOption<S>,
     >(
     table: T,
-    where: WhereableForTable<T> | SQLFragment | AllType,
-    options?: SelectOptionsForTable<T, C, L, E>,
+    where: S['Whereable'] | SQLFragment | AllType,
+    options?: SelectOptionsForTable<S, O, C, L, E>,
   ): SQLFragment<number>;
 }
+
+export const genericCount = function (
+  table: GenericSQLStructure['Table'],
+  where: GenericSQLStructure['Whereable'] | SQLFragment | AllType,
+  options?: SelectOptionsForTable<any, GenericSQLStructure, ColumnsOption<GenericSQLStructure>, LateralOption<ColumnsOption<GenericSQLStructure>, ExtrasOption<GenericSQLStructure>>, ExtrasOption<GenericSQLStructure>>
+) {
+  return genericSelect(table, where, options, SelectResultMode.Numeric);
+};
 
 /**
  * Generate a `SELECT` query `SQLFragment` that returns a count. This can be 
@@ -658,8 +706,14 @@ export interface NumericAggregateSignatures {
  * or `all`
  * @param options Options object. Useful keys may be: `columns`, `alias`.
  */
-export const count: NumericAggregateSignatures = function (table, where, options?) {
-  return select(table, where, options, SelectResultMode.Numeric);
+export const count: NumericAggregateSignatures<SQLStructure, SQLStructure> = genericCount;
+
+export const genericSum = function (
+  table: GenericSQLStructure['Table'],
+  where: GenericSQLStructure['Whereable'] | SQLFragment | AllType,
+  options?: SelectOptionsForTable<any, GenericSQLStructure, ColumnsOption<GenericSQLStructure>, LateralOption<ColumnsOption<GenericSQLStructure>, ExtrasOption<GenericSQLStructure>>, ExtrasOption<GenericSQLStructure>>
+) {
+  return genericSelect(table, where, options, SelectResultMode.Numeric, 'sum');
 };
 
 /**
@@ -670,8 +724,14 @@ export const count: NumericAggregateSignatures = function (table, where, options
  * aggregated, or `all`
  * @param options Options object. Useful keys may be: `columns`, `alias`.
  */
-export const sum: NumericAggregateSignatures = function (table, where, options?) {
-  return select(table, where, options, SelectResultMode.Numeric, 'sum');
+export const sum: NumericAggregateSignatures<SQLStructure, SQLStructure> = genericSum;
+
+export const genericAvg = function (
+  table: GenericSQLStructure['Table'],
+  where: GenericSQLStructure['Whereable'] | SQLFragment | AllType,
+  options?: SelectOptionsForTable<any, GenericSQLStructure, ColumnsOption<GenericSQLStructure>, LateralOption<ColumnsOption<GenericSQLStructure>, ExtrasOption<GenericSQLStructure>>, ExtrasOption<GenericSQLStructure>>
+) {
+  return genericSelect(table, where, options, SelectResultMode.Numeric, 'avg');
 };
 
 /**
@@ -683,8 +743,14 @@ export const sum: NumericAggregateSignatures = function (table, where, options?)
  * aggregated, or `all`
  * @param options Options object. Useful keys may be: `columns`, `alias`.
  */
-export const avg: NumericAggregateSignatures = function (table, where, options?) {
-  return select(table, where, options, SelectResultMode.Numeric, 'avg');
+export const avg: NumericAggregateSignatures<SQLStructure, SQLStructure> = genericAvg;
+
+export const genericMin = function (
+  table: GenericSQLStructure['Table'],
+  where: GenericSQLStructure['Whereable'] | SQLFragment | AllType,
+  options?: SelectOptionsForTable<any, GenericSQLStructure, ColumnsOption<GenericSQLStructure>, LateralOption<ColumnsOption<GenericSQLStructure>, ExtrasOption<GenericSQLStructure>>, ExtrasOption<GenericSQLStructure>>
+) {
+  return genericSelect(table, where, options, SelectResultMode.Numeric, 'min');
 };
 
 /**
@@ -696,8 +762,14 @@ export const avg: NumericAggregateSignatures = function (table, where, options?)
  * aggregated, or `all`
  * @param options Options object. Useful keys may be: `columns`, `alias`.
  */
-export const min: NumericAggregateSignatures = function (table, where, options?) {
-  return select(table, where, options, SelectResultMode.Numeric, 'min');
+export const min: NumericAggregateSignatures<SQLStructure, SQLStructure> = genericMin;
+
+export const genericMax = function (
+  table: GenericSQLStructure['Table'],
+  where: GenericSQLStructure['Whereable'] | SQLFragment | AllType,
+  options?: SelectOptionsForTable<any, GenericSQLStructure, ColumnsOption<GenericSQLStructure>, LateralOption<ColumnsOption<GenericSQLStructure>, ExtrasOption<GenericSQLStructure>>, ExtrasOption<GenericSQLStructure>>
+) {
+  return genericSelect(table, where, options, SelectResultMode.Numeric, 'max');
 };
 
 /**
@@ -709,6 +781,167 @@ export const min: NumericAggregateSignatures = function (table, where, options?)
  * aggregated, or `all`
  * @param options Options object. Useful keys may be: `columns`, `alias`.
  */
-export const max: NumericAggregateSignatures = function (table, where, options?) {
-  return select(table, where, options, SelectResultMode.Numeric, 'max');
+export const max: NumericAggregateSignatures<SQLStructure, SQLStructure> = genericMax;
+
+
+/* === table, tables === */
+
+/*
+ * To allow partial type argument inference, split shortcuts into 2 chained
+ * functions. The first part (table) uses overridable type arguments and
+ * the second one (insert, select, ...) uses type arguments for inference.
+ * https://github.com/microsoft/TypeScript/issues/26242
+ */
+
+interface TableNumericAggregateSignatures <
+  S extends GenericSQLStructure,
+  O extends GenericSQLStructure
+  > {
+  <
+    C extends ColumnsOption<S>,
+    L extends LateralOption<C, E>,
+    E extends ExtrasOption<S>,
+    >(
+    where: S['Whereable'] | SQLFragment | AllType,
+    options?: SelectOptionsForTable<S, O, C, L, E>,
+  ): SQLFragment<number>;
+}
+
+interface TableReturn <
+  S extends GenericSQLStructure,
+  O extends GenericSQLStructure
+> {
+  insert<C extends ColumnsOption<S>, E extends ExtrasOption<S>>(
+    values: S['Insertable'],
+    options?: ReturningOptionsForTable<S, C, E>
+  ): SQLFragment<ReturningTypeForTable<S, C, E>>;
+
+  insert<C extends ColumnsOption<S>, E extends ExtrasOption<S>>(
+    values: S['Insertable'][],
+    options?: ReturningOptionsForTable<S, C, E>
+  ): SQLFragment<ReturningTypeForTable<S, C, E>[]>;
+
+  upsert<
+    C extends ColumnsOption<S>,
+    E extends ExtrasOption<S>,
+    UC extends UpdateColumns<S> | undefined,
+    RA extends UpsertReportAction | undefined
+    >(
+    values: S['Insertable'],
+    conflictTarget: UpsertConflictTargetForStructure<S>,
+    options?: UpsertOptions<S, C, E, UC, RA>
+  ): SQLFragment<UpsertReturnableForTable<S, C, E, RA> | (UC extends never[] ? undefined : never)>;
+
+  upsert<
+    C extends ColumnsOption<S>,
+    E extends ExtrasOption<S>,
+    UC extends UpdateColumns<S> | undefined,
+    RA extends UpsertReportAction | undefined
+    >(
+    values: S['Insertable'][],
+    conflictTarget: UpsertConflictTargetForStructure<S>,
+    options?: UpsertOptions<S, C, E, UC, RA>
+  ): SQLFragment<UpsertReturnableForTable<S, C, E, RA>[]>;
+
+  update<C extends ColumnsOption<S>, E extends ExtrasOption<S>>(
+    values: S['Updatable'],
+    where: S['Whereable'] | SQLFragment,
+    options?: ReturningOptionsForTable<S, C, E>
+  ): SQLFragment<ReturningTypeForTable<S, C, E>[]>;
+
+  deletes<C extends ColumnsOption<S>, E extends ExtrasOption<S>>(
+    where: S['Whereable'] | SQLFragment,
+    options?: ReturningOptionsForTable<S, C, E>
+  ): SQLFragment<ReturningTypeForTable<S, C, E>[]>;
+
+  truncate(): SQLFragment<undefined>;
+  truncate(optId: TruncateIdentityOpts): SQLFragment<undefined>;
+  truncate(optFK: TruncateForeignKeyOpts): SQLFragment<undefined>;
+  truncate(optId: TruncateIdentityOpts, optFK: TruncateForeignKeyOpts): SQLFragment<undefined>;
+
+  select<C extends ColumnsOption<S>,
+    L extends LateralOption<C, E>,
+    E extends ExtrasOption<S>,
+    M extends SelectResultMode = SelectResultMode.Many
+    >(
+    where: S['Whereable'] | SQLFragment | AllType,
+    options?: SelectOptionsForTable<S, O, C, L, E>,
+    mode?: M,
+    aggregate?: string,
+  ): SQLFragment<FullSelectReturnTypeForTable<S, C, L, E, M>>;
+
+  selectOne<
+    C extends ColumnsOption<S>,
+    L extends LateralOption<C, E>,
+    E extends ExtrasOption<S>,
+    >(
+    where: S['Whereable'] | SQLFragment | AllType,
+    options?: SelectOptionsForTable<S, O, C, L, E>,
+  ): SQLFragment<FullSelectReturnTypeForTable<S, C, L, E, SelectResultMode.One>>;
+
+  selectExactlyOne<
+    C extends ColumnsOption<S>,
+    L extends LateralOption<C, E>,
+    E extends ExtrasOption<S>,
+    >(
+    where: S['Whereable'] | SQLFragment | AllType,
+    options?: SelectOptionsForTable<S, O, C, L, E>,
+  ): SQLFragment<FullSelectReturnTypeForTable<S, C, L, E, SelectResultMode.ExactlyOne>>;
+
+  count: TableNumericAggregateSignatures<S, O>;
+  sum: TableNumericAggregateSignatures<S, O>;
+  avg: TableNumericAggregateSignatures<S, O>;
+  max: TableNumericAggregateSignatures<S, O>;
+  min: TableNumericAggregateSignatures<S, O>;
+}
+
+interface TableSignatures {
+  <
+    T extends SQLStructure['Table']
+    >(
+    tables: T
+  ): TableReturn<Extract<SQLStructure, { Table: T }>, SQLStructure>;
+
+  <
+    S extends GenericSQLStructure,
+    O extends GenericSQLStructure = SQLStructure
+    >(
+    tables: S['Table']
+  ): TableReturn<S, O>;
+}
+
+interface TablesReturn {
+  truncate(): SQLFragment<undefined>;
+  truncate(optId: TruncateIdentityOpts): SQLFragment<undefined>;
+  truncate(optFK: TruncateForeignKeyOpts): SQLFragment<undefined>;
+  truncate(optId: TruncateIdentityOpts, optFK: TruncateForeignKeyOpts): SQLFragment<undefined>;
+}
+
+interface TablesSignatures {
+  <S extends GenericSQLStructure = SQLStructure>(tables: readonly S['Table'][]): TablesReturn;
+}
+
+/**
+ * Creates a query generator for the specified table. Allows manual override of
+ * type arguments.
+ * @param table The table to query
+ */
+export const table: TableSignatures & TablesSignatures = (
+  table: GenericSQLStructure['Table'] | readonly GenericSQLStructure['Table'][]
+): TableReturn<GenericSQLStructure, GenericSQLStructure> & TablesReturn => {
+  return {
+    insert: genericInsert.bind(undefined, table as GenericSQLStructure['Table']),
+    upsert: genericUpsert.bind(undefined, table as GenericSQLStructure['Table']),
+    update: genericUpdate.bind(undefined, table as GenericSQLStructure['Table']),
+    deletes: genericDeletes.bind(undefined, table as GenericSQLStructure['Table']),
+    truncate: genericTruncate.bind(undefined, table),
+    select: genericSelect.bind(undefined, table as GenericSQLStructure['Table']),
+    selectOne: genericSelectOne.bind(undefined, table as GenericSQLStructure['Table']),
+    selectExactlyOne: genericSelectExactlyOne.bind(undefined, table as GenericSQLStructure['Table']),
+    count: genericCount.bind(undefined, table as GenericSQLStructure['Table']),
+    sum: genericSum.bind(undefined, table as GenericSQLStructure['Table']),
+    avg: genericAvg.bind(undefined, table as GenericSQLStructure['Table']),
+    min: genericMin.bind(undefined, table as GenericSQLStructure['Table']),
+    max: genericMax.bind(undefined, table as GenericSQLStructure['Table'])
+  };
 };

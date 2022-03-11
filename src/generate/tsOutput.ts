@@ -24,10 +24,8 @@ const
 export interface schemaVersionCanary extends db.SchemaVersionCanary { version: ${canaryVersion} }
 `;
 
-const declareModule = (module: string, declarations: string) => `
-declare module '${module}' {
-${declarations.replace(/^(?=[ \t]*\S)/gm, '  ')}
-}
+const outputBody = (declarations: string) => `
+${declarations.replace(/^(?=[ \t]*\S)/gm, '')}
 `;
 
 const customTypeHeader = `/*
@@ -40,13 +38,17 @@ const sourceFilesForCustomTypes = (customTypes: CustomTypes) =>
   Object.fromEntries(Object.entries(customTypes)
     .map(([name, baseType]) => [
       name,
-      customTypeHeader + declareModule('zapatos/custom',
+      customTypeHeader + outputBody(
         (baseType === 'db.JSONValue' ? `import type * as db from 'zapatos/db';\n` : ``) +
         `export type ${name} = ${baseType};  // replace with your custom type or interface as desired`
       )
     ]));
 
-export const tsForConfig = async (config: CompleteConfig, debug: (s: string) => void) => {
+interface TsForConfigConfig extends CompleteConfig {
+  customFolderName: string;
+}
+
+export const tsForConfig = async (config: TsForConfigConfig, debug: (s: string) => void) => {
   let querySeq = 0;
   const
     { schemas, db } = config,
@@ -88,9 +90,12 @@ export const tsForConfig = async (config: CompleteConfig, debug: (s: string) => 
     schemaTables = schemaData.map(r => r.tables),
     allTables = ([] as Relation[]).concat(...schemaTables).sort((a, b) => a.name.localeCompare(b.name)),
     hasCustomTypes = Object.keys(customTypes).length > 0,
-    ts = header() + declareModule('zapatos/schema',
+    customTypesImports = Object.entries(customTypes).map(([name]) =>
+      `import type { ${name} } from './${config.customFolderName}/${name}';`
+    ).join('\n'),
+    ts = header() + outputBody(
       `\nimport type * as db from 'zapatos/db';\n` +
-      (hasCustomTypes ? `import type * as c from 'zapatos/custom';\n` : ``) +
+      (hasCustomTypes ? `${customTypesImports}\n` : ``) +
       versionCanary +
       schemaDefs.join('\n\n') +
       `\n\n/* === cross-table types === */\n` +

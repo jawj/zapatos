@@ -9,7 +9,6 @@ import * as path from 'path';
 import { finaliseConfig, Config } from './config';
 import * as legacy from './legacy';
 import { tsForConfig } from './tsOutput';
-import { header } from './header';
 
 
 /**
@@ -26,24 +25,18 @@ export const generate = async (suppliedConfig: Config) => {
     debug = config.debugListener === true ? console.log :
       config.debugListener || (() => void 0),
 
-    { ts, customTypeSourceFiles } = await tsForConfig(config, debug),
-
     folderName = 'zapatos',
     schemaName = 'schema' + config.outExt,
     customFolderName = 'custom',
     eslintrcName = '.eslintrc.json',
     eslintrcContent = '{\n  "ignorePatterns": [\n    "*"\n  ]\n}',
-    customTypesIndexName = 'index' + config.outExt,
-    customTypesIndexContent = header() + `
-// this empty declaration appears to fix relative imports in other custom type files
-declare module 'zapatos/custom' { }
-`,
+
+    { ts, customTypeSourceFiles } = await tsForConfig({ ...config, customFolderName }, debug),
 
     folderTargetPath = path.join(config.outDir, folderName),
     schemaTargetPath = path.join(folderTargetPath, schemaName),
     customFolderTargetPath = path.join(folderTargetPath, customFolderName),
-    eslintrcTargetPath = path.join(folderTargetPath, eslintrcName),
-    customTypesIndexTargetPath = path.join(customFolderTargetPath, customTypesIndexName);
+    eslintrcTargetPath = path.join(folderTargetPath, eslintrcName);
 
   log(`(Re)creating schema folder: ${schemaTargetPath}`);
   fs.mkdirSync(folderTargetPath, { recursive: true });
@@ -68,9 +61,6 @@ declare module 'zapatos/custom' { }
         fs.writeFileSync(customTypeFilePath, customTypeFileContent, { flag: 'w' });
       }
     }
-
-    log(`Writing custom types file: ${customTypesIndexTargetPath}`);
-    fs.writeFileSync(customTypesIndexTargetPath, customTypesIndexContent, { flag: 'w' });
   }
 
   legacy.srcWarning(config);
