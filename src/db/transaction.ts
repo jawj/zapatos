@@ -95,7 +95,7 @@ export async function transaction<T, M extends IsolationLevel>(
 
         return result;
 
-      } catch (err) {
+      } catch (err: any) {
         await sql`ROLLBACK`.run(txnClient);
 
         // on trapping the following two rollback error codes, see:
