@@ -189,12 +189,12 @@ export function vals<T>(x: T) { return new ColumnValues<T>(x); }
  * Compiles to the name of the column it wraps in the table of the parent query.
  * @param value The column name
  */
-export class ParentColumn<T extends Column = Column> { constructor(public value: T) { } }
+export class ParentColumn<T extends Column = Column> { constructor(public value?: T) { } }
 /**
  * Returns a `ParentColumn` instance, wrapping a column name, which compiles to
  * that column name of the table of the parent query.
  */
-export function parent<T extends Column = Column>(x: T) { return new ParentColumn<T>(x); }
+export function parent<T extends Column = Column>(x?: T) { return new ParentColumn<T>(x); }
 
 
 export type GenericSQLExpression = SQLFragment<any, any> | Parameter | DefaultType | DangerousRawString | SelfType;
@@ -354,9 +354,9 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
       result.text += `"${currentColumn}"`;
 
     } else if (expression instanceof ParentColumn) {
-      // alias to the parent table (plus supplied column name) of a nested query, if applicable
+      // alias to the parent table (plus optional supplied column name) of a nested query, if applicable
       if (!parentTable) throw new Error(`The 'parent' table alias has no meaning here`);
-      result.text += `"${parentTable}"."${expression.value}"`;
+      result.text += `"${parentTable}"."${expression.value ?? currentColumn}"`;
 
     } else if (expression instanceof ColumnNames) {
       // a ColumnNames-wrapped object -> quoted names in a repeatable order
