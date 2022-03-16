@@ -9,6 +9,7 @@
     "target": "ES2019",
     "module": "CommonJS",
     "strict": true,
+    "exactOptionalPropertyTypes": true,
     "declaration": true,
     "noUnusedLocals": true,
     "paths": {
