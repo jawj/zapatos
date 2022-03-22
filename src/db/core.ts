@@ -68,7 +68,7 @@ export type DateRangeString = RangeString<string>;
 export type NumberRangeString = RangeString<number | ''>;
 
 /**
- * `bytea` value representated as a hex string. Note: for large objects, use
+ * `bytea` value represented as a hex string. Note: for large objects, use
  * something like https://www.npmjs.com/package/pg-large-object instead.
  */
 export type ByteArrayString = `\\x${string}`;
