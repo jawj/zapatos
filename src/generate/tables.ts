@@ -114,7 +114,7 @@ export const definitionForRelationInSchema = async (
       updatableType = tsTypeForPgType(udtName, enums, 'Updatable');
 
     const
-      columnDoc = config.schemaJSDoc ? createColumnDoc(schemaName, rel, row) : '',
+      columnDoc = createColumnDoc(config, schemaName, rel, row),
       columnOptions =
         (config.columnOptions[rel.name] && config.columnOptions[rel.name][column]) ??
         (config.columnOptions["*"] && config.columnOptions["*"][column]),
@@ -169,6 +169,7 @@ export const definitionForRelationInSchema = async (
     uniqueIndexes = result.rows;
 
   const
+    schemaPrefix = schemaName === config.unqualifiedSchema ? '' : `${schemaName}.`,
     friendlyRelTypes: Record<Relation['type'], string> = {
       table: 'Table',
       fdw: 'Foreign table',
@@ -178,7 +179,7 @@ export const definitionForRelationInSchema = async (
     friendlyRelType = friendlyRelTypes[rel.type],
     tableComment = config.schemaJSDoc ? `
 /**
- * **${rel.name}**
+ * **${schemaPrefix}${rel.name}**
  * - ${friendlyRelType} in database
  */` : ``,
     tableDef = `${tableComment}
@@ -249,23 +250,25 @@ export type ${thingable}ForTable<T extends Table> = ${relations.length === 0 ? '
 `).join('')}`;
 
 
-const createColumnDoc = (schemaName: string, rel: Relation, columnDetails: Record<string, unknown>) => {
-  const {
-    column,
-    isGenerated,
-    isNullable,
-    hasDefault,
-    defaultValue,
-    udtName,
-    domainName,
-    description,
-  } = columnDetails;
+const createColumnDoc = (config: CompleteConfig, schemaName: string, rel: Relation, columnDetails: Record<string, unknown>) => {
+  if (!config.schemaJSDoc) return '';
 
-  const doc = `/**
-    * **${rel.name}.${column}**${description ? '\n    *\n    * ' + description : ''}
+  const
+    schemaPrefix = schemaName === config.unqualifiedSchema ? '' : `${schemaName}.`,
+    { column,
+      isGenerated,
+      isNullable,
+      hasDefault,
+      defaultValue,
+      udtName,
+      domainName,
+      description,
+    } = columnDetails,
+    doc = `/**
+    * **${schemaPrefix}${rel.name}.${column}**${description ? '\n    *\n    * ' + description : ''}
     * - ${domainName ? `\`${domainName}\` (base type: \`${udtName ?? '(none)'}\`)` : `\`${udtName ?? '(none)'}\``} in database
     * - ${rel.type === 'mview' ? 'Materialized view column' : isGenerated ? 'Generated column' :
-      `${isNullable ? 'Nullable' : '`NOT NULL`'}, ${hasDefault && defaultValue === null ? `identity column` : hasDefault ? `default: \`${defaultValue}\`` : `no default`}`}
+        `${isNullable ? 'Nullable' : '`NOT NULL`'}, ${hasDefault && defaultValue === null ? `identity column` : hasDefault ? `default: \`${defaultValue}\`` : `no default`}`}
     */
     `;
   return doc;

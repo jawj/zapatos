@@ -46,6 +46,11 @@ const sourceFilesForCustomTypes = (customTypes: CustomTypes) =>
       )
     ]));
 
+function indentAll(s: string, level: number, char = ' ') {
+  if (level === 0) return s;
+  return s.replace(/^/gm, char.repeat(level));
+}
+
 export const tsForConfig = async (config: CompleteConfig, debug: (s: string) => void) => {
   let querySeq = 0;
   const
@@ -75,11 +80,16 @@ export const tsForConfig = async (config: CompleteConfig, debug: (s: string) => 
           enums = await enumDataForSchema(schema, queryFn),
           tableDefs = await Promise.all(tables.map(async table =>
             definitionForRelationInSchema(table, schema, enums, customTypes, config, queryFn))),
+          schemaIsUnqualified = schema === config.unqualifiedSchema,
           schemaDef = `\n/* === schema: ${schema} === */\n` +
-            `\n/* --- enums --- */\n` +
-            enumTypesForEnumData(enums) +
-            `\n\n/* --- tables --- */\n` +
-            tableDefs.sort().join('\n');
+            (schemaIsUnqualified ? '' : `export namespace ${schema} {\n`) +
+            indentAll(
+              `\n/* --- enums --- */\n` +
+              enumTypesForEnumData(enums) +
+              `\n\n/* --- tables --- */\n` +
+              tableDefs.sort().join('\n')
+              , schemaIsUnqualified ? 0 : 2) +
+            (schemaIsUnqualified ? '' : `}\n`);
 
         return { schemaDef, tables };
       }))
