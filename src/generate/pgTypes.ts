@@ -11,6 +11,9 @@ type TypeContext = 'JSONSelectable' | 'Selectable' | 'Insertable' | 'Updatable' 
 const baseTsTypeForBasePgType = (pgType: string, enums: EnumData, context: TypeContext) => {
   const hasOwnProp = Object.prototype.hasOwnProperty;
   switch (pgType) {
+    case 'money':
+      return context === 'JSONSelectable' || context === 'Selectable' ? 'string' :
+        '(number | string)';
     case 'int8':
       return context === 'JSONSelectable' ? 'number' :
         context === 'Selectable' ? 'db.Int8String' :
@@ -58,7 +61,6 @@ const baseTsTypeForBasePgType = (pgType: string, enums: EnumData, context: TypeC
     case 'float4':
     case 'float8':
     case 'numeric':
-    case 'money':
     case 'oid':
       return 'number';
     case 'bool':
