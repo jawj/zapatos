@@ -12,6 +12,7 @@ import { CompleteConfig } from './config';
 
 
 export interface Relation {
+  schema: string;
   name: string;
   type: 'table' | 'view' | 'fdw' | 'mview';
   insertable: boolean;
@@ -20,8 +21,8 @@ export interface Relation {
 export const relationsInSchema = async (schemaName: string, queryFn: (q: pg.QueryConfig) => Promise<pg.QueryResult<any>>): Promise<Relation[]> => {
   const { rows } = await queryFn({
     text: `
-      SELECT
-        table_name AS name
+      SELECT $1 as schema
+      , table_name AS name
       , lower(table_name) AS lname  -- using a case-insensitive sort, but you can't order by a function in a UNION query
       , CASE table_type WHEN 'VIEW' THEN 'view' WHEN 'FOREIGN' THEN 'fdw' ELSE 'table' END AS type
       , CASE WHEN is_insertable_into = 'YES' THEN true ELSE false END AS insertable
@@ -30,8 +31,8 @@ export const relationsInSchema = async (schemaName: string, queryFn: (q: pg.Quer
 
       UNION ALL
 
-      SELECT
-        matviewname AS name
+      SELECT $1 as schema
+      , matviewname AS name
       , lower(matviewname) AS lname
       , 'mview'::text AS type
       , false AS insertable
@@ -184,7 +185,7 @@ export const definitionForRelationInSchema = async (
  */` : ``,
     tableDef = `${tableComment}
 export namespace ${rel.name} {
-  export type Table = '${rel.name}';
+  export type Table = '${schemaPrefix}${rel.name}';
   export interface Selectable {
     ${selectables.join('\n    ')}
   }
@@ -223,32 +224,37 @@ const transformCustomType = (customType: string, config: CompleteConfig) => {
         ctt(customType);
 };
 
-const mappedUnion = (arr: Relation[], fn: (name: string) => string) =>
-  arr.length === 0 ? 'any' : arr.map(rel => fn(rel.name)).join(' | ');
+const
+  mappedUnion = (arr: Relation[], unqualifiedSchema: string | null | undefined, suffix: string) =>
+    arr.length === 0 ? 'any' : arr.map(rel =>
+      `${unqualifiedSchema !== undefined && rel.schema !== unqualifiedSchema ? `${rel.schema}.` : ''}${rel.name}.${suffix}`
+    ).join(' | '),
+  mappedArray = (arr: Relation[], unqualifiedSchema: string | null | undefined, suffix: string) =>
+    '[' + arr.map(rel =>
+      `${unqualifiedSchema !== undefined && rel.schema !== unqualifiedSchema ? `${rel.schema}.` : ''}${rel.name}.${suffix}`
+    ).join(', ') + ']';
 
-export const crossTableTypesForTables = (relations: Relation[]) => `${relations.length === 0 ?
+export const crossTableTypesForTables = (relations: Relation[], unqualifiedSchema?: string | null) => `${relations.length === 0 ?
   '\n// `never` rather than `any` types would be more accurate in this no-tables case, but they stop `shortcuts.ts` compiling\n' : ''
   }
-export type Table = ${mappedUnion(relations, name => `${name}.Table`)};
-export type Selectable = ${mappedUnion(relations, name => `${name}.Selectable`)};
-export type JSONSelectable = ${mappedUnion(relations, name => `${name}.JSONSelectable`)};
-export type Whereable = ${mappedUnion(relations, name => `${name}.Whereable`)};
-export type Insertable = ${mappedUnion(relations, name => `${name}.Insertable`)};
-export type Updatable = ${mappedUnion(relations, name => `${name}.Updatable`)};
-export type UniqueIndex = ${mappedUnion(relations, name => `${name}.UniqueIndex`)};
-export type Column = ${mappedUnion(relations, name => `${name}.Column`)};
-export type AllBaseTables = [${relations.filter(rel => rel.type === 'table').map(rel => `${rel.name}.Table`).join(', ')}];
-export type AllForeignTables = [${relations.filter(rel => rel.type === 'fdw').map(rel => `${rel.name}.Table`).join(', ')}];
-export type AllViews = [${relations.filter(rel => rel.type === 'view').map(rel => `${rel.name}.Table`).join(', ')}];
-export type AllMaterializedViews = [${relations.filter(rel => rel.type === 'mview').map(rel => `${rel.name}.Table`).join(', ')}];
-export type AllTablesAndViews = [${relations.map(rel => `${rel.name}.Table`).join(', ')}];
-
-${['Selectable', 'JSONSelectable', 'Whereable', 'Insertable', 'Updatable', 'UniqueIndex', 'Column', 'SQL'].map(thingable => `
+export type Table = ${mappedUnion(relations, unqualifiedSchema, 'Table')};
+export type Selectable = ${mappedUnion(relations, unqualifiedSchema, 'Selectable')};
+export type JSONSelectable = ${mappedUnion(relations, unqualifiedSchema, 'JSONSelectable')};
+export type Whereable = ${mappedUnion(relations, unqualifiedSchema, 'Whereable')};
+export type Insertable = ${mappedUnion(relations, unqualifiedSchema, 'Insertable')};
+export type Updatable = ${mappedUnion(relations, unqualifiedSchema, 'Updatable')};
+export type UniqueIndex = ${mappedUnion(relations, unqualifiedSchema, 'UniqueIndex')};
+export type Column = ${mappedUnion(relations, unqualifiedSchema, 'Column')};
+export type AllBaseTables = ${mappedArray(relations.filter(rel => rel.type === 'table'), unqualifiedSchema, 'Table')};
+export type AllForeignTables = ${mappedArray(relations.filter(rel => rel.type === 'fdw'), unqualifiedSchema, 'Table')};
+export type AllViews = ${mappedArray(relations.filter(rel => rel.type === 'view'), unqualifiedSchema, 'Table')};
+export type AllMaterializedViews = ${mappedArray(relations.filter(rel => rel.type === 'mview'), unqualifiedSchema, 'Table')};
+export type AllTablesAndViews = ${mappedArray(relations, unqualifiedSchema, 'Table')};
+${unqualifiedSchema === undefined ? '' : '\n' + ['Selectable', 'JSONSelectable', 'Whereable', 'Insertable', 'Updatable', 'UniqueIndex', 'Column', 'SQL'].map(thingable => `
 export type ${thingable}ForTable<T extends Table> = ${relations.length === 0 ? 'any' : `{${relations.map(rel => `
-  ${rel.name}: ${rel.name}.${thingable};`).join('')}
+  "${rel.schema === unqualifiedSchema ? '' : `${rel.schema}.`}${rel.name}": ${rel.schema === unqualifiedSchema ? '' : `${rel.schema}.`}${rel.name}.${thingable};`).join('')}
 }[T]`};
 `).join('')}`;
-
 
 const createColumnDoc = (config: CompleteConfig, schemaName: string, rel: Relation, columnDetails: Record<string, unknown>) => {
   if (!config.schemaJSDoc) return '';

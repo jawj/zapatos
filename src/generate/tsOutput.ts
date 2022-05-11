@@ -46,9 +46,9 @@ const sourceFilesForCustomTypes = (customTypes: CustomTypes) =>
       )
     ]));
 
-function indentAll(s: string, level: number, char = ' ') {
+function indentAll(level: number, s: string) {
   if (level === 0) return s;
-  return s.replace(/^/gm, char.repeat(level));
+  return s.replace(/^/gm, ' '.repeat(level));
 }
 
 export const tsForConfig = async (config: CompleteConfig, debug: (s: string) => void) => {
@@ -81,14 +81,19 @@ export const tsForConfig = async (config: CompleteConfig, debug: (s: string) => 
           tableDefs = await Promise.all(tables.map(async table =>
             definitionForRelationInSchema(table, schema, enums, customTypes, config, queryFn))),
           schemaIsUnqualified = schema === config.unqualifiedSchema,
+          none = '/* (none) */',
           schemaDef = `\n/* === schema: ${schema} === */\n` +
             (schemaIsUnqualified ? '' : `export namespace ${schema} {\n`) +
-            indentAll(
+            indentAll(schemaIsUnqualified ? 0 : 2,
               `\n/* --- enums --- */\n` +
-              enumTypesForEnumData(enums) +
+              (enumTypesForEnumData(enums) || none) +
               `\n\n/* --- tables --- */\n` +
-              tableDefs.sort().join('\n')
-              , schemaIsUnqualified ? 0 : 2) +
+              (tableDefs.sort().join('\n') || none) +
+              `\n\n/* --- lists and helpers --- */\n` +
+              (schemaIsUnqualified ?
+                '/* (included in global lists and helpers) */' :
+                (crossTableTypesForTables(tables) || none))
+            ) + '\n' +
             (schemaIsUnqualified ? '' : `}\n`);
 
         return { schemaDef, tables };
@@ -96,15 +101,17 @@ export const tsForConfig = async (config: CompleteConfig, debug: (s: string) => 
     ),
     schemaDefs = schemaData.map(r => r.schemaDef).sort(),
     schemaTables = schemaData.map(r => r.tables),
-    allTables = ([] as Relation[]).concat(...schemaTables).sort((a, b) => a.name.localeCompare(b.name)),
+    allTables = ([] as Relation[]).concat(...schemaTables).sort((a, b) =>
+      a.schema.localeCompare(b.schema) || a.name.localeCompare(b.name)
+    ),
     hasCustomTypes = Object.keys(customTypes).length > 0,
     ts = header() + declareModule('zapatos/schema',
       `\nimport type * as db from 'zapatos/db';\n` +
       (hasCustomTypes ? `import type * as c from 'zapatos/custom';\n` : ``) +
       versionCanary +
       schemaDefs.join('\n\n') +
-      `\n\n/* === cross-table types === */\n` +
-      crossTableTypesForTables(allTables)
+      `\n\n/* === global lists and helpers === */\n` +
+      crossTableTypesForTables(allTables, config.unqualifiedSchema)
     ),
     customTypeSourceFiles = sourceFilesForCustomTypes(customTypes);
 
