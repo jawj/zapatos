@@ -311,7 +311,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
     } else if (typeof expression === 'string') {
       // if it's a string, it should be a x.Table or x.Column type, so just needs quoting
       result.text += expression.startsWith('"') && expression.endsWith('"') ? expression :
-        `"${expression.replace(/./g, '"."')}"`;
+        `"${expression.replace(/[.]/g, '"."')}"`;
 
     } else if (expression instanceof DangerousRawString) {
       // Little Bobby Tables passes straight through ...
