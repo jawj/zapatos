@@ -225,36 +225,61 @@ const transformCustomType = (customType: string, config: CompleteConfig) => {
 };
 
 const
-  mappedUnion = (arr: Relation[], unqualifiedSchema: string | null | undefined, suffix: string) =>
-    arr.length === 0 ? 'any' : arr.map(rel =>
-      `${unqualifiedSchema !== undefined && rel.schema !== unqualifiedSchema ? `${rel.schema}.` : ''}${rel.name}.${suffix}`
-    ).join(' | '),
-  mappedArray = (arr: Relation[], unqualifiedSchema: string | null | undefined, suffix: string) =>
-    '[' + arr.map(rel =>
-      `${unqualifiedSchema !== undefined && rel.schema !== unqualifiedSchema ? `${rel.schema}.` : ''}${rel.name}.${suffix}`
-    ).join(', ') + ']';
+  tableMappedUnion = (arr: Relation[], suffix: string) =>
+    arr.length === 0 ? 'any' : arr.map(rel => `${rel.name}.${suffix}`).join(' | '),
+  tableMappedArray = (arr: Relation[], suffix: string) =>
+    '[' + arr.map(rel => `${rel.name}.${suffix}`).join(', ') + ']';
 
-export const crossTableTypesForTables = (relations: Relation[], unqualifiedSchema?: string | null) => `${relations.length === 0 ?
+export const crossTableTypesForTables = (tables: Relation[]) => `${tables.length === 0 ?
   '\n// `never` rather than `any` types would be more accurate in this no-tables case, but they stop `shortcuts.ts` compiling\n' : ''
   }
-export type Table = ${mappedUnion(relations, unqualifiedSchema, 'Table')};
-export type Selectable = ${mappedUnion(relations, unqualifiedSchema, 'Selectable')};
-export type JSONSelectable = ${mappedUnion(relations, unqualifiedSchema, 'JSONSelectable')};
-export type Whereable = ${mappedUnion(relations, unqualifiedSchema, 'Whereable')};
-export type Insertable = ${mappedUnion(relations, unqualifiedSchema, 'Insertable')};
-export type Updatable = ${mappedUnion(relations, unqualifiedSchema, 'Updatable')};
-export type UniqueIndex = ${mappedUnion(relations, unqualifiedSchema, 'UniqueIndex')};
-export type Column = ${mappedUnion(relations, unqualifiedSchema, 'Column')};
-export type AllBaseTables = ${mappedArray(relations.filter(rel => rel.type === 'table'), unqualifiedSchema, 'Table')};
-export type AllForeignTables = ${mappedArray(relations.filter(rel => rel.type === 'fdw'), unqualifiedSchema, 'Table')};
-export type AllViews = ${mappedArray(relations.filter(rel => rel.type === 'view'), unqualifiedSchema, 'Table')};
-export type AllMaterializedViews = ${mappedArray(relations.filter(rel => rel.type === 'mview'), unqualifiedSchema, 'Table')};
-export type AllTablesAndViews = ${mappedArray(relations, unqualifiedSchema, 'Table')};
-${unqualifiedSchema === undefined ? '' : '\n' + ['Selectable', 'JSONSelectable', 'Whereable', 'Insertable', 'Updatable', 'UniqueIndex', 'Column', 'SQL'].map(thingable => `
-export type ${thingable}ForTable<T extends Table> = ${relations.length === 0 ? 'any' : `{${relations.map(rel => `
+export type Table = ${tableMappedUnion(tables, 'Table')};
+export type Selectable = ${tableMappedUnion(tables, 'Selectable')};
+export type JSONSelectable = ${tableMappedUnion(tables, 'JSONSelectable')};
+export type Whereable = ${tableMappedUnion(tables, 'Whereable')};
+export type Insertable = ${tableMappedUnion(tables, 'Insertable')};
+export type Updatable = ${tableMappedUnion(tables, 'Updatable')};
+export type UniqueIndex = ${tableMappedUnion(tables, 'UniqueIndex')};
+export type Column = ${tableMappedUnion(tables, 'Column')};
+
+export type AllBaseTables = ${tableMappedArray(tables.filter(rel => rel.type === 'table'), 'Table')};
+export type AllForeignTables = ${tableMappedArray(tables.filter(rel => rel.type === 'fdw'), 'Table')};
+export type AllViews = ${tableMappedArray(tables.filter(rel => rel.type === 'view'), 'Table')};
+export type AllMaterializedViews = ${tableMappedArray(tables.filter(rel => rel.type === 'mview'), 'Table')};
+export type AllTablesAndViews = ${tableMappedArray(tables, 'Table')};`;
+
+export const crossSchemaTypesForAllTables = (allTables: Relation[], unqualifiedSchema: string | null) =>
+  ['Selectable', 'JSONSelectable', 'Whereable', 'Insertable', 'Updatable', 'UniqueIndex', 'Column', 'SQL'].map(thingable => `
+export type ${thingable}ForTable<T extends Table> = ${allTables.length === 0 ? 'any' : `{${allTables.map(rel => `
   "${rel.schema === unqualifiedSchema ? '' : `${rel.schema}.`}${rel.name}": ${rel.schema === unqualifiedSchema ? '' : `${rel.schema}.`}${rel.name}.${thingable};`).join('')}
 }[T]`};
-`).join('')}`;
+`).join('');
+
+const
+  schemaMappedUnion = (arr: string[], unqualifiedSchema: string | null, suffix: string) =>
+    arr.length === 0 ? 'any' : arr.map(s => `${s === unqualifiedSchema ? '' : `${s}.`}${suffix}`).join(' | '),
+  schemaMappedArray = (arr: string[], unqualifiedSchema: string | null, suffix: string) =>
+    '[' + arr.map(s => `...${s === unqualifiedSchema ? '' : `${s}.`}${suffix}`).join(', ') + ']';
+
+export const crossSchemaTypesForSchemas = (schemas: string[], unqualifiedSchema: string | null) => `
+export type Schema = ${schemas.map(s => `'${s}'`).join(' | ')};
+export type AllSchemas = [${schemas.map(s => `'${s}'`).join(', ')}];
+
+export type AllSchemasTable = ${schemaMappedUnion(schemas, unqualifiedSchema, 'Table')};
+export type AllSchemasSelectable = ${schemaMappedUnion(schemas, unqualifiedSchema, 'Selectable')};
+export type AllSchemasJSONSelectable = ${schemaMappedUnion(schemas, unqualifiedSchema, 'JSONSelectable')};
+export type AllSchemasWhereable = ${schemaMappedUnion(schemas, unqualifiedSchema, 'Whereable')};
+export type AllSchemasInsertable = ${schemaMappedUnion(schemas, unqualifiedSchema, 'Insertable')};
+export type AllSchemasUpdatable = ${schemaMappedUnion(schemas, unqualifiedSchema, 'Updatable')};
+export type AllSchemasUniqueIndex = ${schemaMappedUnion(schemas, unqualifiedSchema, 'UniqueIndex')};
+export type AllSchemasColumn = ${schemaMappedUnion(schemas, unqualifiedSchema, 'Column')};
+
+export type AllSchemasAllBaseTables = ${schemaMappedArray(schemas, unqualifiedSchema, 'AllBaseTables')};
+export type AllSchemasAllForeignTables = ${schemaMappedArray(schemas, unqualifiedSchema, 'AllForeignTables')};
+export type AllSchemasAllViews = ${schemaMappedArray(schemas, unqualifiedSchema, 'AllViews')};
+export type AllSchemasAllMaterializedViews = ${schemaMappedArray(schemas, unqualifiedSchema, 'AllMaterializedViews')};
+export type AllSchemasAllTablesAndViews = ${schemaMappedArray(schemas, unqualifiedSchema, 'AllTablesAndViews')};
+`;
 
 const createColumnDoc = (config: CompleteConfig, schemaName: string, rel: Relation, columnDetails: Record<string, unknown>) => {
   if (!config.schemaJSDoc) return '';
@@ -276,6 +301,6 @@ const createColumnDoc = (config: CompleteConfig, schemaName: string, rel: Relati
     * - ${rel.type === 'mview' ? 'Materialized view column' : isGenerated ? 'Generated column' :
         `${isNullable ? 'Nullable' : '`NOT NULL`'}, ${hasDefault && defaultValue === null ? `identity column` : hasDefault ? `default: \`${defaultValue}\`` : `no default`}`}
     */
-    `;
+  `;
   return doc;
 };
