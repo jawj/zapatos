@@ -90,15 +90,17 @@ export const tsForConfig = async (config: CompleteConfig, debug: (s: string) => 
             definitionForRelationInSchema(table, schema, enums, customTypes, config, queryFn))),
           schemaIsUnqualified = schema === config.unqualifiedSchema,
           none = '/* (none) */',
-          schemaDef = `\n/* === schema: ${schema} === */\n` +
-            (schemaIsUnqualified ? '' : `export namespace ${schema} {\n`) +
+          schemaDef = `/* === schema: ${schema} === */\n` +
+            (schemaIsUnqualified ? '' : `\nexport namespace ${schema} {\n`) +
             indentAll(schemaIsUnqualified ? 0 : 2,
               `\n/* --- enums --- */\n` +
               (enumTypesForEnumData(enums) || none) +
               `\n\n/* --- tables --- */\n` +
               (tableDefs.join('\n') || none) +
-              `\n\n/* --- lists --- */\n` +
-              (crossTableTypesForTables(tables) || none)
+              `\n\n/* --- aggregate types --- */\n` +
+              (schemaIsUnqualified ?
+                `\nexport namespace ${schema} {` + (indentAll(2, crossTableTypesForTables(tables) || none)) + '\n}\n' :
+                (crossTableTypesForTables(tables) || none))
             ) + '\n' +
             (schemaIsUnqualified ? '' : `}\n`);
 
@@ -112,11 +114,11 @@ export const tsForConfig = async (config: CompleteConfig, debug: (s: string) => 
     ts = header() + declareModule('zapatos/schema',
       `\nimport type * as db from 'zapatos/db';\n` +
       (hasCustomTypes ? `import type * as c from 'zapatos/custom';\n` : ``) +
-      versionCanary +
+      versionCanary + '\n\n' +
       schemaDefs.join('\n\n') +
-      `\n\n/* === global lists === */\n` +
-      crossSchemaTypesForSchemas(schemaNames, config.unqualifiedSchema) +
-      `\n\n/* === global lookups === */\n` +
+      `\n\n/* === global aggregate types === */\n` +
+      crossSchemaTypesForSchemas(schemaNames) +
+      `\n\n/* === lookups === */\n` +
       crossSchemaTypesForAllTables(allTables, config.unqualifiedSchema)
     ),
     customTypeSourceFiles = sourceFilesForCustomTypes(customTypes);

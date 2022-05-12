@@ -256,29 +256,28 @@ export type ${thingable}ForTable<T extends Table> = ${allTables.length === 0 ? '
 `).join('');
 
 const
-  schemaMappedUnion = (arr: string[], unqualifiedSchema: string | null, suffix: string) =>
-    arr.length === 0 ? 'any' : arr.map(s => `${s === unqualifiedSchema ? '' : `${s}.`}${suffix}`).join(' | '),
-  schemaMappedArray = (arr: string[], unqualifiedSchema: string | null, suffix: string) =>
-    '[' + arr.map(s => `...${s === unqualifiedSchema ? '' : `${s}.`}${suffix}`).join(', ') + ']';
+  schemaMappedUnion = (arr: string[], suffix: string) =>
+    arr.length === 0 ? 'any' : arr.map(s => `${s}.${suffix}`).join(' | '),
+  schemaMappedArray = (arr: string[], suffix: string) =>
+    '[' + arr.map(s => `...${s}.${suffix}`).join(', ') + ']';
 
-export const crossSchemaTypesForSchemas = (schemas: string[], unqualifiedSchema: string | null) => `
+export const crossSchemaTypesForSchemas = (schemas: string[]) => `
 export type Schema = ${schemas.map(s => `'${s}'`).join(' | ')};
+export type Table = ${schemaMappedUnion(schemas, 'Table')};
+export type Selectable = ${schemaMappedUnion(schemas, 'Selectable')};
+export type JSONSelectable = ${schemaMappedUnion(schemas, 'JSONSelectable')};
+export type Whereable = ${schemaMappedUnion(schemas, 'Whereable')};
+export type Insertable = ${schemaMappedUnion(schemas, 'Insertable')};
+export type Updatable = ${schemaMappedUnion(schemas, 'Updatable')};
+export type UniqueIndex = ${schemaMappedUnion(schemas, 'UniqueIndex')};
+export type Column = ${schemaMappedUnion(schemas, 'Column')};
+
 export type AllSchemas = [${schemas.map(s => `'${s}'`).join(', ')}];
-
-export type AllSchemasTable = ${schemaMappedUnion(schemas, unqualifiedSchema, 'Table')};
-export type AllSchemasSelectable = ${schemaMappedUnion(schemas, unqualifiedSchema, 'Selectable')};
-export type AllSchemasJSONSelectable = ${schemaMappedUnion(schemas, unqualifiedSchema, 'JSONSelectable')};
-export type AllSchemasWhereable = ${schemaMappedUnion(schemas, unqualifiedSchema, 'Whereable')};
-export type AllSchemasInsertable = ${schemaMappedUnion(schemas, unqualifiedSchema, 'Insertable')};
-export type AllSchemasUpdatable = ${schemaMappedUnion(schemas, unqualifiedSchema, 'Updatable')};
-export type AllSchemasUniqueIndex = ${schemaMappedUnion(schemas, unqualifiedSchema, 'UniqueIndex')};
-export type AllSchemasColumn = ${schemaMappedUnion(schemas, unqualifiedSchema, 'Column')};
-
-export type AllSchemasAllBaseTables = ${schemaMappedArray(schemas, unqualifiedSchema, 'AllBaseTables')};
-export type AllSchemasAllForeignTables = ${schemaMappedArray(schemas, unqualifiedSchema, 'AllForeignTables')};
-export type AllSchemasAllViews = ${schemaMappedArray(schemas, unqualifiedSchema, 'AllViews')};
-export type AllSchemasAllMaterializedViews = ${schemaMappedArray(schemas, unqualifiedSchema, 'AllMaterializedViews')};
-export type AllSchemasAllTablesAndViews = ${schemaMappedArray(schemas, unqualifiedSchema, 'AllTablesAndViews')};
+export type AllBaseTables = ${schemaMappedArray(schemas, 'AllBaseTables')};
+export type AllForeignTables = ${schemaMappedArray(schemas, 'AllForeignTables')};
+export type AllViews = ${schemaMappedArray(schemas, 'AllViews')};
+export type AllMaterializedViews = ${schemaMappedArray(schemas, 'AllMaterializedViews')};
+export type AllTablesAndViews = ${schemaMappedArray(schemas, 'AllTablesAndViews')};
 `;
 
 const createColumnDoc = (config: CompleteConfig, schemaName: string, rel: Relation, columnDetails: Record<string, unknown>) => {
