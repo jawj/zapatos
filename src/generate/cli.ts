@@ -24,7 +24,7 @@ const recursivelyInterpolateEnvVars = (obj: any): any =>
     Array.isArray(obj) ?
       obj.map(item => recursivelyInterpolateEnvVars(item)) :
       // object? => recurse over its values (but don't touch the keys)
-      typeof obj === 'object' ?
+      obj !== null && typeof obj === 'object' ?
         Object.keys(obj).reduce<any>((memo, key) => {
           memo[key] = recursivelyInterpolateEnvVars(obj[key]);
           return memo;
