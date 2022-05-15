@@ -88,21 +88,21 @@ export const tsForConfig = async (config: CompleteConfig, debug: (s: string) => 
           enums = await enumDataForSchema(schema, queryFn),
           tableDefs = await Promise.all(tables.map(async table =>
             definitionForRelationInSchema(table, schema, enums, customTypes, config, queryFn))),
-          schemaIsUnqualified = schema === config.unqualifiedSchema,
+          schemaIsUnprefixed = schema === config.unprefixedSchema,
           none = '/* (none) */',
           schemaDef = `/* === schema: ${schema} === */\n` +
-            (schemaIsUnqualified ? '' : `\nexport namespace ${schema} {\n`) +
-            indentAll(schemaIsUnqualified ? 0 : 2,
+            (schemaIsUnprefixed ? '' : `\nexport namespace ${schema} {\n`) +
+            indentAll(schemaIsUnprefixed ? 0 : 2,
               `\n/* --- enums --- */\n` +
               (enumTypesForEnumData(enums) || none) +
               `\n\n/* --- tables --- */\n` +
               (tableDefs.join('\n') || none) +
               `\n\n/* --- aggregate types --- */\n` +
-              (schemaIsUnqualified ?
+              (schemaIsUnprefixed ?
                 `\nexport namespace ${schema} {` + (indentAll(2, crossTableTypesForTables(tables) || none)) + '\n}\n' :
                 (crossTableTypesForTables(tables) || none))
             ) + '\n' +
-            (schemaIsUnqualified ? '' : `}\n`);
+            (schemaIsUnprefixed ? '' : `}\n`);
 
         return { schemaDef, tables };
       }))
@@ -119,7 +119,7 @@ export const tsForConfig = async (config: CompleteConfig, debug: (s: string) => 
       `\n\n/* === global aggregate types === */\n` +
       crossSchemaTypesForSchemas(schemaNames) +
       `\n\n/* === lookups === */\n` +
-      crossSchemaTypesForAllTables(allTables, config.unqualifiedSchema)
+      crossSchemaTypesForAllTables(allTables, config.unprefixedSchema)
     ),
     customTypeSourceFiles = sourceFilesForCustomTypes(customTypes);
 

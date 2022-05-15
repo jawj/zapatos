@@ -170,7 +170,7 @@ export const definitionForRelationInSchema = async (
     uniqueIndexes = result.rows;
 
   const
-    schemaPrefix = schemaName === config.unqualifiedSchema ? '' : `${schemaName}.`,
+    schemaPrefix = schemaName === config.unprefixedSchema ? '' : `${schemaName}.`,
     friendlyRelTypes: Record<Relation['type'], string> = {
       table: 'Table',
       fdw: 'Foreign table',
@@ -248,10 +248,10 @@ export type AllViews = ${tableMappedArray(tables.filter(rel => rel.type === 'vie
 export type AllMaterializedViews = ${tableMappedArray(tables.filter(rel => rel.type === 'mview'), 'Table')};
 export type AllTablesAndViews = ${tableMappedArray(tables, 'Table')};`;
 
-export const crossSchemaTypesForAllTables = (allTables: Relation[], unqualifiedSchema: string | null) =>
+export const crossSchemaTypesForAllTables = (allTables: Relation[], unprefixedSchema: string | null) =>
   ['Selectable', 'JSONSelectable', 'Whereable', 'Insertable', 'Updatable', 'UniqueIndex', 'Column', 'SQL'].map(thingable => `
 export type ${thingable}ForTable<T extends Table> = ${allTables.length === 0 ? 'any' : `{${allTables.map(rel => `
-  "${rel.schema === unqualifiedSchema ? '' : `${rel.schema}.`}${rel.name}": ${rel.schema === unqualifiedSchema ? '' : `${rel.schema}.`}${rel.name}.${thingable};`).join('')}
+  "${rel.schema === unprefixedSchema ? '' : `${rel.schema}.`}${rel.name}": ${rel.schema === unprefixedSchema ? '' : `${rel.schema}.`}${rel.name}.${thingable};`).join('')}
 }[T]`};
 `).join('');
 
@@ -284,7 +284,7 @@ const createColumnDoc = (config: CompleteConfig, schemaName: string, rel: Relati
   if (!config.schemaJSDoc) return '';
 
   const
-    schemaPrefix = schemaName === config.unqualifiedSchema ? '' : `${schemaName}.`,
+    schemaPrefix = schemaName === config.unprefixedSchema ? '' : `${schemaName}.`,
     { column,
       isGenerated,
       isNullable,

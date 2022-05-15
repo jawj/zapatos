@@ -23,7 +23,7 @@ export interface OptionalConfig {
   customTypesTransform: 'PgMy_type' | 'my_type' | 'PgMyType' | ((s: string) => string);
   columnOptions: ColumnOptions;
   schemaJSDoc: boolean;
-  unqualifiedSchema: string | null;
+  unprefixedSchema: string | null;
 }
 
 interface SchemaRules {
@@ -55,7 +55,7 @@ const defaultConfig: OptionalConfig = {
   customTypesTransform: 'PgMy_type',
   columnOptions: {},
   schemaJSDoc: true,
-  unqualifiedSchema: 'public',
+  unprefixedSchema: 'public',
 };
 
 export const moduleRoot = () => {
