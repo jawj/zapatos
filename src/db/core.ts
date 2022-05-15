@@ -189,12 +189,12 @@ export function vals<T>(x: T) { return new ColumnValues<T>(x); }
  * Compiles to the name of the column it wraps in the table of the parent query.
  * @param value The column name
  */
-export class ParentColumn<T extends Column | undefined = Column> { constructor(public value?: T) { } }
+export class ParentColumn<T extends Column | undefined = Column | undefined> { constructor(public value?: T) { } }
 /**
  * Returns a `ParentColumn` instance, wrapping a column name, which compiles to
  * that column name of the table of the parent query.
  */
-export function parent<T extends Column | undefined = Column>(x?: T) { return new ParentColumn<T>(x); }
+export function parent<T extends Column | undefined = Column | undefined>(x?: T) { return new ParentColumn<T>(x); }
 
 
 export type GenericSQLExpression = SQLFragment<any, any> | Parameter | DefaultType | DangerousRawString | SelfType;
@@ -310,7 +310,8 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
 
     } else if (typeof expression === 'string') {
       // if it's a string, it should be a x.Table or x.Column type, so just needs quoting
-      result.text += expression.charAt(0) === '"' ? expression : `"${expression}"`;
+      result.text += expression.startsWith('"') && expression.endsWith('"') ? expression :
+        `"${expression.replace(/[.]/g, '"."')}"`;
 
     } else if (expression instanceof DangerousRawString) {
       // Little Bobby Tables passes straight through ...
@@ -351,19 +352,25 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
     } else if (expression === self) {
       // alias to the latest column, if applicable
       if (!currentColumn) throw new Error(`The 'self' column alias has no meaning here`);
-      result.text += `"${currentColumn}"`;
+      this.compileExpression(currentColumn, result);
 
     } else if (expression instanceof ParentColumn) {
       // alias to the parent table (plus optional supplied column name) of a nested query, if applicable
       if (!parentTable) throw new Error(`The 'parent' table alias has no meaning here`);
-      result.text += `"${parentTable}"."${expression.value ?? currentColumn}"`;
+      this.compileExpression(parentTable, result);
+      result.text += '.';
+      this.compileExpression(expression.value ?? currentColumn!, result);
 
     } else if (expression instanceof ColumnNames) {
       // a ColumnNames-wrapped object -> quoted names in a repeatable order
       // OR a ColumnNames-wrapped array -> quoted array values
       const columnNames = Array.isArray(expression.value) ? expression.value :
         Object.keys(expression.value).sort();
-      result.text += columnNames.map(k => `"${k}"`).join(', ');
+
+      for (let i = 0, len = columnNames.length; i < len; i++) {
+        if (i > 0) result.text += ', ';
+        this.compileExpression(String(columnNames[i]), result);
+      }
 
     } else if (expression instanceof ColumnValues) {
       // a ColumnValues-wrapped object OR array 
@@ -412,7 +419,8 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
             result.text += ')';
 
           } else {
-            result.text += `"${columnName}" = `;
+            this.compileExpression(columnName, result);
+            result.text += ` = `;
             this.compileExpression(columnValue instanceof ParentColumn ? columnValue : new Parameter(columnValue),
               result, parentTable, columnName);
           }

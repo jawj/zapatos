@@ -7,10 +7,17 @@ Released under the MIT licence: see LICENCE file
 import * as pg from 'pg';
 
 import { enumDataForSchema, enumTypesForEnumData } from './enums';
-import { Relation, relationsInSchema, definitionForRelationInSchema, crossTableTypesForTables } from './tables';
 import { header } from './header';
 import type { CompleteConfig } from './config';
 import type { SchemaVersionCanary } from "../db/canary";
+import {
+  Relation,
+  relationsInSchema,
+  definitionForRelationInSchema,
+  crossTableTypesForTables,
+  crossSchemaTypesForAllTables,
+  crossSchemaTypesForSchemas,
+} from './tables';
 
 
 export interface CustomTypes {
@@ -46,6 +53,11 @@ const sourceFilesForCustomTypes = (customTypes: CustomTypes) =>
       )
     ]));
 
+function indentAll(level: number, s: string) {
+  if (level === 0) return s;
+  return s.replace(/^/gm, ' '.repeat(level));
+}
+
 export const tsForConfig = async (config: CompleteConfig, debug: (s: string) => void) => {
   let querySeq = 0;
   const
@@ -64,8 +76,9 @@ export const tsForConfig = async (config: CompleteConfig, debug: (s: string) => 
       }
     },
     customTypes = {},
+    schemaNames = Object.keys(schemas),
     schemaData = (await Promise.all(
-      Object.keys(schemas).map(async schema => {
+      schemaNames.map(async schema => {
         const
           rules = schemas[schema],
           tables = rules.exclude === '*' ? [] :  // exclude takes precedence
@@ -75,26 +88,38 @@ export const tsForConfig = async (config: CompleteConfig, debug: (s: string) => 
           enums = await enumDataForSchema(schema, queryFn),
           tableDefs = await Promise.all(tables.map(async table =>
             definitionForRelationInSchema(table, schema, enums, customTypes, config, queryFn))),
-          schemaDef = `\n/* === schema: ${schema} === */\n` +
-            `\n/* --- enums --- */\n` +
-            enumTypesForEnumData(enums) +
-            `\n\n/* --- tables --- */\n` +
-            tableDefs.sort().join('\n');
+          schemaIsUnqualified = schema === config.unqualifiedSchema,
+          none = '/* (none) */',
+          schemaDef = `/* === schema: ${schema} === */\n` +
+            (schemaIsUnqualified ? '' : `\nexport namespace ${schema} {\n`) +
+            indentAll(schemaIsUnqualified ? 0 : 2,
+              `\n/* --- enums --- */\n` +
+              (enumTypesForEnumData(enums) || none) +
+              `\n\n/* --- tables --- */\n` +
+              (tableDefs.join('\n') || none) +
+              `\n\n/* --- aggregate types --- */\n` +
+              (schemaIsUnqualified ?
+                `\nexport namespace ${schema} {` + (indentAll(2, crossTableTypesForTables(tables) || none)) + '\n}\n' :
+                (crossTableTypesForTables(tables) || none))
+            ) + '\n' +
+            (schemaIsUnqualified ? '' : `}\n`);
 
         return { schemaDef, tables };
       }))
     ),
-    schemaDefs = schemaData.map(r => r.schemaDef).sort(),
+    schemaDefs = schemaData.map(r => r.schemaDef),
     schemaTables = schemaData.map(r => r.tables),
-    allTables = ([] as Relation[]).concat(...schemaTables).sort((a, b) => a.name.localeCompare(b.name)),
+    allTables = ([] as Relation[]).concat(...schemaTables),
     hasCustomTypes = Object.keys(customTypes).length > 0,
     ts = header() + declareModule('zapatos/schema',
       `\nimport type * as db from 'zapatos/db';\n` +
       (hasCustomTypes ? `import type * as c from 'zapatos/custom';\n` : ``) +
-      versionCanary +
+      versionCanary + '\n\n' +
       schemaDefs.join('\n\n') +
-      `\n\n/* === cross-table types === */\n` +
-      crossTableTypesForTables(allTables)
+      `\n\n/* === global aggregate types === */\n` +
+      crossSchemaTypesForSchemas(schemaNames) +
+      `\n\n/* === lookups === */\n` +
+      crossSchemaTypesForAllTables(allTables, config.unqualifiedSchema)
     ),
     customTypeSourceFiles = sourceFilesForCustomTypes(customTypes);
 
