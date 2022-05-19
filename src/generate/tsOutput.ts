@@ -25,7 +25,7 @@ export interface CustomTypes {
 }
 
 const
-  canaryVersion: SchemaVersionCanary['version'] = 103,
+  canaryVersion: SchemaVersionCanary['version'] = 104,
   versionCanary = `
 // got a type error on schemaVersionCanary below? update by running \`npx zapatos\`
 export interface schemaVersionCanary extends db.SchemaVersionCanary { version: ${canaryVersion} }
