@@ -116,8 +116,10 @@ export const definitionForRelationInSchema = async (
 
     const
       columnDoc = createColumnDoc(config, schemaName, rel, row),
+      schemaPrefix = config.unprefixedSchema === schemaName ? '' : `${schemaName}.`,
+      prefixedRelName = schemaPrefix + rel.name,
       columnOptions =
-        (config.columnOptions[rel.name] && config.columnOptions[rel.name][column]) ??
+        (config.columnOptions[prefixedRelName] && config.columnOptions[prefixedRelName][column]) ??
         (config.columnOptions["*"] && config.columnOptions["*"][column]),
       isInsertable = rel.insertable && !isGenerated && columnOptions?.insert !== 'excluded',
       isUpdatable = rel.insertable && !isGenerated && columnOptions?.update !== 'excluded',
