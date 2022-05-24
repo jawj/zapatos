@@ -16,7 +16,6 @@ import type {
   Updatable,
   Whereable,
   Table,
-  BareTable,
   Column,
 } from 'zapatos/schema';
 
@@ -386,9 +385,11 @@ interface OrderSpecForTable<T extends Table> {
   nulls?: 'FIRST' | 'LAST';
 }
 
+type Unprefixed<S extends string> = S extends `${infer _}.${infer Rest}` ? Rest : S;
+
 export interface SelectLockingOptions<A extends string> {
   for: 'UPDATE' | 'NO KEY UPDATE' | 'SHARE' | 'KEY SHARE';
-  of?: BareTable | A | (BareTable | A)[];
+  of?: Unprefixed<Table> | A | (Unprefixed<Table> | A)[];
   wait?: 'NOWAIT' | 'SKIP LOCKED';
 }
 
