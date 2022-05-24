@@ -8,6 +8,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type * as pg from 'pg';
 
+import * as nt from '../common/nameTransforms';
 
 export interface RequiredConfig {
   db: pg.ClientConfig;
@@ -24,6 +25,7 @@ export interface OptionalConfig {
   columnOptions: ColumnOptions;
   schemaJSDoc: boolean;
   unprefixedSchema: string | null;
+  nameTransforms: nt.NameTransforms | boolean;
 }
 
 interface SchemaRules {
@@ -56,6 +58,7 @@ const defaultConfig: OptionalConfig = {
   columnOptions: {},
   schemaJSDoc: true,
   unprefixedSchema: 'public',
+  nameTransforms: false,
 };
 
 export const moduleRoot = () => {
@@ -68,6 +71,12 @@ export const moduleRoot = () => {
 
 export const finaliseConfig = (config: Config) => {
   const finalConfig = { ...defaultConfig, ...config };
+
+  finalConfig.nameTransforms =
+    finalConfig.nameTransforms === false ? nt.nullTransforms :
+      finalConfig.nameTransforms === true ? nt.snakeCamelTransforms :
+        finalConfig.nameTransforms;
+
   if (!finalConfig.db || Object.keys(finalConfig.db).length < 1) throw new Error(`Zapatos needs database connection details`);
   return finalConfig as CompleteConfig;
 };
