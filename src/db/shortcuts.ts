@@ -16,6 +16,7 @@ import type {
   Updatable,
   Whereable,
   Table,
+  BareTable,
   Column,
 } from 'zapatos/schema';
 
@@ -35,6 +36,7 @@ import {
 import {
   completeKeysWithDefaultValue,
   mapWithSeparator,
+  NoInfer,
 } from './utils';
 
 
@@ -384,9 +386,9 @@ interface OrderSpecForTable<T extends Table> {
   nulls?: 'FIRST' | 'LAST';
 }
 
-export interface SelectLockingOptions {
+export interface SelectLockingOptions<A extends string> {
   for: 'UPDATE' | 'NO KEY UPDATE' | 'SHARE' | 'KEY SHARE';
-  of?: Table | Table[];
+  of?: BareTable | A | (BareTable | A)[];
   wait?: 'NOWAIT' | 'SKIP LOCKED';
 }
 
@@ -395,6 +397,7 @@ export interface SelectOptionsForTable<
   C extends ColumnsOption<T>,
   L extends LateralOption<C, E>,
   E extends ExtrasOption<T>,
+  A extends string,
   > {
   distinct?: boolean | ColumnForTable<T> | ColumnForTable<T>[] | SQLFragment<any>;
   order?: OrderSpecForTable<T> | OrderSpecForTable<T>[];
@@ -406,8 +409,8 @@ export interface SelectOptionsForTable<
   groupBy?: ColumnForTable<T> | ColumnForTable<T>[] | SQLFragment<any>;
   having?: WhereableForTable<T> | SQLFragment<any>;
   lateral?: L;
-  alias?: string;
-  lock?: SelectLockingOptions | SelectLockingOptions[];
+  alias?: A;
+  lock?: SelectLockingOptions<NoInfer<A>> | SelectLockingOptions<NoInfer<A>>[];
 };
 
 type SelectReturnTypeForTable<
@@ -442,11 +445,12 @@ export interface SelectSignatures {
     C extends ColumnsOption<T>,
     L extends LateralOption<C, E>,
     E extends ExtrasOption<T>,
+    A extends string = never,
     M extends SelectResultMode = SelectResultMode.Many
     >(
     table: T,
     where: WhereableForTable<T> | SQLFragment | AllType,
-    options?: SelectOptionsForTable<T, C, L, E>,
+    options?: SelectOptionsForTable<T, C, L, E, A>,
     mode?: M,
     aggregate?: string,
   ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, M>>;
@@ -487,7 +491,7 @@ export class NotExactlyOneError extends Error {
 export const select: SelectSignatures = function (
   table: Table,
   where: Whereable | SQLFragment | AllType = all,
-  options: SelectOptionsForTable<Table, ColumnsOption<Table>, LateralOption<ColumnsOption<Table>, ExtrasOption<Table>>, ExtrasOption<Table>> = {},
+  options: SelectOptionsForTable<Table, ColumnsOption<Table>, LateralOption<ColumnsOption<Table>, ExtrasOption<Table>>, ExtrasOption<Table>, any> = {},
   mode: SelectResultMode = SelectResultMode.Many,
   aggregate: string = 'count',
 ) {
@@ -525,7 +529,7 @@ export const select: SelectSignatures = function (
       allOptions.withTies ? sql` FETCH FIRST ${param(allOptions.limit)} ROWS WITH TIES` :
         sql` LIMIT ${param(allOptions.limit)}`,  // compatibility with pg pre-10.5; and fewer bytes!
     offsetSQL = allOptions.offset === undefined ? [] : sql` OFFSET ${param(allOptions.offset)}`,  // pg is lax about OFFSET following FETCH, and we exploit that
-    lockSQL = lock === undefined ? [] : (lock as SelectLockingOptions[]).map(lock => {  // `as` clause is required when TS not strict
+    lockSQL = lock === undefined ? [] : (lock as SelectLockingOptions<string>[]).map(lock => {  // `as` clause is required when TS not strict
       const
         ofTables = lock.of === undefined || Array.isArray(lock.of) ? lock.of : [lock.of],
         ofClause = ofTables === undefined ? [] : sql` OF ${mapWithSeparator(ofTables as Table[], sql`, `, t => t)}`;  // `as` clause is required when TS not strict
@@ -576,10 +580,11 @@ export interface SelectOneSignatures {
     C extends ColumnsOption<T>,
     L extends LateralOption<C, E>,
     E extends ExtrasOption<T>,
+    A extends string,
     >(
     table: T,
     where: WhereableForTable<T> | SQLFragment | AllType,
-    options?: SelectOptionsForTable<T, C, L, E>,
+    options?: SelectOptionsForTable<T, C, L, E, A>,
   ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, SelectResultMode.One>>;
 }
 
@@ -612,10 +617,11 @@ export interface SelectExactlyOneSignatures {
     C extends ColumnsOption<T>,
     L extends LateralOption<C, E>,
     E extends ExtrasOption<T>,
+    A extends string,
     >(
     table: T,
     where: WhereableForTable<T> | SQLFragment | AllType,
-    options?: SelectOptionsForTable<T, C, L, E>,
+    options?: SelectOptionsForTable<T, C, L, E, A>,
   ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, SelectResultMode.ExactlyOne>>;
 }
 
@@ -643,10 +649,11 @@ export interface NumericAggregateSignatures {
     C extends ColumnsOption<T>,
     L extends LateralOption<C, E>,
     E extends ExtrasOption<T>,
+    A extends string,
     >(
     table: T,
     where: WhereableForTable<T> | SQLFragment | AllType,
-    options?: SelectOptionsForTable<T, C, L, E>,
+    options?: SelectOptionsForTable<T, C, L, E, A>,
   ): SQLFragment<number>;
 }
 

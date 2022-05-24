@@ -188,6 +188,7 @@ export const definitionForRelationInSchema = async (
     tableDef = `${tableComment}
 export namespace ${rel.name} {
   export type Table = '${schemaPrefix}${rel.name}';
+  export type BareTable = '${rel.name}';
   export interface Selectable {
     ${selectables.join('\n    ')}
   }
@@ -228,7 +229,7 @@ const transformCustomType = (customType: string, config: CompleteConfig) => {
 
 const
   tableMappedUnion = (arr: Relation[], suffix: string) =>
-    arr.length === 0 ? 'any' : arr.map(rel => `${rel.name}.${suffix}`).join(' | '),
+    arr.length === 0 ? 'never' : arr.map(rel => `${rel.name}.${suffix}`).join(' | '),
   tableMappedArray = (arr: Relation[], suffix: string) =>
     '[' + arr.map(rel => `${rel.name}.${suffix}`).join(', ') + ']';
 
@@ -236,6 +237,7 @@ export const crossTableTypesForTables = (tables: Relation[]) => `${tables.length
   '\n// `never` rather than `any` types would be more accurate in this no-tables case, but they stop `shortcuts.ts` compiling\n' : ''
   }
 export type Table = ${tableMappedUnion(tables, 'Table')};
+export type BareTable = ${tableMappedUnion(tables, 'BareTable')};
 export type Selectable = ${tableMappedUnion(tables, 'Selectable')};
 export type JSONSelectable = ${tableMappedUnion(tables, 'JSONSelectable')};
 export type Whereable = ${tableMappedUnion(tables, 'Whereable')};
@@ -266,6 +268,7 @@ const
 export const crossSchemaTypesForSchemas = (schemas: string[]) => `
 export type Schema = ${schemas.map(s => `'${s}'`).join(' | ')};
 export type Table = ${schemaMappedUnion(schemas, 'Table')};
+export type BareTable = ${schemaMappedUnion(schemas, 'BareTable')};
 export type Selectable = ${schemaMappedUnion(schemas, 'Selectable')};
 export type JSONSelectable = ${schemaMappedUnion(schemas, 'JSONSelectable')};
 export type Whereable = ${schemaMappedUnion(schemas, 'Whereable')};
