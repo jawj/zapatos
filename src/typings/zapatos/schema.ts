@@ -11,7 +11,6 @@ export interface Updatable { [k: string]: any }
 export interface Whereable { [k: string]: any }
 export interface Insertable { [k: string]: any }
 export type Table = string;
-export type BareTable = string;
 export type Column = string;
 export type JSONSelectableForTable<T extends Table> = { [k: string]: any };
 export type SelectableForTable<T extends Table> = { [k: string]: any };
