@@ -8,6 +8,7 @@ Released under the MIT licence: see LICENCE file
 */
 
 import * as fs from 'fs';
+
 import { generate } from ".";
 import type { Config } from './config';
 

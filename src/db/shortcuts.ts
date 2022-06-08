@@ -30,6 +30,7 @@ import {
   raw,
   param,
   Default,
+  getConfig,
 } from './core';
 
 import {
@@ -38,6 +39,7 @@ import {
   NoInfer,
 } from './utils';
 
+const config = getConfig();
 
 export type JSONOnlyColsForTable<T extends Table, C extends any[] /* `ColumnForTable<T>[]` gives errors here for reasons I haven't got to the bottom of */> =
   Pick<JSONSelectableForTable<T>, C[number]>;
@@ -77,8 +79,7 @@ type ReturningTypeForTable<T extends Table, C extends ColumnsOption<T>, E extend
 
 
 function SQLForColumnsOfTable(columns: Column[] | undefined, table: Table) {
-  return columns === undefined ? sql`to_jsonb(${table}.*)` :
-    sql`jsonb_build_object(${mapWithSeparator(columns, sql`, `, c => sql`${param(c)}::text, ${c}`)})`;
+  return columns === undefined ? config.nameTransforms.pg.allColumnsJSON(table) : config.nameTransforms.pg.namedColumnsJSON(columns);
 }
 
 function SQLForExtras<T extends Table>(extras: ExtrasOption<T>) {

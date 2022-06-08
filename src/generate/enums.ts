@@ -6,12 +6,14 @@ Released under the MIT licence: see LICENCE file
 
 import * as pg from 'pg';
 
+import type { TsNameTransforms } from '../db';
+
 
 export type EnumData = { [k: string]: string[] };
 
-export const enumDataForSchema = async (schemaName: string, queryFn: (q: pg.QueryConfig) => Promise<pg.QueryResult<any>>) => {
+export const enumDataForSchema = async (schemaName: string, transforms: TsNameTransforms, queryFn: (q: pg.QueryConfig) => Promise<pg.QueryResult<any>>) => {
   const
-    { rows } = await queryFn({
+    result = await queryFn({
       text: `
         SELECT
           n.nspname AS schema
@@ -22,9 +24,13 @@ export const enumDataForSchema = async (schemaName: string, queryFn: (q: pg.Quer
         JOIN pg_catalog.pg_namespace n ON n.oid = t.typnamespace
         WHERE n.nspname = $1
         ORDER BY t.typname ASC, e.enumlabel ASC`,
-      values: [schemaName],
+      values: [transforms.fromTsToPg(schemaName)],
     }),
-
+    rows = result.rows.map(row => ({
+      ...row,
+      schema: transforms.fromPgToTs(row.schema),
+      name: transforms.fromPgToTs(row.name)
+    })),
     enums: EnumData = rows.reduce((memo, row) => {
       memo[row.name] = memo[row.name] ?? [];
       memo[row.name].push(row.value);

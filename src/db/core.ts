@@ -7,8 +7,8 @@ Released under the MIT licence: see LICENCE file
 import type * as pg from 'pg';
 import { performance } from 'perf_hooks';
 
-import { getConfig, SQLQuery } from './config';
-import { isPOJO, NoInfer } from './utils';
+import { isPOJO, mapWithSeparator, NoInfer, noop } from './utils';
+
 
 import type {
   Updatable,
@@ -16,6 +16,112 @@ import type {
   Table,
   Column,
 } from 'zapatos/schema';
+
+
+// === name transforms ===
+
+export interface TsNameTransforms {
+  fromPgToTs: (s: string) => string;
+  fromTsToPg: (s: string) => string;
+}
+export interface PgNameTransforms {
+  fromPgToTs: (s: SQLFragment) => SQLFragment;
+  fromTsToPg: (s: SQLFragment) => SQLFragment;
+  namedColumnsJSON: (columns: string[]) => SQLFragment;
+  allColumnsJSON: (table: string) => SQLFragment;
+}
+
+export interface NameTransforms {
+  ts: TsNameTransforms;
+  pg: PgNameTransforms;
+}
+
+const
+  snakeToCamelFn = (s: string) => s.replace(/_[a-z]/g, m => m.charAt(1).toUpperCase()),
+  camelToSnakeFn = (s: string) => s.replace(/[A-Z]/g, m => '_' + m.toLowerCase()),
+  snakeToCamelSQL = (s: SQLFragment) => sql`(
+    select string_agg(case when i = 1 then s else upper(left(s, 1)) || right(s, -1) end, NULL) 
+    from regexp_split_to_table(${s}, '_(?=[a-z])') with ordinality as rstt(s, i)
+  )`,
+  camelToSnakeSQL = (s: SQLFragment) => sql`(
+    select string_agg(case when i = 1 then right(s, -1) else lower(left(s, 1)) || right(s, -1) end, '_')
+    from regexp_split_to_table('~' || ${s}, '(?=[A-Z])') with ordinality as rstt(s, i)
+  )`;
+
+export const
+  nullTransforms: NameTransforms = {
+    ts: {
+      fromPgToTs: noop,
+      fromTsToPg: noop,
+    },
+    pg: {
+      fromPgToTs: noop,
+      fromTsToPg: noop,
+      namedColumnsJSON: columns => sql`jsonb_build_object(${mapWithSeparator(columns, sql`, `, c => sql`${param(c)}::text, ${c}`)})`,
+      allColumnsJSON: table => sql`to_jsonb(${table}.*)`,
+    },
+  },
+  snakeCamelTransforms: NameTransforms = {
+    ts: {
+      fromPgToTs: snakeToCamelFn,
+      fromTsToPg: camelToSnakeFn,
+    },
+    pg: {
+      fromPgToTs: snakeToCamelSQL,
+      fromTsToPg: camelToSnakeSQL,
+      namedColumnsJSON: columns => sql`jsonb_build_object(${mapWithSeparator(columns, sql`, `, c => sql`${param(c)}::text, ${camelToSnakeFn(c)}`)})`,
+      allColumnsJSON: table => sql`(select jsonb_object_agg(${snakeToCamelSQL(sql`${raw('key')}`)}, value) from jsonb_each(to_jsonb(${table}.*)))`,
+    },
+  };
+
+
+// === config ===
+
+export interface SQLQuery {
+  text: string;
+  values: any[];
+  name?: string;
+}
+
+export interface Config {
+  transactionAttemptsMax: number;
+  transactionRetryDelay: { minMs: number; maxMs: number };
+  castArrayParamsToJson: boolean;   // see https://github.com/brianc/node-postgres/issues/2012
+  castObjectParamsToJson: boolean;  // useful if json will be cast onward differently from text
+  queryListener?(query: SQLQuery, txnId?: number): void;
+  resultListener?(result: any, txnId?: number, elapsedMs?: number): void;
+  transactionListener?(message: string, txnId?: number): void;
+  nameTransforms: NameTransforms;
+}
+export type NewConfig = Partial<Config | { nameTransforms: NameTransforms | boolean }>;  // special case for setting nameTransforms to true or false
+
+const config: Config = {  // defaults
+  transactionAttemptsMax: 5,
+  transactionRetryDelay: { minMs: 25, maxMs: 250 },
+  castArrayParamsToJson: false,
+  castObjectParamsToJson: false,
+  nameTransforms: nullTransforms,
+};
+
+/**
+ * Get the current configuration.
+ */
+export const getConfig = () => config;
+
+/**
+ * Set key(s) on the configuration.
+ * @param newConfig Partial configuration object
+ */
+export const setConfig = (newConfig: NewConfig) => {
+  const { nameTransforms } = newConfig;
+
+  Object.assign(
+    config,
+    newConfig as Config,  // might be a lie now, but we're about to fix that
+    (nameTransforms === false ? { nameTransforms: nullTransforms } :
+      nameTransforms === true ? { nameTransforms: snakeCamelTransforms } : {})
+  );
+};
 
 
 // === symbols, types, wrapper classes and shortcuts ===
@@ -231,7 +337,18 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
    * returned — i.e. `(qr) => qr.rows` — but some shortcut functions alter this
    * in order to match their declared `RunResult` type.
    */
-  runResultTransform: (qr: pg.QueryResult) => any = qr => qr.rows;
+  runResultTransform: (qr: pg.QueryResult) => any = qr => {
+    const
+      { fromPgToTs } = config.nameTransforms.ts,
+      { rows } = qr;
+
+    if (fromPgToTs === noop) return rows;
+
+    const namesMap = Object.fromEntries(qr.fields.map(f => [f.name, fromPgToTs(f.name)]));
+    for (let i = 0, len = rows.length; i < len; i++) rows[i] = Object.fromEntries(Object.entries(rows[i]).map(([k, v]) => [namesMap[k], v]));
+
+    return rows;
+  };
 
   parentTable?: string = undefined;  // used for nested shortcut select queries
   preparedName?: string = undefined;  // for prepared statements
@@ -261,7 +378,6 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
   run = async (queryable: Queryable, force = false): Promise<RunResult> => {
     const
       query = this.compile(),
-      config = getConfig(),
       txnId = (queryable as any)._zapatos?.txnId;
 
     if (config.queryListener) config.queryListener(query, txnId);
@@ -310,8 +426,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
 
     } else if (typeof expression === 'string') {
       // if it's a string, it should be a x.Table or x.Column type, so just needs quoting
-      result.text += expression.startsWith('"') && expression.endsWith('"') ? expression :
-        `"${expression.replace(/[.]/g, '"."')}"`;
+      result.text += `"${config.nameTransforms.ts.fromTsToPg(expression).replace(/[.]/g, '"."')}"`;
 
     } else if (expression instanceof DangerousRawString) {
       // Little Bobby Tables passes straight through ...
@@ -323,9 +438,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
 
     } else if (expression instanceof Parameter) {
       // parameters become placeholders, and a corresponding entry in the values array
-      const
-        placeholder = '$' + String(result.values.length + 1),  // 1-based indexing
-        config = getConfig();
+      const placeholder = '$' + String(result.values.length + 1);  // 1-based indexing
 
       if (
         ((expression.cast !== false && (expression.cast === true || config.castArrayParamsToJson)) &&

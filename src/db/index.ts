@@ -5,7 +5,6 @@ Released under the MIT licence: see LICENCE file
 */
 
 export * from './canary';
-export * from './config';
 export * from './core';
 export * from './date';
 export * from './pgErrors';

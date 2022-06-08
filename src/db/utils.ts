@@ -6,6 +6,8 @@ Released under the MIT licence: see LICENCE file
 
 export type NoInfer<T> = [T][T extends any ? 0 : never];  // https://github.com/Microsoft/TypeScript/issues/14829
 
+export const noop = (s: any) => s;
+
 /**
  * Basic zero-padding for small, positive integers
  * @param n The integer to pad

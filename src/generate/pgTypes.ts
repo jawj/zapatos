@@ -8,7 +8,7 @@ import type { EnumData } from './enums';
 
 type TypeContext = 'JSONSelectable' | 'Selectable' | 'Insertable' | 'Updatable' | 'Whereable';
 
-const baseTsTypeForBasePgType = (pgType: string, enums: EnumData, context: TypeContext) => {
+const baseTsTypeForBasePgType = (pgType: string, tsType: string, enums: EnumData, context: TypeContext) => {
   const hasOwnProp = Object.prototype.hasOwnProperty;
   switch (pgType) {
     case 'money':
@@ -69,20 +69,20 @@ const baseTsTypeForBasePgType = (pgType: string, enums: EnumData, context: TypeC
     case 'jsonb':
       return 'db.JSONValue';
     default:
-      if (hasOwnProp.call(enums, pgType)) return pgType;
+      if (hasOwnProp.call(enums, tsType)) return tsType;
       return null;
   }
 };
 
-export const tsTypeForPgType = (pgType: string, enums: EnumData, context: TypeContext) => {
+export const tsTypeForPgType = (pgType: string, tsType: string, enums: EnumData, context: TypeContext) => {
   // basic and enum types (enum names can begin with an underscore even if not an array)
-  const baseTsType = baseTsTypeForBasePgType(pgType, enums, context);
+  const baseTsType = baseTsTypeForBasePgType(pgType, tsType, enums, context);
   if (baseTsType !== null) return baseTsType;
 
   // arrays of basic and enum types: pg prefixes these with underscore (_)
   // see https://www.postgresql.org/docs/current/sql-createtype.html#id-1.9.3.94.5.9
   if (pgType.charAt(0) === '_') {
-    const arrayTsType = baseTsTypeForBasePgType(pgType.slice(1), enums, context);
+    const arrayTsType = baseTsTypeForBasePgType(pgType.slice(1), tsType, enums, context);
     if (arrayTsType !== null) return arrayTsType + '[]';
   }
 

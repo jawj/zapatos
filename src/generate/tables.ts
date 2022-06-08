@@ -9,6 +9,7 @@ import { tsTypeForPgType } from './pgTypes';
 import type { EnumData } from './enums';
 import type { CustomTypes } from './tsOutput';
 import { CompleteConfig } from './config';
+import type { TsNameTransforms } from '../db';
 
 
 export interface Relation {
@@ -18,36 +19,41 @@ export interface Relation {
   insertable: boolean;
 }
 
-export const relationsInSchema = async (schemaName: string, queryFn: (q: pg.QueryConfig) => Promise<pg.QueryResult<any>>): Promise<Relation[]> => {
-  const { rows } = await queryFn({
-    text: `
-      SELECT $1 as schema
-      , table_name AS name
-      , lower(table_name) AS lname  -- using a case-insensitive sort, but you can't order by a function in a UNION query
-      , CASE table_type WHEN 'VIEW' THEN 'view' WHEN 'FOREIGN' THEN 'fdw' ELSE 'table' END AS type
-      , CASE WHEN is_insertable_into = 'YES' THEN true ELSE false END AS insertable
-      FROM information_schema.tables
-      WHERE table_schema = $1 AND table_type != 'LOCAL TEMPORARY'
+export const relationsInSchema = async (schemaName: string, transforms: TsNameTransforms, queryFn: (q: pg.QueryConfig) => Promise<pg.QueryResult<any>>): Promise<Relation[]> => {
+  const
+    { rows } = await queryFn({
+      text: `
+        SELECT $1 as schema
+        , table_name AS name
+        , lower(table_name) AS lname  -- using a case-insensitive sort, but you can't order by a function in a UNION query
+        , CASE table_type WHEN 'VIEW' THEN 'view' WHEN 'FOREIGN' THEN 'fdw' ELSE 'table' END AS type
+        , CASE WHEN is_insertable_into = 'YES' THEN true ELSE false END AS insertable
+        FROM information_schema.tables
+        WHERE table_schema = $1 AND table_type != 'LOCAL TEMPORARY'
 
-      UNION ALL
+        UNION ALL
 
-      SELECT $1 as schema
-      , matviewname AS name
-      , lower(matviewname) AS lname
-      , 'mview'::text AS type
-      , false AS insertable
-      FROM pg_catalog.pg_matviews
-      WHERE schemaname = $1
+        SELECT $1 as schema
+        , matviewname AS name
+        , lower(matviewname) AS lname
+        , 'mview'::text AS type
+        , false AS insertable
+        FROM pg_catalog.pg_matviews
+        WHERE schemaname = $1
 
-      ORDER BY lname, name
-    `,
-    values: [schemaName]
-  });
+        ORDER BY lname, name
+      `,
+      values: [transforms.fromTsToPg(schemaName)]
+    });
 
-  return rows;
+  return rows.map(row => ({
+    ...row,
+    schema: transforms.fromPgToTs(row.schema),
+    name: transforms.fromPgToTs(row.name),
+  }));
 };
 
-const columnsForRelation = async (rel: Relation, schemaName: string, queryFn: (q: pg.QueryConfig) => Promise<pg.QueryResult<any>>) => {
+const columnsForRelation = async (rel: Relation, schemaName: string, transforms: TsNameTransforms, queryFn: (q: pg.QueryConfig) => Promise<pg.QueryResult<any>>) => {
   const { rows } = await queryFn({
     text:
       rel.type === 'mview'
@@ -83,10 +89,14 @@ const columnsForRelation = async (rel: Relation, schemaName: string, queryFn: (q
         LEFT JOIN pg_catalog.pg_class cl ON cl.relkind = 'r' AND cl.relname = c.table_name AND cl.relnamespace = ns.oid
         LEFT JOIN pg_catalog.pg_description d ON d.objoid = cl.oid AND d.objsubid = c.ordinal_position
         WHERE c.table_name = $1 AND c.table_schema = $2`,
-    values: [rel.name, schemaName],
+
+    values: [transforms.fromTsToPg(rel.name), transforms.fromTsToPg(schemaName)],
   });
 
-  return rows;
+  return rows.map(row => ({
+    ...row,
+    column: transforms.fromPgToTs(row.column),
+  }));
 };
 
 export const definitionForRelationInSchema = async (
@@ -98,7 +108,7 @@ export const definitionForRelationInSchema = async (
   queryFn: (q: pg.QueryConfig) => Promise<pg.QueryResult<any>>,
 ) => {
   const
-    rows = await columnsForRelation(rel, schemaName, queryFn),
+    rows = await columnsForRelation(rel, schemaName, config.tsNameTransforms, queryFn),
     selectables: string[] = [],
     JSONSelectables: string[] = [],
     whereables: string[] = [],
@@ -106,13 +116,16 @@ export const definitionForRelationInSchema = async (
     updatables: string[] = [];
 
   rows.forEach(row => {
-    const { column, isGenerated, isNullable, hasDefault, udtName, domainName } = row;
+    const
+      { column, isGenerated, isNullable, hasDefault, udtName, domainName } = row,
+      transformedName = config.tsNameTransforms.fromPgToTs(udtName);
+
     let
-      selectableType = tsTypeForPgType(udtName, enums, 'Selectable'),
-      JSONSelectableType = tsTypeForPgType(udtName, enums, 'JSONSelectable'),
-      whereableType = tsTypeForPgType(udtName, enums, 'Whereable'),
-      insertableType = tsTypeForPgType(udtName, enums, 'Insertable'),
-      updatableType = tsTypeForPgType(udtName, enums, 'Updatable');
+      selectableType = tsTypeForPgType(udtName, transformedName, enums, 'Selectable'),
+      JSONSelectableType = tsTypeForPgType(udtName, transformedName, enums, 'JSONSelectable'),
+      whereableType = tsTypeForPgType(udtName, transformedName, enums, 'Whereable'),
+      insertableType = tsTypeForPgType(udtName, transformedName, enums, 'Insertable'),
+      updatableType = tsTypeForPgType(udtName, transformedName, enums, 'Updatable');
 
     const
       columnDoc = createColumnDoc(config, schemaName, rel, row),
@@ -167,9 +180,9 @@ export const definitionForRelationInSchema = async (
         JOIN pg_catalog.pg_index idx ON idx.indexrelid = c.oid AND idx.indisunique
         WHERE i.tablename = $1 AND i.schemaname = $2
         ORDER BY i.indexname`,
-      values: [rel.name, schemaName]
+      values: [config.tsNameTransforms.fromTsToPg(rel.name), config.tsNameTransforms.fromTsToPg(schemaName)]
     }),
-    uniqueIndexes = result.rows;
+    uniqueIndexes = result.rows.map(row => config.tsNameTransforms.fromPgToTs(row.indexname));
 
   const
     schemaPrefix = schemaName === config.unprefixedSchema ? '' : `${schemaName}.`,
@@ -204,7 +217,7 @@ export namespace ${rel.name} {
     ${updatables.length > 0 ? updatables.join('\n    ') : `[key: string]: never;`}
   }
   export type UniqueIndex = ${uniqueIndexes.length > 0 ?
-        uniqueIndexes.map(ui => "'" + ui.indexname + "'").join(' | ') :
+        uniqueIndexes.map(ui => `'${ui}'`).join(' | ') :
         'never'};
   export type Column = keyof Selectable;
   export type OnlyCols<T extends readonly Column[]> = Pick<Selectable, T[number]>;

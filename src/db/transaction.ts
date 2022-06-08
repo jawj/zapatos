@@ -5,10 +5,10 @@ Released under the MIT licence: see LICENCE file
 */
 
 import * as pg from 'pg';
+
 import { isDatabaseError } from './pgErrors';
 import { wait } from './utils';
-import { sql, raw } from './core';
-import { getConfig } from './config';
+import { sql, raw, getConfig } from './core';
 import type { Queryable } from './core';
 
 

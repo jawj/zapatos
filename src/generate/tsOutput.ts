@@ -82,10 +82,10 @@ export const tsForConfig = async (config: CompleteConfig, debug: (s: string) => 
         const
           rules = schemas[schema],
           tables = rules.exclude === '*' ? [] :  // exclude takes precedence
-            (await relationsInSchema(schema, queryFn))
+            (await relationsInSchema(schema, config.tsNameTransforms, queryFn))
               .filter(rel => rules.include === '*' || rules.include.indexOf(rel.name) >= 0)
               .filter(rel => rules.exclude.indexOf(rel.name) < 0),
-          enums = await enumDataForSchema(schema, queryFn),
+          enums = await enumDataForSchema(schema, config.tsNameTransforms, queryFn),
           tableDefs = await Promise.all(tables.map(async table =>
             definitionForRelationInSchema(table, schema, enums, customTypes, config, queryFn))),
           schemaIsUnprefixed = schema === config.unprefixedSchema,
