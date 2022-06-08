@@ -40,12 +40,12 @@ const
   snakeToCamelFn = (s: string) => s.replace(/_[a-z]/g, m => m.charAt(1).toUpperCase()),
   camelToSnakeFn = (s: string) => s.replace(/[A-Z]/g, m => '_' + m.toLowerCase()),
   snakeToCamelSQL = (s: SQLFragment) => sql`(
-    select string_agg(case when i = 1 then s else upper(left(s, 1)) || right(s, -1) end, NULL) 
-    from regexp_split_to_table(${s}, '_(?=[a-z])') with ordinality as rstt(s, i)
+    SELECT string_agg(CASE WHEN i = 1 THEN s ELSE upper(left(s, 1)) || right(s, -1) END, NULL) 
+    FROM regexp_split_to_table(${s}, '_(?=[a-z])') WITH ORDINALITY AS rstt(s, i)
   )`,
   camelToSnakeSQL = (s: SQLFragment) => sql`(
-    select string_agg(case when i = 1 then right(s, -1) else lower(left(s, 1)) || right(s, -1) end, '_')
-    from regexp_split_to_table('~' || ${s}, '(?=[A-Z])') with ordinality as rstt(s, i)
+    SELECT string_agg(CASE WHEN i = 1 THEN right(s, -1) ELSE lower(left(s, 1)) || right(s, -1) END, '_')
+    FROM regexp_split_to_table('~' || ${s}, '(?=[A-Z])') WITH ORDINALITY AS rstt(s, i)
   )`;
 
 export const
@@ -70,7 +70,7 @@ export const
       fromPgToTs: snakeToCamelSQL,
       fromTsToPg: camelToSnakeSQL,
       namedColumnsJSON: columns => sql`jsonb_build_object(${mapWithSeparator(columns, sql`, `, c => sql`${param(c)}::text, ${camelToSnakeFn(c)}`)})`,
-      allColumnsJSON: table => sql`(select jsonb_object_agg(${snakeToCamelSQL(sql`${raw('key')}`)}, value) from jsonb_each(to_jsonb(${table}.*)))`,
+      allColumnsJSON: table => sql`(SELECT jsonb_object_agg(${snakeToCamelSQL(sql`${raw('key')}`)}, value) FROM jsonb_each(to_jsonb(${table}.*)))`,
     },
   };
 
@@ -426,7 +426,8 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
 
     } else if (typeof expression === 'string') {
       // if it's a string, it should be a x.Table or x.Column type, so just needs quoting
-      result.text += `"${config.nameTransforms.ts.fromTsToPg(expression).replace(/[.]/g, '"."')}"`;
+      const transformed = config.nameTransforms.ts.fromTsToPg(expression);
+      result.text += `"${transformed.replace(/[.]/g, '"."')}"`;
 
     } else if (expression instanceof DangerousRawString) {
       // Little Bobby Tables passes straight through ...
