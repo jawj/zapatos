@@ -108,7 +108,7 @@ export const definitionForRelationInSchema = async (
   queryFn: (q: pg.QueryConfig) => Promise<pg.QueryResult<any>>,
 ) => {
   const
-    rows = await columnsForRelation(rel, schemaName, config.tsNameTransforms, queryFn),
+    rows = await columnsForRelation(rel, schemaName, config.nameTransforms, queryFn),
     selectables: string[] = [],
     JSONSelectables: string[] = [],
     whereables: string[] = [],
@@ -118,7 +118,7 @@ export const definitionForRelationInSchema = async (
   rows.forEach(row => {
     const
       { column, isGenerated, isNullable, hasDefault, udtName, domainName } = row,
-      transformedName = config.tsNameTransforms.fromPgToTs(udtName);
+      transformedName = config.nameTransforms.fromPgToTs(udtName);
 
     let
       selectableType = tsTypeForPgType(udtName, transformedName, enums, 'Selectable'),
@@ -180,9 +180,9 @@ export const definitionForRelationInSchema = async (
         JOIN pg_catalog.pg_index idx ON idx.indexrelid = c.oid AND idx.indisunique
         WHERE i.tablename = $1 AND i.schemaname = $2
         ORDER BY i.indexname`,
-      values: [config.tsNameTransforms.fromTsToPg(rel.name), config.tsNameTransforms.fromTsToPg(schemaName)]
+      values: [config.nameTransforms.fromTsToPg(rel.name), config.nameTransforms.fromTsToPg(schemaName)]
     }),
-    uniqueIndexes = result.rows.map(row => config.tsNameTransforms.fromPgToTs(row.indexname));
+    uniqueIndexes = result.rows.map(row => config.nameTransforms.fromPgToTs(row.indexname));
 
   const
     schemaPrefix = schemaName === config.unprefixedSchema ? '' : `${schemaName}.`,

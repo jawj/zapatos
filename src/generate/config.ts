@@ -42,11 +42,11 @@ export interface OptionalConfig {
   columnOptions: ColumnOptions;
   schemaJSDoc: boolean;
   unprefixedSchema: string | null;
-  tsNameTransforms: TsNameTransforms | boolean;
+  nameTransforms: TsNameTransforms | boolean;
 }
 
 export type Config = RequiredConfig & Partial<OptionalConfig>;
-export type CompleteConfig = RequiredConfig & OptionalConfig & { tsNameTransforms: TsNameTransforms };
+export type CompleteConfig = RequiredConfig & OptionalConfig & { nameTransforms: TsNameTransforms };
 
 const defaultConfig: OptionalConfig = {
   outDir: '.',
@@ -59,16 +59,16 @@ const defaultConfig: OptionalConfig = {
   columnOptions: {},
   schemaJSDoc: true,
   unprefixedSchema: 'public',
-  tsNameTransforms: false,
+  nameTransforms: false,
 };
 
 export const finaliseConfig = (config: Config) => {
   const finalConfig = { ...defaultConfig, ...config };
 
-  finalConfig.tsNameTransforms =
-    finalConfig.tsNameTransforms === false ? nullTransforms.ts :
-      finalConfig.tsNameTransforms === true ? snakeCamelTransforms.ts :
-        finalConfig.tsNameTransforms;
+  finalConfig.nameTransforms =
+    finalConfig.nameTransforms === false ? nullTransforms.ts :
+      finalConfig.nameTransforms === true ? snakeCamelTransforms.ts :
+        finalConfig.nameTransforms;
 
   if (!finalConfig.db || Object.keys(finalConfig.db).length < 1) throw new Error(`Zapatos needs database connection details`);
   return finalConfig as CompleteConfig;
