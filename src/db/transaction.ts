@@ -142,7 +142,10 @@ export async function transaction<T, M extends IsolationLevel>(
     }
 
   } catch (err) {
-    if (clientIsOurs && !released) txnClient.release(err);
+    if (clientIsOurs && !released) { 
+      txnClient.release(err);
+      released = true;
+    }
     throw err;
   } finally {
     delete txnClient._zapatos;
