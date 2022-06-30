@@ -89,6 +89,11 @@ const columnsForRelation = async (rel: Relation, schemaName: string, queryFn: (q
   return rows;
 };
 
+function quoteIfIllegalIdentifier(identifier: string) {
+  // note: we'll redundantly quote a bunch of non-ASCII characters like this
+  return identifier.match(/^[a-zA-Z_$][0-9a-zA-Z_$]*$/) ? identifier : `"${identifier}"`;
+}
+
 export const definitionForRelationInSchema = async (
   rel: Relation,
   schemaName: string,
@@ -125,7 +130,8 @@ export const definitionForRelationInSchema = async (
       isUpdatable = rel.insertable && !isGenerated && columnOptions?.update !== 'excluded',
       insertablyOptional = isNullable || hasDefault || columnOptions?.insert === 'optional' ? '?' : '',
       orNull = isNullable ? ' | null' : '',
-      orDefault = isNullable || hasDefault ? ' | db.DefaultType' : '';
+      orDefault = isNullable || hasDefault ? ' | db.DefaultType' : '',
+      possiblyQuotedColumn = quoteIfIllegalIdentifier(column);
 
     // Now, 4 cases: 
     //   1. null domain, known udt        <-- standard case
@@ -145,17 +151,17 @@ export const definitionForRelationInSchema = async (
         'c.' + prefixedCustomType;
     }
 
-    selectables.push(`${columnDoc}${column}: ${selectableType}${orNull};`);
-    JSONSelectables.push(`${columnDoc}${column}: ${JSONSelectableType}${orNull};`);
+    selectables.push(`${columnDoc}${possiblyQuotedColumn}: ${selectableType}${orNull};`);
+    JSONSelectables.push(`${columnDoc}${possiblyQuotedColumn}: ${JSONSelectableType}${orNull};`);
 
     const basicWhereableTypes = `${whereableType} | db.Parameter<${whereableType}> | db.SQLFragment | db.ParentColumn`;
-    whereables.push(`${columnDoc}${column}?: ${basicWhereableTypes} | db.SQLFragment<any, ${basicWhereableTypes}>;`);
+    whereables.push(`${columnDoc}${possiblyQuotedColumn}?: ${basicWhereableTypes} | db.SQLFragment<any, ${basicWhereableTypes}>;`);
 
     const insertableTypes = `${insertableType} | db.Parameter<${insertableType}>${orNull}${orDefault} | db.SQLFragment`;
-    if (isInsertable) insertables.push(`${columnDoc}${column}${insertablyOptional}: ${insertableTypes};`);
+    if (isInsertable) insertables.push(`${columnDoc}${possiblyQuotedColumn}${insertablyOptional}: ${insertableTypes};`);
 
     const updatableTypes = `${updatableType} | db.Parameter<${updatableType}>${orNull}${orDefault} | db.SQLFragment`;
-    if (isUpdatable) updatables.push(`${columnDoc}${column}?: ${updatableTypes} | db.SQLFragment<any, ${updatableTypes}>;`);
+    if (isUpdatable) updatables.push(`${columnDoc}${possiblyQuotedColumn}?: ${updatableTypes} | db.SQLFragment<any, ${updatableTypes}>;`);
   });
 
   const
