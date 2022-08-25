@@ -308,6 +308,6 @@ const createColumnDoc = (config: CompleteConfig, schemaName: string, rel: Relati
     * - ${rel.type === 'mview' ? 'Materialized view column' : isGenerated ? 'Generated column' :
         `${isNullable ? 'Nullable' : '`NOT NULL`'}, ${hasDefault && defaultValue === null ? `identity column` : hasDefault ? `default: \`${defaultValue}\`` : `no default`}`}
     */
-  `;
+    `;
   return doc;
 };
