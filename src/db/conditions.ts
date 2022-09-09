@@ -16,7 +16,7 @@ import {
 } from './core';
 
 import { mapWithSeparator } from './utils';
-
+import type { Whereable } from 'zapatos/schema';
 
 const conditionalParam = (a: any) => a instanceof SQLFragment || a instanceof ParentColumn || a instanceof Parameter ? a : param(a);
 
@@ -58,9 +58,9 @@ export const notReImatch = <T extends string>(a: T) => sql<SQL, boolean | null, 
 export const isIn = <T>(a: readonly T[]) => a.length > 0 ? sql<SQL, boolean | null, T>`${self} IN (${vals(a)})` : sql`false`;
 export const isNotIn = <T>(a: readonly T[]) => a.length > 0 ? sql<SQL, boolean | null, T>`${self} NOT IN (${vals(a)})` : sql`true`;
 
-export const or = <T>(...conditions: SQLFragment<any, T>[]) => sql<SQL, boolean | null, T>`(${mapWithSeparator(conditions, sql` OR `, c => c)})`;
-export const and = <T>(...conditions: SQLFragment<any, T>[]) => sql<SQL, boolean | null, T>`(${mapWithSeparator(conditions, sql` AND `, c => c)})`;
-export const not = <T>(condition: SQLFragment<any, T>) => sql<SQL, boolean | null, T>`(NOT ${condition})`;
+export const or = <T>(...conditions: SQLFragment<any, T>[] | Whereable[]) => sql<SQL, boolean | null, T>`(${mapWithSeparator(conditions, sql` OR `, c => c)})`;
+export const and = <T>(...conditions: SQLFragment<any, T>[] | Whereable[]) => sql<SQL, boolean | null, T>`(${mapWithSeparator(conditions, sql` AND `, c => c)})`;
+export const not = <T>(condition: SQLFragment<any, T> | Whereable) => sql<SQL, boolean | null, T>`(NOT ${condition})`;
 
 // things that aren't genuinely conditions
 type PluralisingIntervalUnit = 'microsecond' | 'millisecond' | 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year' | 'decade';

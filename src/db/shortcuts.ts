@@ -283,7 +283,7 @@ interface UpdateSignatures {
   <T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>>(
     table: T,
     values: UpdatableForTable<T>,
-    where: WhereableForTable<T> | SQLFragment,
+    where: WhereableForTable<T> | SQLFragment<any>,
     options?: ReturningOptionsForTable<T, C, E>
   ): SQLFragment<ReturningTypeForTable<T, C, E>[]>;
 }
@@ -297,7 +297,7 @@ interface UpdateSignatures {
 export const update: UpdateSignatures = function (
   table: Table,
   values: Updatable,
-  where: Whereable | SQLFragment,
+  where: Whereable | SQLFragment<any>,
   options?: ReturningOptionsForTable<Table, ColumnsOption<Table>, ExtrasOption<Table>>
 ): SQLFragment {
 
@@ -319,7 +319,7 @@ export const update: UpdateSignatures = function (
 export interface DeleteSignatures {
   <T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>>(
     table: T,
-    where: WhereableForTable<T> | SQLFragment,
+    where: WhereableForTable<T> | SQLFragment<any>,
     options?: ReturningOptionsForTable<T, C, E>
   ): SQLFragment<ReturningTypeForTable<T, C, E>[]>;
 }
@@ -331,7 +331,7 @@ export interface DeleteSignatures {
  */
 export const deletes: DeleteSignatures = function (
   table: Table,
-  where: Whereable | SQLFragment,
+  where: Whereable | SQLFragment<any>,
   options?: ReturningOptionsForTable<Table, ColumnsOption<Table>, ExtrasOption<Table>>
 ): SQLFragment {
 
@@ -450,7 +450,7 @@ export interface SelectSignatures {
     M extends SelectResultMode = SelectResultMode.Many
     >(
     table: T,
-    where: WhereableForTable<T> | SQLFragment | AllType,
+    where: WhereableForTable<T> | SQLFragment<any> | AllType,
     options?: SelectOptionsForTable<T, C, L, E, A>,
     mode?: M,
     aggregate?: string,
@@ -491,7 +491,7 @@ export class NotExactlyOneError extends Error {
  */
 export const select: SelectSignatures = function (
   table: Table,
-  where: Whereable | SQLFragment | AllType = all,
+  where: Whereable | SQLFragment<any> | AllType = all,
   options: SelectOptionsForTable<Table, ColumnsOption<Table>, LateralOption<ColumnsOption<Table>, ExtrasOption<Table>>, ExtrasOption<Table>, any> = {},
   mode: SelectResultMode = SelectResultMode.Many,
   aggregate: string = 'count',
@@ -543,7 +543,7 @@ export const select: SelectSignatures = function (
       })() :
         Object.keys(lateral).sort().map(k => {
           const subQ = lateral[k];
-          subQ.parentTable = alias;  // enables `parent('column')` in subquery's Wherables
+          subQ.parentTable = alias;  // enables `parent('column')` in subquery's Whereables
           return sql` LEFT JOIN LATERAL (${subQ}) AS "lateral_${raw(k)}" ON true`;
         });
 
@@ -584,7 +584,7 @@ export interface SelectOneSignatures {
     A extends string,
     >(
     table: T,
-    where: WhereableForTable<T> | SQLFragment | AllType,
+    where: WhereableForTable<T> | SQLFragment<any> | AllType,
     options?: SelectOptionsForTable<T, C, L, E, A>,
   ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, SelectResultMode.One>>;
 }
@@ -621,7 +621,7 @@ export interface SelectExactlyOneSignatures {
     A extends string,
     >(
     table: T,
-    where: WhereableForTable<T> | SQLFragment | AllType,
+    where: WhereableForTable<T> | SQLFragment<any> | AllType,
     options?: SelectOptionsForTable<T, C, L, E, A>,
   ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, SelectResultMode.ExactlyOne>>;
 }
@@ -653,7 +653,7 @@ export interface NumericAggregateSignatures {
     A extends string,
     >(
     table: T,
-    where: WhereableForTable<T> | SQLFragment | AllType,
+    where: WhereableForTable<T> | SQLFragment<any> | AllType,
     options?: SelectOptionsForTable<T, C, L, E, A>,
   ): SQLFragment<number>;
 }
