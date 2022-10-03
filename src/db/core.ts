@@ -180,7 +180,7 @@ export function cols<T>(x: T) { return new ColumnNames<T>(x); }
 export class ColumnValues<T> { constructor(public value: T) { } }
 /**
  * Returns a ColumnValues instance, wrapping an object. ColumnValues compiles to
- * a  quoted, comma-separated list of object keys for use in an INSERT, UPDATE
+ * a quoted, comma-separated list of object keys for use in an INSERT, UPDATE
  * or UPSERT query alongside a `ColumnNames`.
  */
 export function vals<T>(x: T) { return new ColumnValues<T>(x); }

@@ -30,11 +30,13 @@
   "exports": {
     "./db": {
       "require": "./db.js",
-      "import": "./db.mjs"
+      "import": "./db.mjs",
+      "types": "./db.d.ts"
     },
     "./generate": {
       "require": "./generate.js",
-      "import": "./generate.mjs"
+      "import": "./generate.mjs",
+      "types": "./generate.d.ts"
     }
   },
   "keywords": [
