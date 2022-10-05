@@ -244,12 +244,14 @@ export const upsert: UpsertSignatures = function (
     insertColsSQL = cols(firstRow),
     insertValuesSQL = mapWithSeparator(completedValues, sql`, `, v => sql`(${vals(v)})`),
     colNames = Object.keys(firstRow) as Column[],
-    updateColumns = specifiedUpdateColumns as string[] ?? colNames,
+    updateValues = options?.updateValues ?? {},
+    updateColumns = [...new Set(  // deduplicate the keys here
+      [...specifiedUpdateColumns as string[] ?? colNames, ...Object.keys(updateValues)]
+    )],
     conflictTargetSQL = Array.isArray(conflictTarget) ?
       sql`(${mapWithSeparator(conflictTarget, sql`, `, c => c)})` :
       sql<string>`ON CONSTRAINT ${conflictTarget.value}`,
     updateColsSQL = mapWithSeparator(updateColumns, sql`, `, c => c),
-    updateValues = options?.updateValues ?? {},
     updateValuesSQL = mapWithSeparator(updateColumns, sql`, `, c =>
       updateValues[c] !== undefined ? updateValues[c] :
         noNullUpdateColumns.includes(c) ? sql`CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END` :
