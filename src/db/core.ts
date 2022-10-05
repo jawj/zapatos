@@ -216,8 +216,8 @@ export function sql<
   Interpolations = SQL,
   RunResult = pg.QueryResult['rows'],
   Constraint = never,
-  >(literals: TemplateStringsArray, ...expressions: NoInfer<Interpolations>[]) {
-  return new SQLFragment<RunResult, Constraint>(Array.prototype.slice.apply(literals), expressions);
+>(literals: TemplateStringsArray, ...expressions: NoInfer<Interpolations>[]) {
+  return new SQLFragment<RunResult, Constraint>(Array.prototype.slice.apply(literals), expressions as SQL[]);
 }
 
 let preparedNameSeq = 0;
