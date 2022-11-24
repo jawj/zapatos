@@ -30,9 +30,9 @@ export const wait = (delayMs: number) => new Promise(resolve => setTimeout(resol
  * @param cb Mapping function
  */
 export const mapWithSeparator = <TIn, TSep, TOut>(
-  arr: TIn[],
+  arr: readonly TIn[],
   separator: TSep,
-  cb: (x: TIn, i: number, a: TIn[]) => TOut
+  cb: (x: TIn, i: number, a: readonly TIn[]) => TOut
 ): (TOut | TSep)[] => {
 
   const result: (TOut | TSep)[] = [];
