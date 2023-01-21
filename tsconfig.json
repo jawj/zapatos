@@ -1,6 +1,6 @@
 {
   "include": [
-    "src/**/*"
+    "src/**/*",
   ],
   "compilerOptions": {
     "baseUrl": ".",
@@ -8,6 +8,7 @@
     "rootDir": "src",
     "target": "ES2019",
     "module": "CommonJS",
+    "esModuleInterop": true,
     "strict": true,
     "exactOptionalPropertyTypes": true,
     "declaration": true,
