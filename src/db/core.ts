@@ -5,7 +5,6 @@ Released under the MIT licence: see LICENCE file
 */
 
 import type * as pg from 'pg';
-import { performance } from 'perf_hooks';
 
 import { getConfig, SQLQuery } from './config';
 import { isPOJO, NoInfer } from './utils';
@@ -17,6 +16,9 @@ import type {
   Column,
 } from 'zapatos/schema';
 
+const timing = typeof performance === 'object' ?
+  () => performance.now() :
+  () => Date.now();
 
 // === symbols, types, wrapper classes and shortcuts ===
 
@@ -261,14 +263,14 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
   run = async (queryable: Queryable, force = false): Promise<RunResult> => {
     const
       query = this.compile(),
-      config = getConfig(),
+      { queryListener, resultListener } = getConfig(),
       txnId = (queryable as any)._zapatos?.txnId;
 
-    if (config.queryListener) config.queryListener(query, txnId);
+    if (queryListener) queryListener(query, txnId);
 
-    const startMs = performance.now();
+    let startMs: number | undefined, result;
+    if (resultListener) startMs = timing();
 
-    let result;
     if (!this.noop || force) {
       const qr = await queryable.query(query);
       result = this.runResultTransform(qr);
@@ -277,7 +279,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
       result = this.noopResult;
     }
 
-    if (config.resultListener) config.resultListener(result, txnId, performance.now() - startMs);
+    if (resultListener) resultListener(result, txnId, timing() - startMs!);
     return result;
   };
 
