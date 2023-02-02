@@ -47,11 +47,6 @@
   ],
   "author": "George MacKerron",
   "license": "MIT",
-  "peerDependencies": {
-    "typescript": ">=4.1",
-    "pg": ">=7.18.2",
-    "@types/pg": ">=7.14.3"
-  },
   "devDependencies": {
     "@types/pg": "^8.6.5",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
