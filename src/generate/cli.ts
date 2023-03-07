@@ -43,7 +43,7 @@ void (async () => {
     fileConfig = recursivelyInterpolateEnvVars(JSON.parse(configJSON));
 
   } catch (err: any) {
-    throw new Error(`If present, zapatosconfig.ts must be a valid JSON file, and all referenced environment variables must exist: ${err.message}`);
+    throw new Error(`If present, zapatosconfig.json must be a valid JSON file, and all referenced environment variables must exist: ${err.message}`);
   }
 
   let argsConfig;
