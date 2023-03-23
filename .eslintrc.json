@@ -22,6 +22,9 @@
     "@typescript-eslint",
     "import"
   ],
+  "globals": {
+    "globalThis": false
+  },
   "rules": {
     "import/no-self-import": "warn",
     "import/no-cycle": "warn",
