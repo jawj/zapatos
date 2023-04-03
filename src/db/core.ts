@@ -165,15 +165,17 @@ export function raw(x: string) { return new DangerousRawString(x); }
  * Wraps either an array or object, and compiles to a quoted, comma-separated
  * list of array values (for use in a `SELECT` query) or object keys (for use
  * in an `INSERT`, `UPDATE` or `UPSERT` query, alongside `ColumnValues`).
+ * Table name can be provided to disambiguate the column names in SELECT queries.
  */
-export class ColumnNames<T> { constructor(public value: T) { } }
+export class ColumnNames<T, TTable extends Table> { constructor(public value: T, public tableName?: TTable) { } }
 /**
  * Returns a `ColumnNames` instance, wrapping either an array or an object.
  * `ColumnNames` compiles to a quoted, comma-separated list of array values (for
  * use in a `SELECT` query) or object keys (for use in an `INSERT`, `UDPATE` or
  * `UPSERT` query alongside a `ColumnValues`).
+ * Optionally, provide tableName to prefix each column name in the generated query.
  */
-export function cols<T>(x: T) { return new ColumnNames<T>(x); }
+export function cols<T, TTable extends Table = Table>(x: T, tableName?: TTable) { return new ColumnNames<T, TTable>(x, tableName); }
 
 /**
  * Compiles to a quoted, comma-separated list of object keys for use in an
@@ -200,7 +202,7 @@ export function parent<T extends Column | undefined = Column | undefined>(x?: T)
 
 
 export type GenericSQLExpression = SQLFragment<any, any> | Parameter | DefaultType | DangerousRawString | SelfType;
-export type SQLExpression = Table | ColumnNames<Updatable | (keyof Updatable)[]> | ColumnValues<Updatable | any[]> | Whereable | Column | ParentColumn | GenericSQLExpression;
+export type SQLExpression = Table | ColumnNames<Updatable | (keyof Updatable)[], Table> | ColumnValues<Updatable | any[]> | Whereable | Column | ParentColumn | GenericSQLExpression;
 export type SQL = SQLExpression | SQLExpression[];
 
 export type Queryable = pg.ClientBase | pg.Pool;
@@ -218,8 +220,23 @@ export function sql<
   Interpolations = SQL,
   RunResult = pg.QueryResult['rows'],
   Constraint = never,
->(literals: TemplateStringsArray, ...expressions: NoInfer<Interpolations>[]) {
-  return new SQLFragment<RunResult, Constraint>(Array.prototype.slice.apply(literals), expressions as SQL[]);
+  >(literals: TemplateStringsArray, ...expressions: NoInfer<Interpolations>[]) {
+  return new SQLFragment<RunResult, Constraint>(Array.prototype.slice.apply(literals), expressions  as SQL[]);
+}
+
+export function escapeIdentifier (identifier: string | number): string {
+  return `"${String(identifier).replace(/"/g, '""')}"`;
+}
+
+export function unescapeIdentifier (escapedIdentifier: string): string {
+  if (escapedIdentifier.charAt(0) === '"') {
+    const innerEscapedIdentifier = escapedIdentifier.charAt(escapedIdentifier.length - 1) === '"'
+      ? escapedIdentifier.slice(1, -1)
+      : escapedIdentifier.slice(1);
+    return innerEscapedIdentifier.replace(/""/g, '"');
+  } else {
+    return escapedIdentifier;
+  }
 }
 
 let preparedNameSeq = 0;
@@ -312,9 +329,15 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
 
     } else if (typeof expression === 'string') {
       // if it's a string, it should be a x.Table or x.Column type, so just needs quoting
-      result.text += expression.startsWith('"') && expression.endsWith('"') ? expression :
-        `"${expression.replace(/[.]/g, '"."')}"`;
-
+      // Re-escape identifier even if it "seems" to be already escaped. A malicious user
+      // could pass a string that starts with " but injects SQL code. Only trust escaped
+      // identifiers that we escape ourselves.
+      const [table, column] = String(expression).split('.');
+      if (table && column) {
+        result.text += escapeIdentifier(unescapeIdentifier(table)) + '.' + escapeIdentifier(unescapeIdentifier(column));
+      } else {
+        result.text += escapeIdentifier(unescapeIdentifier(expression));
+      }
     } else if (expression instanceof DangerousRawString) {
       // Little Bobby Tables passes straight through ...
       result.text += expression.value;
@@ -408,7 +431,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
       if (expression === globalThis) throw new Error('Did you use `self` (the global object) where you meant `db.self` (the Zapatos value)? The global object cannot be embedded in a query.');
 
       // must be a Whereable object, so put together a WHERE clause
-      const columnNames = <Column[]>Object.keys(expression).sort();
+      const columnNames = <Column[]>Object.keys(expression).filter(key => (<any>expression)[key] !== undefined).sort();
 
       if (columnNames.length) {  // if the object is not empty
         result.text += '(';
@@ -423,10 +446,14 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
             result.text += ')';
 
           } else {
-            this.compileExpression(columnName, result);
-            result.text += ` = `;
-            this.compileExpression(columnValue instanceof ParentColumn ? columnValue : new Parameter(columnValue),
-              result, parentTable, columnName);
+            if (columnValue === null) {
+              result.text += `"${columnName}" IS NULL`;
+            } else {
+              this.compileExpression(columnName, result);
+              result.text += ` = `;
+              this.compileExpression(columnValue instanceof ParentColumn ? columnValue : new Parameter(columnValue),
+                result, parentTable, columnName);
+            }
           }
         }
         result.text += ')';

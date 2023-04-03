@@ -52,8 +52,8 @@ interface ToDate {
  * Convert a `TimestampTzString`, `TimestampString` or `DateString` to a
  * JavaScript `Date`. For `TimestampString` and `DateString`, you must specify
  * whether the input is to be interpreted in the JavaScript environment's local
- * time or as UTC. 
- * 
+ * time or as UTC.
+ *
  * Nullability is preserved (e.g. `TimestampTzString | null` input gives
  * `Date | null` output).
  *

@@ -133,7 +133,7 @@ export const definitionForRelationInSchema = async (
       orDefault = isNullable || hasDefault ? ' | db.DefaultType' : '',
       possiblyQuotedColumn = quoteIfIllegalIdentifier(column);
 
-    // Now, 4 cases: 
+    // Now, 4 cases:
     //   1. null domain, known udt        <-- standard case
     //   2. null domain, unknown udt      <-- custom type:       create type file, with placeholder 'any'
     //   3. non-null domain, known udt    <-- alias type:        create type file, with udt-based placeholder
@@ -213,8 +213,9 @@ export namespace ${rel.name} {
         uniqueIndexes.map(ui => "'" + ui.indexname + "'").join(' | ') :
         'never'};
   export type Column = keyof Selectable;
+  export type FQColumn = \`\${Table}.\${keyof Selectable}\`; 
   export type OnlyCols<T extends readonly Column[]> = Pick<Selectable, T[number]>;
-  export type SQLExpression = Table | db.ColumnNames<Updatable | (keyof Updatable)[]> | db.ColumnValues<Updatable> | Whereable | Column | db.ParentColumn | db.GenericSQLExpression;
+  export type SQLExpression = db.GenericSQLExpression | db.ColumnNames<Updatable | (keyof Updatable)[], Table> | db.ColumnValues<Updatable> | Table | Whereable | Column | db.ParentColumn | db.GenericSQLExpression | FQColumn;
   export type SQL = SQLExpression | SQLExpression[];
 }`;
   return tableDef;
