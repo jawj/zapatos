@@ -44,7 +44,14 @@ export type JSONOnlyColsForTable<T extends Table, C extends any[] /* `ColumnForT
 
 export interface SQLFragmentMap { [k: string]: SQLFragment<any> }
 export interface SQLFragmentOrColumnMap<T extends Table> { [k: string]: SQLFragment<any> | ColumnForTable<T> }
-export type RunResultForSQLFragment<T extends SQLFragment<any, any>> = T extends SQLFragment<infer RunResult, any> ? RunResult : never;
+export type RunResultForSQLFragment<T extends SQLFragment<any, any>> =
+    T extends SQLFragment<infer RunResult, any>
+        // selectOne() will use a RunResult of T | undefined, but when embedded into another SQL query (through
+        // lateral or extras) the result will necessarily become T | null.
+        ? undefined extends RunResult
+            ? NonNullable<RunResult> | null
+            : RunResult
+    : never; // should never happen
 
 export type LateralResult<L extends SQLFragmentMap> = { [K in keyof L]: RunResultForSQLFragment<L[K]> };
 export type ExtrasResult<T extends Table, E extends SQLFragmentOrColumnMap<T>> = { [K in keyof E]:
@@ -424,7 +431,7 @@ type SelectReturnTypeForTable<
 > =
   (undefined extends L ? ReturningTypeForTable<T, C, E> :
     L extends SQLFragmentMap ? ReturningTypeForTable<T, C, E> & LateralResult<L> :
-    L extends SQLFragment<any> ? RunResultForSQLFragment<L> :
+    L extends SQLFragment<any> ? RunResultForSQLFragment<L> : // Lateral pass-through
     never);
 
 export enum SelectResultMode { Many, One, ExactlyOne, Numeric }
