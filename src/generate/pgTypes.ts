@@ -15,9 +15,7 @@ const baseTsTypeForBasePgType = (pgType: string, enums: EnumData, context: TypeC
       return context === 'JSONSelectable' || context === 'Selectable' ? 'string' :
         '(number | string)';
     case 'int8':
-      return context === 'JSONSelectable' ? 'number' :
-        context === 'Selectable' ? 'db.Int8String' :
-          '(number | db.Int8String)';
+      return 'db.Int8String';
     case 'bytea':
       return context === 'JSONSelectable' ? 'db.ByteArrayString' :
         context === 'Selectable' ? 'Buffer' :

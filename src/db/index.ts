@@ -14,3 +14,8 @@ export * from './transaction';
 export { mapWithSeparator } from './utils';
 
 export * as conditions from './conditions';
+
+import { types } from 'pg';
+
+const JSONBigNative = require('json-bigint')({ useNativeBigInt: true });
+types.setTypeParser(types.builtins.JSONB, JSONBigNative.parse);
