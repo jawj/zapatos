@@ -112,12 +112,21 @@ export const definitionForRelationInSchema = async (
 
   rows.forEach(row => {
     const { column, isGenerated, isNullable, hasDefault, udtName, domainName } = row;
-    let
-      selectableType = tsTypeForPgType(udtName, enums, 'Selectable'),
-      JSONSelectableType = tsTypeForPgType(udtName, enums, 'JSONSelectable'),
-      whereableType = tsTypeForPgType(udtName, enums, 'Whereable'),
-      insertableType = tsTypeForPgType(udtName, enums, 'Insertable'),
-      updatableType = tsTypeForPgType(udtName, enums, 'Updatable');
+    let selectableType =
+        config.types[rel.name]?.[column] ??
+        tsTypeForPgType(udtName, enums, "Selectable"),
+      JSONSelectableType =
+        config.types[rel.name]?.[column] ??
+        tsTypeForPgType(udtName, enums, "JSONSelectable"),
+      whereableType =
+        config.types[rel.name]?.[column] ??
+        tsTypeForPgType(udtName, enums, "Whereable"),
+      insertableType =
+        config.types[rel.name]?.[column] ??
+        tsTypeForPgType(udtName, enums, "Insertable"),
+      updatableType =
+        config.types[rel.name]?.[column] ??
+        tsTypeForPgType(udtName, enums, "Updatable");
 
     const
       columnDoc = createColumnDoc(config, schemaName, rel, row),

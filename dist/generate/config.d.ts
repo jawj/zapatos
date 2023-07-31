@@ -13,6 +13,8 @@ export interface OptionalConfig {
     columnOptions: ColumnOptions;
     schemaJSDoc: boolean;
     unprefixedSchema: string | null;
+    types?: Record<string, Record<string, string>>;
+    preamble?: string[];
 }
 interface SchemaRules {
     [schema: string]: {

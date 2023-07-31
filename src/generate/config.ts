@@ -24,6 +24,8 @@ export interface OptionalConfig {
   columnOptions: ColumnOptions;
   schemaJSDoc: boolean;
   unprefixedSchema: string | null;
+  types: Record<string, Record<string, string>>;
+  preamble: string[];
 }
 
 interface SchemaRules {
@@ -56,6 +58,8 @@ const defaultConfig: OptionalConfig = {
   columnOptions: {},
   schemaJSDoc: true,
   unprefixedSchema: 'public',
+  types: {},
+  preamble: [],
 };
 
 export const moduleRoot = () => {

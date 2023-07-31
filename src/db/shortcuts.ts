@@ -32,6 +32,8 @@ import {
   Default,
 } from './core';
 
+import { applyDeserializeHook, applySerializeHook } from "./serde";
+
 import {
   completeKeysWithDefaultValue,
   mapWithSeparator,
@@ -123,7 +125,8 @@ export const insert: InsertSignatures = function (
 
   } else {
     const
-      completedValues = Array.isArray(values) ? completeKeysWithDefaultValue(values, Default) : values,
+      postValues = applySerializeHook(table, values),
+      completedValues = Array.isArray(postValues) ? completeKeysWithDefaultValue(postValues, Default) : postValues,
       colsSQL = cols(Array.isArray(completedValues) ? completedValues[0] : completedValues),
       valuesSQL = Array.isArray(completedValues) ?
         mapWithSeparator(completedValues as Insertable[], sql`, `, v => sql`(${vals(v)})`) :
@@ -135,8 +138,8 @@ export const insert: InsertSignatures = function (
   }
 
   query.runResultTransform = Array.isArray(values) ?
-    (qr) => qr.rows.map(r => r.result) :
-    (qr) => qr.rows[0].result;
+    (qr) => qr.rows.map(r => applyDeserializeHook(table, r.result)) :
+    (qr) => applyDeserializeHook(table, qr.rows[0].result);
 
   return query;
 };
@@ -239,7 +242,8 @@ export const upsert: UpsertSignatures = function (
   if (specifiedUpdateColumns && !Array.isArray(specifiedUpdateColumns)) specifiedUpdateColumns = [specifiedUpdateColumns];
 
   const
-    completedValues = Array.isArray(values) ? completeKeysWithDefaultValue(values, Default) : [values],
+    postValues = applySerializeHook(table, values),
+    completedValues = Array.isArray(postValues) ? completeKeysWithDefaultValue(postValues, Default) : [postValues],
     firstRow = completedValues[0],
     insertColsSQL = cols(firstRow),
     insertValuesSQL = mapWithSeparator(completedValues, sql`, `, v => sql`(${vals(v)})`),
@@ -272,8 +276,8 @@ export const upsert: UpsertSignatures = function (
     query = sql`${insertPart} ${conflictPart} ${conflictActionPart} ${returningPart}`;
 
   query.runResultTransform = Array.isArray(values) ?
-    (qr) => qr.rows.map(r => r.result) :
-    (qr) => qr.rows[0]?.result;
+    (qr) => qr.rows.map(r => applyDeserializeHook(table, r.result)) :
+    (qr) => applyDeserializeHook(table, qr.rows[0]?.result);
 
   return query;
 };
@@ -307,11 +311,12 @@ export const update: UpdateSignatures = function (
   // more info: https://www.postgresql-archive.org/Possible-regression-in-UPDATE-SET-lt-column-list-gt-lt-row-expression-gt-with-just-one-single-column0-td5989074.html
 
   const
+    postValues = applySerializeHook(table, values),
     returningSQL = SQLForColumnsOfTable(options?.returning, table),
     extrasSQL = SQLForExtras(options?.extras),
-    query = sql`UPDATE ${table} SET (${cols(values)}) = ROW(${vals(values)}) WHERE ${where} RETURNING ${returningSQL}${extrasSQL} AS result`;
+    query = sql`UPDATE ${table} SET (${cols(postValues)}) = ROW(${vals(postValues)}) WHERE ${where} RETURNING ${returningSQL}${extrasSQL} AS result`;
 
-  query.runResultTransform = (qr) => qr.rows.map(r => r.result);
+  query.runResultTransform = (qr) => qr.rows.map(r => applyDeserializeHook(table, r.result));
   return query;
 };
 
@@ -342,7 +347,7 @@ export const deletes: DeleteSignatures = function (
     extrasSQL = SQLForExtras(options?.extras),
     query = sql`DELETE FROM ${table} WHERE ${where} RETURNING ${returningSQL}${extrasSQL} AS result`;
 
-  query.runResultTransform = (qr) => qr.rows.map(r => r.result);
+  query.runResultTransform = (qr) => qr.rows.map(r => applyDeserializeHook(table, r.result));
   return query;
 };
 
@@ -566,10 +571,10 @@ export const select: SelectSignatures = function (
         (qr) => {
           const result = qr.rows[0]?.result;
           if (result === undefined) throw new NotExactlyOneError(query, 'One result expected but none returned (hint: check `.query.compile()` on this Error)');
-          return result;
+          return applyDeserializeHook(table, result);
         } :
         // SelectResultMode.One or SelectResultMode.Many
-        (qr) => qr.rows[0]?.result;
+        (qr) => applyDeserializeHook(table, qr.rows[0]?.result);
 
   return query;
 };

@@ -114,6 +114,7 @@ export const tsForConfig = async (config: CompleteConfig, debug: (s: string) => 
     ts = header() + declareModule('zapatos/schema',
       `\nimport type * as db from 'zapatos/db';\n` +
       (hasCustomTypes ? `import type * as c from 'zapatos/custom';\n` : ``) +
+      config.preamble.join('\n') +
       versionCanary + '\n\n' +
       schemaDefs.join('\n\n') +
       `\n\n/* === global aggregate types === */\n` +
