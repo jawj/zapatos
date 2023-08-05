@@ -1,6 +1,6 @@
-import type { JSONSelectableForTable, WhereableForTable, InsertableForTable, UpdatableForTable, ColumnForTable, UniqueIndexForTable, SQLForTable, Table } from "zapatos/schema";
-import { AllType, SQLFragment } from "./core";
-import { NoInfer } from "./utils";
+import type { JSONSelectableForTable, WhereableForTable, InsertableForTable, UpdatableForTable, ColumnForTable, UniqueIndexForTable, SQLForTable, Table } from 'zapatos/schema';
+import { AllType, SQLFragment } from './core';
+import { NoInfer } from './utils';
 export type JSONOnlyColsForTable<T extends Table, C extends any[]> = Pick<JSONSelectableForTable<T>, C[number]>;
 export interface SQLFragmentMap {
     [k: string]: SQLFragment<any>;
@@ -18,7 +18,7 @@ export type ExtrasResult<T extends Table, E extends SQLFragmentOrColumnMap<T>> =
 type ExtrasOption<T extends Table> = SQLFragmentOrColumnMap<T> | undefined;
 type ColumnsOption<T extends Table> = readonly ColumnForTable<T>[] | undefined;
 type LimitedLateralOption = SQLFragmentMap | undefined;
-type FullLateralOption = LimitedLateralOption | SQLFragment<any>;
+export type FullLateralOption = LimitedLateralOption | SQLFragment<any>;
 type LateralOption<C extends ColumnsOption<Table>, E extends ExtrasOption<Table>> = undefined extends C ? undefined extends E ? FullLateralOption : LimitedLateralOption : LimitedLateralOption;
 export interface ReturningOptionsForTable<T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>> {
     returning?: C;
@@ -49,9 +49,9 @@ export declare class Constraint<T extends Table> {
  */
 export declare function constraint<T extends Table>(x: UniqueIndexForTable<T>): Constraint<T>;
 export interface UpsertAction {
-    $action: "INSERT" | "UPDATE";
+    $action: 'INSERT' | 'UPDATE';
 }
-type UpsertReportAction = "suppress";
+type UpsertReportAction = 'suppress';
 type UpsertReturnableForTable<T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>, RA extends UpsertReportAction | undefined> = ReturningTypeForTable<T, C, E> & (undefined extends RA ? UpsertAction : {});
 type UpsertConflictTargetForTable<T extends Table> = Constraint<T> | ColumnForTable<T> | ColumnForTable<T>[];
 type UpdateColumns<T extends Table> = ColumnForTable<T> | ColumnForTable<T>[];
@@ -98,8 +98,8 @@ export interface DeleteSignatures {
  * @param where A `Whereable` (or `SQLFragment`) defining which rows to delete
  */
 export declare const deletes: DeleteSignatures;
-type TruncateIdentityOpts = "CONTINUE IDENTITY" | "RESTART IDENTITY";
-type TruncateForeignKeyOpts = "RESTRICT" | "CASCADE";
+type TruncateIdentityOpts = 'CONTINUE IDENTITY' | 'RESTART IDENTITY';
+type TruncateForeignKeyOpts = 'RESTRICT' | 'CASCADE';
 interface TruncateSignatures {
     (table: Table | Table[]): SQLFragment<undefined>;
     (table: Table | Table[], optId: TruncateIdentityOpts): SQLFragment<undefined>;
@@ -115,14 +115,14 @@ interface TruncateSignatures {
 export declare const truncate: TruncateSignatures;
 interface OrderSpecForTable<T extends Table> {
     by: SQLForTable<T>;
-    direction: "ASC" | "DESC";
-    nulls?: "FIRST" | "LAST";
+    direction: 'ASC' | 'DESC';
+    nulls?: 'FIRST' | 'LAST';
 }
 type Unprefixed<S extends string> = S extends `${infer _}.${infer Rest}` ? Rest : S;
 export interface SelectLockingOptions<A extends string> {
-    for: "UPDATE" | "NO KEY UPDATE" | "SHARE" | "KEY SHARE";
+    for: 'UPDATE' | 'NO KEY UPDATE' | 'SHARE' | 'KEY SHARE';
     of?: Unprefixed<Table> | A | (Unprefixed<Table> | A)[];
-    wait?: "NOWAIT" | "SKIP LOCKED";
+    wait?: 'NOWAIT' | 'SKIP LOCKED';
 }
 export interface SelectOptionsForTable<T extends Table, C extends ColumnsOption<T>, L extends LateralOption<C, E>, E extends ExtrasOption<T>, A extends string> {
     distinct?: boolean | ColumnForTable<T> | ColumnForTable<T>[] | SQLFragment<any>;
@@ -138,7 +138,7 @@ export interface SelectOptionsForTable<T extends Table, C extends ColumnsOption<
     alias?: A;
     lock?: SelectLockingOptions<NoInfer<A>> | SelectLockingOptions<NoInfer<A>>[];
 }
-type SelectReturnTypeForTable<T extends Table, C extends ColumnsOption<T>, L extends LateralOption<C, E>, E extends ExtrasOption<T>> = undefined extends L ? ReturningTypeForTable<T, C, E> : L extends SQLFragmentMap ? ReturningTypeForTable<T, C, E> & LateralResult<L> : L extends SQLFragment<any> ? RunResultForSQLFragment<L> : never;
+type SelectReturnTypeForTable<T extends Table, C extends ColumnsOption<T>, L extends LateralOption<C, E>, E extends ExtrasOption<T>> = (undefined extends L ? ReturningTypeForTable<T, C, E> : L extends SQLFragmentMap ? ReturningTypeForTable<T, C, E> & LateralResult<L> : L extends SQLFragment<any> ? RunResultForSQLFragment<L> : never);
 export declare enum SelectResultMode {
     Many = 0,
     One = 1,

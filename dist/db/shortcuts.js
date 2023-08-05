@@ -9,15 +9,14 @@ exports.max = exports.min = exports.avg = exports.sum = exports.count = exports.
 const core_1 = require("./core");
 const serde_1 = require("./serde");
 const utils_1 = require("./utils");
+;
 function SQLForColumnsOfTable(columns, table) {
-    return columns === undefined
-        ? (0, core_1.sql) `to_jsonb(${table}.*)`
-        : (0, core_1.sql) `jsonb_build_object(${(0, utils_1.mapWithSeparator)(columns, (0, core_1.sql) `, `, (c) => (0, core_1.sql) `${(0, core_1.param)(c)}::text, ${c}`)})`;
+    return columns === undefined ? (0, core_1.sql) `to_jsonb(${table}.*)` :
+        (0, core_1.sql) `jsonb_build_object(${(0, utils_1.mapWithSeparator)(columns, (0, core_1.sql) `, `, c => (0, core_1.sql) `${(0, core_1.param)(c)}::text, ${c}`)})`;
 }
 function SQLForExtras(extras) {
-    return extras === undefined
-        ? []
-        : (0, core_1.sql) ` || jsonb_build_object(${(0, utils_1.mapWithSeparator)(Object.keys(extras), (0, core_1.sql) `, `, (k) => (0, core_1.sql) `${(0, core_1.param)(k)}::text, ${extras[k]}`)})`;
+    return extras === undefined ? [] :
+        (0, core_1.sql) ` || jsonb_build_object(${(0, utils_1.mapWithSeparator)(Object.keys(extras), (0, core_1.sql) `, `, k => (0, core_1.sql) `${(0, core_1.param)(k)}::text, ${extras[k]}`)})`;
 }
 /**
  * Generate an `INSERT` query `SQLFragment`.
@@ -32,16 +31,14 @@ const insert = function (table, values, options) {
         query.noopResult = [];
     }
     else {
-        const postValues = (0, serde_1.applySerializeHook)(table, values), completedValues = Array.isArray(postValues)
-            ? (0, utils_1.completeKeysWithDefaultValue)(postValues, core_1.Default)
-            : postValues, colsSQL = (0, core_1.cols)(Array.isArray(completedValues) ? completedValues[0] : completedValues), valuesSQL = Array.isArray(completedValues)
-            ? (0, utils_1.mapWithSeparator)(completedValues, (0, core_1.sql) `, `, (v) => (0, core_1.sql) `(${(0, core_1.vals)(v)})`)
-            : (0, core_1.sql) `(${(0, core_1.vals)(completedValues)})`, returningSQL = SQLForColumnsOfTable(options === null || options === void 0 ? void 0 : options.returning, table), extrasSQL = SQLForExtras(options === null || options === void 0 ? void 0 : options.extras);
+        const postValues = (0, serde_1.applySerializeHook)(table, values), completedValues = Array.isArray(postValues) ? (0, utils_1.completeKeysWithDefaultValue)(postValues, core_1.Default) : postValues, colsSQL = (0, core_1.cols)(Array.isArray(completedValues) ? completedValues[0] : completedValues), valuesSQL = Array.isArray(completedValues) ?
+            (0, utils_1.mapWithSeparator)(completedValues, (0, core_1.sql) `, `, v => (0, core_1.sql) `(${(0, core_1.vals)(v)})`) :
+            (0, core_1.sql) `(${(0, core_1.vals)(completedValues)})`, returningSQL = SQLForColumnsOfTable(options === null || options === void 0 ? void 0 : options.returning, table), extrasSQL = SQLForExtras(options === null || options === void 0 ? void 0 : options.extras);
         query = (0, core_1.sql) `INSERT INTO ${table} (${colsSQL}) VALUES ${valuesSQL} RETURNING ${returningSQL}${extrasSQL} AS result`;
     }
-    query.runResultTransform = Array.isArray(values)
-        ? (qr) => qr.rows.map((r) => r.result)
-        : (qr) => qr.rows[0].result;
+    query.runResultTransform = Array.isArray(values) ?
+        (qr) => qr.rows.map(r => (0, serde_1.applyDeserializeHook)(table, r.result)) :
+        (qr) => (0, serde_1.applyDeserializeHook)(table, qr.rows[0].result);
     return query;
 };
 exports.insert = insert;
@@ -60,9 +57,7 @@ exports.Constraint = Constraint;
  * Returns a `Constraint` instance, wrapping a unique index of the target table
  * for use as the arbiter constraint of an `upsert` shortcut query.
  */
-function constraint(x) {
-    return new Constraint(x);
-}
+function constraint(x) { return new Constraint(x); }
 exports.constraint = constraint;
 exports.doNothing = [];
 /**
@@ -81,7 +76,7 @@ const upsert = function (table, values, conflictTarget, options) {
     var _a, _b, _c;
     if (Array.isArray(values) && values.length === 0)
         return (0, exports.insert)(table, values); // punt a no-op to plain insert
-    if (typeof conflictTarget === "string")
+    if (typeof conflictTarget === 'string')
         conflictTarget = [conflictTarget]; // now either Column[] or Constraint
     let noNullUpdateColumns = (_a = options === null || options === void 0 ? void 0 : options.noNullUpdateColumns) !== null && _a !== void 0 ? _a : [];
     if (!Array.isArray(noNullUpdateColumns))
@@ -89,29 +84,18 @@ const upsert = function (table, values, conflictTarget, options) {
     let specifiedUpdateColumns = options === null || options === void 0 ? void 0 : options.updateColumns;
     if (specifiedUpdateColumns && !Array.isArray(specifiedUpdateColumns))
         specifiedUpdateColumns = [specifiedUpdateColumns];
-    const postValues = (0, serde_1.applySerializeHook)(table, values), completedValues = Array.isArray(postValues)
-        ? (0, utils_1.completeKeysWithDefaultValue)(postValues, core_1.Default)
-        : [postValues], firstRow = completedValues[0], insertColsSQL = (0, core_1.cols)(firstRow), insertValuesSQL = (0, utils_1.mapWithSeparator)(completedValues, (0, core_1.sql) `, `, (v) => (0, core_1.sql) `(${(0, core_1.vals)(v)})`), colNames = Object.keys(firstRow), updateValues = (_b = options === null || options === void 0 ? void 0 : options.updateValues) !== null && _b !== void 0 ? _b : {}, updateColumns = [
-        ...new Set([
-            // deduplicate the keys here
-            ...((_c = specifiedUpdateColumns) !== null && _c !== void 0 ? _c : colNames),
-            ...Object.keys(updateValues),
-        ]),
-    ], conflictTargetSQL = Array.isArray(conflictTarget)
-        ? (0, core_1.sql) `(${(0, utils_1.mapWithSeparator)(conflictTarget, (0, core_1.sql) `, `, (c) => c)})`
-        : (0, core_1.sql) `ON CONSTRAINT ${conflictTarget.value}`, updateColsSQL = (0, utils_1.mapWithSeparator)(updateColumns, (0, core_1.sql) `, `, (c) => c), updateValuesSQL = (0, utils_1.mapWithSeparator)(updateColumns, (0, core_1.sql) `, `, (c) => updateValues[c] !== undefined
-        ? updateValues[c]
-        : noNullUpdateColumns.includes(c)
-            ? (0, core_1.sql) `CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END`
-            : (0, core_1.sql) `EXCLUDED.${c}`), returningSQL = SQLForColumnsOfTable(options === null || options === void 0 ? void 0 : options.returning, table), extrasSQL = SQLForExtras(options === null || options === void 0 ? void 0 : options.extras), suppressReport = (options === null || options === void 0 ? void 0 : options.reportAction) === "suppress";
+    const postValues = (0, serde_1.applySerializeHook)(table, values), completedValues = Array.isArray(postValues) ? (0, utils_1.completeKeysWithDefaultValue)(postValues, core_1.Default) : [postValues], firstRow = completedValues[0], insertColsSQL = (0, core_1.cols)(firstRow), insertValuesSQL = (0, utils_1.mapWithSeparator)(completedValues, (0, core_1.sql) `, `, v => (0, core_1.sql) `(${(0, core_1.vals)(v)})`), colNames = Object.keys(firstRow), updateValues = (_b = options === null || options === void 0 ? void 0 : options.updateValues) !== null && _b !== void 0 ? _b : {}, updateColumns = [...new Set(// deduplicate the keys here
+        [...(_c = specifiedUpdateColumns) !== null && _c !== void 0 ? _c : colNames, ...Object.keys(updateValues)])], conflictTargetSQL = Array.isArray(conflictTarget) ?
+        (0, core_1.sql) `(${(0, utils_1.mapWithSeparator)(conflictTarget, (0, core_1.sql) `, `, c => c)})` :
+        (0, core_1.sql) `ON CONSTRAINT ${conflictTarget.value}`, updateColsSQL = (0, utils_1.mapWithSeparator)(updateColumns, (0, core_1.sql) `, `, c => c), updateValuesSQL = (0, utils_1.mapWithSeparator)(updateColumns, (0, core_1.sql) `, `, c => updateValues[c] !== undefined ? updateValues[c] :
+        noNullUpdateColumns.includes(c) ? (0, core_1.sql) `CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END` :
+            (0, core_1.sql) `EXCLUDED.${c}`), returningSQL = SQLForColumnsOfTable(options === null || options === void 0 ? void 0 : options.returning, table), extrasSQL = SQLForExtras(options === null || options === void 0 ? void 0 : options.extras), suppressReport = (options === null || options === void 0 ? void 0 : options.reportAction) === 'suppress';
     // the added-on $action = 'INSERT' | 'UPDATE' key takes after SQL Server's approach to MERGE
     // (and on the use of xmax for this purpose, see: https://stackoverflow.com/questions/39058213/postgresql-upsert-differentiate-inserted-and-updated-rows-using-system-columns-x)
-    const insertPart = (0, core_1.sql) `INSERT INTO ${table} (${insertColsSQL}) VALUES ${insertValuesSQL}`, conflictPart = (0, core_1.sql) `ON CONFLICT ${conflictTargetSQL} DO`, conflictActionPart = updateColsSQL.length > 0
-        ? (0, core_1.sql) `UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL})`
-        : (0, core_1.sql) `NOTHING`, reportPart = (0, core_1.sql) ` || jsonb_build_object('$action', CASE xmax WHEN 0 THEN 'INSERT' ELSE 'UPDATE' END)`, returningPart = (0, core_1.sql) `RETURNING ${returningSQL}${extrasSQL}${suppressReport ? [] : reportPart} AS result`, query = (0, core_1.sql) `${insertPart} ${conflictPart} ${conflictActionPart} ${returningPart}`;
-    query.runResultTransform = Array.isArray(values)
-        ? (qr) => qr.rows.map((r) => r.result)
-        : (qr) => { var _a; return (_a = qr.rows[0]) === null || _a === void 0 ? void 0 : _a.result; };
+    const insertPart = (0, core_1.sql) `INSERT INTO ${table} (${insertColsSQL}) VALUES ${insertValuesSQL}`, conflictPart = (0, core_1.sql) `ON CONFLICT ${conflictTargetSQL} DO`, conflictActionPart = updateColsSQL.length > 0 ? (0, core_1.sql) `UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL})` : (0, core_1.sql) `NOTHING`, reportPart = (0, core_1.sql) ` || jsonb_build_object('$action', CASE xmax WHEN 0 THEN 'INSERT' ELSE 'UPDATE' END)`, returningPart = (0, core_1.sql) `RETURNING ${returningSQL}${extrasSQL}${suppressReport ? [] : reportPart} AS result`, query = (0, core_1.sql) `${insertPart} ${conflictPart} ${conflictActionPart} ${returningPart}`;
+    query.runResultTransform = Array.isArray(values) ?
+        (qr) => qr.rows.map(r => (0, serde_1.applyDeserializeHook)(table, r.result)) :
+        (qr) => { var _a; return (0, serde_1.applyDeserializeHook)(table, (_a = qr.rows[0]) === null || _a === void 0 ? void 0 : _a.result); };
     return query;
 };
 exports.upsert = upsert;
@@ -125,7 +109,7 @@ const update = function (table, values, where, options) {
     // note: the ROW() constructor below is required in Postgres 10+ if we're updating a single column
     // more info: https://www.postgresql-archive.org/Possible-regression-in-UPDATE-SET-lt-column-list-gt-lt-row-expression-gt-with-just-one-single-column0-td5989074.html
     const postValues = (0, serde_1.applySerializeHook)(table, values), returningSQL = SQLForColumnsOfTable(options === null || options === void 0 ? void 0 : options.returning, table), extrasSQL = SQLForExtras(options === null || options === void 0 ? void 0 : options.extras), query = (0, core_1.sql) `UPDATE ${table} SET (${(0, core_1.cols)(postValues)}) = ROW(${(0, core_1.vals)(postValues)}) WHERE ${where} RETURNING ${returningSQL}${extrasSQL} AS result`;
-    query.runResultTransform = (qr) => qr.rows.map((r) => r.result);
+    query.runResultTransform = (qr) => qr.rows.map(r => (0, serde_1.applyDeserializeHook)(table, r.result));
     return query;
 };
 exports.update = update;
@@ -136,7 +120,7 @@ exports.update = update;
  */
 const deletes = function (table, where, options) {
     const returningSQL = SQLForColumnsOfTable(options === null || options === void 0 ? void 0 : options.returning, table), extrasSQL = SQLForExtras(options === null || options === void 0 ? void 0 : options.extras), query = (0, core_1.sql) `DELETE FROM ${table} WHERE ${where} RETURNING ${returningSQL}${extrasSQL} AS result`;
-    query.runResultTransform = (qr) => qr.rows.map((r) => r.result);
+    query.runResultTransform = (qr) => qr.rows.map(r => (0, serde_1.applyDeserializeHook)(table, r.result));
     return query;
 };
 exports.deletes = deletes;
@@ -149,10 +133,11 @@ exports.deletes = deletes;
 const truncate = function (table, ...opts) {
     if (!Array.isArray(table))
         table = [table];
-    const tables = (0, utils_1.mapWithSeparator)(table, (0, core_1.sql) `, `, (t) => t), query = (0, core_1.sql) `TRUNCATE ${tables}${(0, core_1.raw)((opts.length ? " " : "") + opts.join(" "))}`;
+    const tables = (0, utils_1.mapWithSeparator)(table, (0, core_1.sql) `, `, t => t), query = (0, core_1.sql) `TRUNCATE ${tables}${(0, core_1.raw)((opts.length ? ' ' : '') + opts.join(' '))}`;
     return query;
 };
 exports.truncate = truncate;
+;
 var SelectResultMode;
 (function (SelectResultMode) {
     SelectResultMode[SelectResultMode["Many"] = 0] = "Many";
@@ -165,7 +150,7 @@ class NotExactlyOneError extends Error {
         super(...params);
         if (Error.captureStackTrace)
             Error.captureStackTrace(this, NotExactlyOneError); // V8 only
-        this.name = "NotExactlyOneError";
+        this.name = 'NotExactlyOneError';
         this.query = query; // custom property
     }
 }
@@ -191,93 +176,55 @@ exports.NotExactlyOneError = NotExactlyOneError;
  * quantities can be included in the JSON result
  * @param mode (Used internally by `selectOne` and `count`)
  */
-const select = function (table, where = core_1.all, options = {}, mode = SelectResultMode.Many, aggregate = "count") {
-    const limit1 = mode === SelectResultMode.One || mode === SelectResultMode.ExactlyOne, allOptions = limit1 ? { ...options, limit: 1 } : options, alias = allOptions.alias || table, { distinct, groupBy, having, lateral, columns, extras } = allOptions, lock = allOptions.lock === undefined || Array.isArray(allOptions.lock)
-        ? allOptions.lock
-        : [allOptions.lock], order = allOptions.order === undefined || Array.isArray(allOptions.order)
-        ? allOptions.order
-        : [allOptions.order], tableAliasSQL = alias === table ? [] : (0, core_1.sql) ` AS ${alias}`, distinctSQL = !distinct
-        ? []
-        : (0, core_1.sql) ` DISTINCT${distinct instanceof core_1.SQLFragment || typeof distinct === "string"
-            ? (0, core_1.sql) ` ON (${distinct})`
-            : Array.isArray(distinct)
-                ? (0, core_1.sql) ` ON (${(0, core_1.cols)(distinct)})`
-                : []}`, colsSQL = lateral instanceof core_1.SQLFragment
-        ? []
-        : mode === SelectResultMode.Numeric
-            ? columns
-                ? (0, core_1.sql) `${(0, core_1.raw)(aggregate)}(${(0, core_1.cols)(columns)})`
-                : (0, core_1.sql) `${(0, core_1.raw)(aggregate)}(${alias}.*)`
-            : SQLForColumnsOfTable(columns, alias), colsExtraSQL = lateral instanceof core_1.SQLFragment || mode === SelectResultMode.Numeric
-        ? []
-        : SQLForExtras(extras), colsLateralSQL = lateral === undefined || mode === SelectResultMode.Numeric
-        ? []
-        : lateral instanceof core_1.SQLFragment
-            ? (0, core_1.sql) `"lateral_passthru".result`
-            : (0, core_1.sql) ` || jsonb_build_object(${(0, utils_1.mapWithSeparator)(Object.keys(lateral).sort(), (0, core_1.sql) `, `, (k) => (0, core_1.sql) `${(0, core_1.param)(k)}::text, "lateral_${(0, core_1.raw)(k)}".result`)})`, allColsSQL = (0, core_1.sql) `${colsSQL}${colsExtraSQL}${colsLateralSQL}`, whereSQL = where === core_1.all ? [] : (0, core_1.sql) ` WHERE ${where}`, groupBySQL = !groupBy
-        ? []
-        : (0, core_1.sql) ` GROUP BY ${groupBy instanceof core_1.SQLFragment || typeof groupBy === "string"
-            ? groupBy
-            : (0, core_1.cols)(groupBy)}`, havingSQL = !having ? [] : (0, core_1.sql) ` HAVING ${having}`, orderSQL = order === undefined
-        ? []
-        : (0, core_1.sql) ` ORDER BY ${(0, utils_1.mapWithSeparator)(order, (0, core_1.sql) `, `, (o) => {
-            // `as` clause is required when TS not strict
-            if (!["ASC", "DESC"].includes(o.direction))
+const select = function (table, where = core_1.all, options = {}, mode = SelectResultMode.Many, aggregate = 'count') {
+    const limit1 = mode === SelectResultMode.One || mode === SelectResultMode.ExactlyOne, allOptions = limit1 ? { ...options, limit: 1 } : options, alias = allOptions.alias || table, { distinct, groupBy, having, lateral, columns, extras } = allOptions, lock = allOptions.lock === undefined || Array.isArray(allOptions.lock) ? allOptions.lock : [allOptions.lock], order = allOptions.order === undefined || Array.isArray(allOptions.order) ? allOptions.order : [allOptions.order], tableAliasSQL = alias === table ? [] : (0, core_1.sql) ` AS ${alias}`, distinctSQL = !distinct ? [] : (0, core_1.sql) ` DISTINCT${distinct instanceof core_1.SQLFragment || typeof distinct === 'string' ? (0, core_1.sql) ` ON (${distinct})` :
+        Array.isArray(distinct) ? (0, core_1.sql) ` ON (${(0, core_1.cols)(distinct)})` : []}`, colsSQL = lateral instanceof core_1.SQLFragment ? [] :
+        mode === SelectResultMode.Numeric ?
+            (columns ? (0, core_1.sql) `${(0, core_1.raw)(aggregate)}(${(0, core_1.cols)(columns)})` : (0, core_1.sql) `${(0, core_1.raw)(aggregate)}(${alias}.*)`) :
+            SQLForColumnsOfTable(columns, alias), colsExtraSQL = lateral instanceof core_1.SQLFragment || mode === SelectResultMode.Numeric ? [] : SQLForExtras(extras), colsLateralSQL = lateral === undefined || mode === SelectResultMode.Numeric ? [] :
+        lateral instanceof core_1.SQLFragment ? (0, core_1.sql) `"lateral_passthru".result` :
+            (0, core_1.sql) ` || jsonb_build_object(${(0, utils_1.mapWithSeparator)(Object.keys(lateral).sort(), (0, core_1.sql) `, `, k => (0, core_1.sql) `${(0, core_1.param)(k)}::text, "lateral_${(0, core_1.raw)(k)}".result`)})`, allColsSQL = (0, core_1.sql) `${colsSQL}${colsExtraSQL}${colsLateralSQL}`, whereSQL = where === core_1.all ? [] : (0, core_1.sql) ` WHERE ${where}`, groupBySQL = !groupBy ? [] : (0, core_1.sql) ` GROUP BY ${groupBy instanceof core_1.SQLFragment || typeof groupBy === 'string' ? groupBy : (0, core_1.cols)(groupBy)}`, havingSQL = !having ? [] : (0, core_1.sql) ` HAVING ${having}`, orderSQL = order === undefined ? [] :
+        (0, core_1.sql) ` ORDER BY ${(0, utils_1.mapWithSeparator)(order, (0, core_1.sql) `, `, o => {
+            if (!['ASC', 'DESC'].includes(o.direction))
                 throw new Error(`Direction must be ASC/DESC, not '${o.direction}'`);
-            if (o.nulls && !["FIRST", "LAST"].includes(o.nulls))
+            if (o.nulls && !['FIRST', 'LAST'].includes(o.nulls))
                 throw new Error(`Nulls must be FIRST/LAST/undefined, not '${o.nulls}'`);
             return (0, core_1.sql) `${o.by} ${(0, core_1.raw)(o.direction)}${o.nulls ? (0, core_1.sql) ` NULLS ${(0, core_1.raw)(o.nulls)}` : []}`;
-        })}`, limitSQL = allOptions.limit === undefined
-        ? []
-        : allOptions.withTies
-            ? (0, core_1.sql) ` FETCH FIRST ${(0, core_1.param)(allOptions.limit)} ROWS WITH TIES`
-            : (0, core_1.sql) ` LIMIT ${(0, core_1.param)(allOptions.limit)}`, // compatibility with pg pre-10.5; and fewer bytes!
-    offsetSQL = allOptions.offset === undefined
-        ? []
-        : (0, core_1.sql) ` OFFSET ${(0, core_1.param)(allOptions.offset)}`, // pg is lax about OFFSET following FETCH, and we exploit that
-    lockSQL = lock === undefined
-        ? []
-        : lock.map((lock) => {
-            // `as` clause is required when TS not strict
-            const ofTables = lock.of === undefined || Array.isArray(lock.of)
-                ? lock.of
-                : [lock.of], ofClause = ofTables === undefined
-                ? []
-                : (0, core_1.sql) ` OF ${(0, utils_1.mapWithSeparator)(ofTables, (0, core_1.sql) `, `, (t) => t)}`; // `as` clause is required when TS not strict
-            return (0, core_1.sql) ` FOR ${(0, core_1.raw)(lock.for)}${ofClause}${lock.wait ? (0, core_1.sql) ` ${(0, core_1.raw)(lock.wait)}` : []}`;
-        }), lateralSQL = lateral === undefined
-        ? []
-        : lateral instanceof core_1.SQLFragment
-            ? (() => {
-                lateral.parentTable = alias;
-                return (0, core_1.sql) ` LEFT JOIN LATERAL (${lateral}) AS "lateral_passthru" ON true`;
-            })()
-            : Object.keys(lateral)
-                .sort()
-                .map((k) => {
+        })}`, limitSQL = allOptions.limit === undefined ? [] :
+        allOptions.withTies ? (0, core_1.sql) ` FETCH FIRST ${(0, core_1.param)(allOptions.limit)} ROWS WITH TIES` :
+            (0, core_1.sql) ` LIMIT ${(0, core_1.param)(allOptions.limit)}`, // compatibility with pg pre-10.5; and fewer bytes!
+    offsetSQL = allOptions.offset === undefined ? [] : (0, core_1.sql) ` OFFSET ${(0, core_1.param)(allOptions.offset)}`, // pg is lax about OFFSET following FETCH, and we exploit that
+    lockSQL = lock === undefined ? [] : lock.map(lock => {
+        const ofTables = lock.of === undefined || Array.isArray(lock.of) ? lock.of : [lock.of], ofClause = ofTables === undefined ? [] : (0, core_1.sql) ` OF ${(0, utils_1.mapWithSeparator)(ofTables, (0, core_1.sql) `, `, t => t)}`; // `as` clause is required when TS not strict
+        return (0, core_1.sql) ` FOR ${(0, core_1.raw)(lock.for)}${ofClause}${lock.wait ? (0, core_1.sql) ` ${(0, core_1.raw)(lock.wait)}` : []}`;
+    }), lateralSQL = lateral === undefined ? [] :
+        lateral instanceof core_1.SQLFragment ? (() => {
+            lateral.parentTable = alias;
+            return (0, core_1.sql) ` LEFT JOIN LATERAL (${lateral}) AS "lateral_passthru" ON true`;
+        })() :
+            Object.keys(lateral).sort().map(k => {
                 const subQ = lateral[k];
                 subQ.parentTable = alias; // enables `parent('column')` in subquery's Whereables
                 return (0, core_1.sql) ` LEFT JOIN LATERAL (${subQ}) AS "lateral_${(0, core_1.raw)(k)}" ON true`;
             });
-    const rowsQuery = (0, core_1.sql) `SELECT${distinctSQL} ${allColsSQL} AS result FROM ${table}${tableAliasSQL}${lateralSQL}${whereSQL}${groupBySQL}${havingSQL}${orderSQL}${limitSQL}${offsetSQL}${lockSQL}`, query = mode !== SelectResultMode.Many
-        ? rowsQuery
-        : // we need the aggregate to sit in a sub-SELECT in order to keep ORDER and LIMIT working as usual
-            (0, core_1.sql) `SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${(0, core_1.raw)(`"sq_${alias}"`)}`;
+    const rowsQuery = (0, core_1.sql) `SELECT${distinctSQL} ${allColsSQL} AS result FROM ${table}${tableAliasSQL}${lateralSQL}${whereSQL}${groupBySQL}${havingSQL}${orderSQL}${limitSQL}${offsetSQL}${lockSQL}`, query = mode !== SelectResultMode.Many ? rowsQuery :
+        // we need the aggregate to sit in a sub-SELECT in order to keep ORDER and LIMIT working as usual
+        (0, core_1.sql) `SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${(0, core_1.raw)(`"sq_${alias}"`)}`;
     query.runResultTransform =
-        mode === SelectResultMode.Numeric
-            ? // note: pg deliberately returns strings for int8 in case 64-bit numbers overflow
-                // (see https://github.com/brianc/node-pg-types#use), but we assume our counts aren't that big
-                (qr) => Number(qr.rows[0].result)
-            : mode === SelectResultMode.ExactlyOne
-                ? (qr) => {
+        mode === SelectResultMode.Numeric ?
+            // note: pg deliberately returns strings for int8 in case 64-bit numbers overflow
+            // (see https://github.com/brianc/node-pg-types#use), but we assume our counts aren't that big
+            (qr) => Number(qr.rows[0].result) :
+            mode === SelectResultMode.ExactlyOne ?
+                (qr) => {
                     var _a;
                     const result = (_a = qr.rows[0]) === null || _a === void 0 ? void 0 : _a.result;
                     if (result === undefined)
-                        throw new NotExactlyOneError(query, "One result expected but none returned (hint: check `.query.compile()` on this Error)");
-                    return (0, serde_1.applyDeserializeHook)(table, result);
-                }
-                : // SelectResultMode.One or SelectResultMode.Many
-                    (qr) => { var _a; return (0, serde_1.applyDeserializeHook)(table, (_a = qr.rows[0]) === null || _a === void 0 ? void 0 : _a.result); };
+                        throw new NotExactlyOneError(query, 'One result expected but none returned (hint: check `.query.compile()` on this Error)');
+                    return (0, serde_1.applyDeserializeHook)(table, result, lateral);
+                } :
+                // SelectResultMode.One or SelectResultMode.Many
+                (qr) => { var _a; return (0, serde_1.applyDeserializeHook)(table, (_a = qr.rows[0]) === null || _a === void 0 ? void 0 : _a.result, lateral); };
     return query;
 };
 exports.select = select;
@@ -291,10 +238,10 @@ exports.select = select;
  * @param options Options object. See documentation for `select` for details.
  */
 const selectOne = function (table, where, options = {}) {
-    // you might argue that 'selectOne' offers little that you can't get with
-    // destructuring assignment and plain 'select'
+    // you might argue that 'selectOne' offers little that you can't get with 
+    // destructuring assignment and plain 'select' 
     // -- e.g.let[x] = async select(...).run(pool); -- but something worth having
-    // is '| undefined' in the return signature, because the result of indexing
+    // is '| undefined' in the return signature, because the result of indexing 
     // never includes undefined (until 4.1 and --noUncheckedIndexedAccess)
     // (see https://github.com/Microsoft/TypeScript/issues/13778)
     return (0, exports.select)(table, where, options, SelectResultMode.One);
@@ -335,7 +282,7 @@ exports.count = count;
  * @param options Options object. Useful keys may be: `columns`, `alias`.
  */
 const sum = function (table, where, options) {
-    return (0, exports.select)(table, where, options, SelectResultMode.Numeric, "sum");
+    return (0, exports.select)(table, where, options, SelectResultMode.Numeric, 'sum');
 };
 exports.sum = sum;
 /**
@@ -348,7 +295,7 @@ exports.sum = sum;
  * @param options Options object. Useful keys may be: `columns`, `alias`.
  */
 const avg = function (table, where, options) {
-    return (0, exports.select)(table, where, options, SelectResultMode.Numeric, "avg");
+    return (0, exports.select)(table, where, options, SelectResultMode.Numeric, 'avg');
 };
 exports.avg = avg;
 /**
@@ -361,7 +308,7 @@ exports.avg = avg;
  * @param options Options object. Useful keys may be: `columns`, `alias`.
  */
 const min = function (table, where, options) {
-    return (0, exports.select)(table, where, options, SelectResultMode.Numeric, "min");
+    return (0, exports.select)(table, where, options, SelectResultMode.Numeric, 'min');
 };
 exports.min = min;
 /**
@@ -374,6 +321,6 @@ exports.min = min;
  * @param options Options object. Useful keys may be: `columns`, `alias`.
  */
 const max = function (table, where, options) {
-    return (0, exports.select)(table, where, options, SelectResultMode.Numeric, "max");
+    return (0, exports.select)(table, where, options, SelectResultMode.Numeric, 'max');
 };
 exports.max = max;

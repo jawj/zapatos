@@ -1,4 +1,12 @@
-import { Column, ColumnForTable, InsertableForTable, Table } from "zapatos/schema";
+import {
+  Column,
+  ColumnForTable,
+  InsertableForTable,
+  SelectableForTable,
+  Table,
+} from "zapatos/schema";
+import { FullLateralOption } from "./shortcuts";
+import { SQLFragment } from "./core";
 
 export interface Hook<U, V> {
   [t: Table]: { [c: Column]: (x: U) => V };
@@ -8,25 +16,51 @@ export interface Hook<U, V> {
 const DESERIALIZE_HOOK: Hook<any, any> = {};
 const SERIALIZE_HOOK: Hook<any, any> = {};
 
-function applyHook<T extends Table, U, V>(
-  hook: Hook<U, T>,
-  table: Table,
-  values: InsertableForTable<T> | InsertableForTable<T>[]
-): InsertableForTable<T> | InsertableForTable<T>[] {
-  return Array.isArray(values)
-    ? values.map((v) => applyHookSingle(hook, table, v))
-    : applyHookSingle(hook, table, values);
+type InsertableOrSelectableForTable<T extends Table> =
+  | InsertableForTable<T>
+  | SelectableForTable<T>;
+type InsertableOrSelectableForTableArray<T extends Table> =
+  | InsertableForTable<T>[]
+  | SelectableForTable<T>[];
+
+function applyHook<
+  T extends Table,
+  V extends
+    | InsertableOrSelectableForTable<T>
+    | InsertableOrSelectableForTableArray<T>,
+  U,
+  W
+>(hook: Hook<U, W>, table: Table, values: V, lateral?: FullLateralOption): V {
+  return (
+    Array.isArray(values)
+      ? values.map<V>((v) => applyHookSingle(hook, table, v, lateral))
+      : applyHookSingle(hook, table, values, lateral)
+  ) as V;
 }
 
-function applyHookSingle<T extends Table, U, V>(
-  hook: Hook<U, V>,
-  table: T,
-  values: InsertableForTable<T>
-): InsertableForTable<T> {
-  const processed: InsertableForTable<T> = {};
+function applyHookSingle<
+  T extends Table,
+  V extends InsertableOrSelectableForTable<T>,
+  U,
+  W
+>(hook: Hook<U, W>, table: T, values: V, lateral?: FullLateralOption): V {
+  const processed: V = {} as V;
   for (const [k, v] of Object.entries(values)) {
     const f = hook?.[table]?.[k];
-    processed[k] = f ? f(v) : v;
+    processed[k as T] = f ? f(v) : v;
+  }
+  if (lateral) {
+    if (lateral instanceof SQLFragment) {
+      // TODO: if json/jsonb is removed, we can remove this shim too
+      const shim = { rows: [{ result: values }] };
+      return lateral.runResultTransform(shim as any);
+    } else {
+      for (const [k, subQ] of Object.entries(lateral)) {
+        processed[k as T] = processed[k]
+          ? applyHook(hook, k as T, processed[k], subQ)
+          : processed[k];
+      }
+    }
   }
   return processed;
 }
@@ -45,12 +79,13 @@ function registerHook<T extends Table, U, V>(
 
 export function applyDeserializeHook<T extends Table>(
   table: T,
-  values?: InsertableForTable<T> | InsertableForTable<T>[]
-): undefined | InsertableForTable<T> | InsertableForTable<T>[] {
+  values: SelectableForTable<T> | SelectableForTable<T>[] | undefined,
+  lateral?: FullLateralOption
+): undefined | SelectableForTable<T> | SelectableForTable<T>[] {
   if (!values) {
     return values;
   }
-  return applyHook(DESERIALIZE_HOOK, table, values);
+  return applyHook(DESERIALIZE_HOOK, table, values, lateral);
 }
 
 export function applySerializeHook<T extends Table>(

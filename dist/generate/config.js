@@ -19,6 +19,8 @@ const defaultConfig = {
     columnOptions: {},
     schemaJSDoc: true,
     unprefixedSchema: 'public',
+    types: {},
+    preamble: [],
 };
 const moduleRoot = () => {
     // __dirname could be either ./generate (ts) or ./dist/generate (js)

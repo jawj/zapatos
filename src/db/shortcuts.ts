@@ -57,7 +57,7 @@ type ExtrasOption<T extends Table> = SQLFragmentOrColumnMap<T> | undefined;
 type ColumnsOption<T extends Table> = readonly ColumnForTable<T>[] | undefined;
 
 type LimitedLateralOption = SQLFragmentMap | undefined;
-type FullLateralOption = LimitedLateralOption | SQLFragment<any>;
+export type FullLateralOption = LimitedLateralOption | SQLFragment<any>;
 type LateralOption<
   C extends ColumnsOption<Table>,
   E extends ExtrasOption<Table>,
@@ -571,10 +571,10 @@ export const select: SelectSignatures = function (
         (qr) => {
           const result = qr.rows[0]?.result;
           if (result === undefined) throw new NotExactlyOneError(query, 'One result expected but none returned (hint: check `.query.compile()` on this Error)');
-          return applyDeserializeHook(table, result);
+          return applyDeserializeHook(table, result, lateral);
         } :
         // SelectResultMode.One or SelectResultMode.Many
-        (qr) => applyDeserializeHook(table, qr.rows[0]?.result);
+        (qr) => applyDeserializeHook(table, qr.rows[0]?.result, lateral);
 
   return query;
 };

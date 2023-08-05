@@ -1,20 +1,35 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerSerdeHook = exports.registerSerializeHook = exports.registerDeserializeHook = exports.applySerializeHook = exports.applyDeserializeHook = void 0;
+const core_1 = require("./core");
 // TODO: narrow these types
 const DESERIALIZE_HOOK = {};
 const SERIALIZE_HOOK = {};
-function applyHook(hook, table, values) {
-    return Array.isArray(values)
-        ? values.map((v) => applyHookSingle(hook, table, v))
-        : applyHookSingle(hook, table, values);
+function applyHook(hook, table, values, lateral) {
+    return (Array.isArray(values)
+        ? values.map((v) => applyHookSingle(hook, table, v, lateral))
+        : applyHookSingle(hook, table, values, lateral));
 }
-function applyHookSingle(hook, table, values) {
+function applyHookSingle(hook, table, values, lateral) {
     var _a;
     const processed = {};
     for (const [k, v] of Object.entries(values)) {
         const f = (_a = hook === null || hook === void 0 ? void 0 : hook[table]) === null || _a === void 0 ? void 0 : _a[k];
         processed[k] = f ? f(v) : v;
+    }
+    if (lateral) {
+        if (lateral instanceof core_1.SQLFragment) {
+            // TODO: if json/jsonb is removed, we can remove this shim too
+            const shim = { rows: [{ result: values }] };
+            return lateral.runResultTransform(shim);
+        }
+        else {
+            for (const [k, subQ] of Object.entries(lateral)) {
+                processed[k] = processed[k]
+                    ? applyHook(hook, k, processed[k], subQ)
+                    : processed[k];
+            }
+        }
     }
     return processed;
 }
@@ -24,11 +39,11 @@ function registerHook(hook, table, column, f) {
     }
     hook[table][column] = f;
 }
-function applyDeserializeHook(table, values) {
+function applyDeserializeHook(table, values, lateral) {
     if (!values) {
         return values;
     }
-    return applyHook(DESERIALIZE_HOOK, table, values);
+    return applyHook(DESERIALIZE_HOOK, table, values, lateral);
 }
 exports.applyDeserializeHook = applyDeserializeHook;
 function applySerializeHook(table, values) {
