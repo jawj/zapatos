@@ -29,14 +29,14 @@
   ],
   "exports": {
     "./db": {
+      "types": "./db.d.ts",
       "require": "./db.js",
-      "import": "./db.mjs",
-      "types": "./db.d.ts"
+      "import": "./db.mjs"
     },
     "./generate": {
+      "types": "./generate.d.ts",
       "require": "./generate.js",
-      "import": "./generate.mjs",
-      "types": "./generate.d.ts"
+      "import": "./generate.mjs"
     }
   },
   "keywords": [
