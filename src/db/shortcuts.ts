@@ -314,7 +314,8 @@ export const update: UpdateSignatures = function (
     postValues = applySerializeHook(table, values),
     returningSQL = SQLForColumnsOfTable(options?.returning, table),
     extrasSQL = SQLForExtras(options?.extras),
-    query = sql`UPDATE ${table} SET (${cols(postValues)}) = ROW(${vals(postValues)}) WHERE ${where} RETURNING ${returningSQL}${extrasSQL} AS result`;
+    postWhere = applySerializeHook(table, where),
+    query = sql`UPDATE ${table} SET (${cols(postValues)}) = ROW(${vals(postValues)}) WHERE ${postWhere} RETURNING ${returningSQL}${extrasSQL} AS result`;
 
   query.runResultTransform = (qr) => qr.rows.map(r => applyDeserializeHook(table, r.result));
   return query;
@@ -345,7 +346,8 @@ export const deletes: DeleteSignatures = function (
   const
     returningSQL = SQLForColumnsOfTable(options?.returning, table),
     extrasSQL = SQLForExtras(options?.extras),
-    query = sql`DELETE FROM ${table} WHERE ${where} RETURNING ${returningSQL}${extrasSQL} AS result`;
+    postWhere = applySerializeHook(table, where),
+    query = sql`DELETE FROM ${table} WHERE ${postWhere} RETURNING ${returningSQL}${extrasSQL} AS result`;
 
   query.runResultTransform = (qr) => qr.rows.map(r => applyDeserializeHook(table, r.result));
   return query;
@@ -524,7 +526,8 @@ export const select: SelectSignatures = function (
         sql` || jsonb_build_object(${mapWithSeparator(
           Object.keys(lateral).sort(), sql`, `, k => sql`${param(k)}::text, "lateral_${raw(k)}".result`)})`,
     allColsSQL = sql`${colsSQL}${colsExtraSQL}${colsLateralSQL}`,
-    whereSQL = where === all ? [] : sql` WHERE ${where}`,
+    whereSQL = where === all ? [] : sql` WHERE ${applySerializeHook(table, where)}`,
+    //whereSQL = where === all ? [] : sql` WHERE ${where}`,
     groupBySQL = !groupBy ? [] : sql` GROUP BY ${groupBy instanceof SQLFragment || typeof groupBy === 'string' ? groupBy : cols(groupBy)}`,
     havingSQL = !having ? [] : sql` HAVING ${having}`,
     orderSQL = order === undefined ? [] :

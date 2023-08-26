@@ -201,6 +201,8 @@ export declare class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint 
     noop: boolean;
     noopResult: any;
     constructor(literals: string[], expressions: SQL[]);
+    getExpressions(): SQL[];
+    setExpressions(expressions: SQL[]): void;
     /**
      * Instruct Postgres to treat this as a prepared statement: see
      * https://node-postgres.com/features/queries#prepared-statements

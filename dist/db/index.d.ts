@@ -3,7 +3,7 @@ export * from './config';
 export * from './core';
 export * from './date';
 export * from './pgErrors';
-export { registerDeserializeHook, registerSerdeHook, registerSerializeHook } from './serde';
+export { registerDeserializeHook, registerSerdeHook, registerSerdeHooksForTable, registerSerializeHook, type SerdeHook } from './serde';
 export * from './shortcuts';
 export * from './transaction';
 export { mapWithSeparator } from './utils';

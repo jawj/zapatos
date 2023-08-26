@@ -33,6 +33,7 @@ export const readCommitted = mod.readCommitted;
 export const readCommittedRO = mod.readCommittedRO;
 export const registerDeserializeHook = mod.registerDeserializeHook;
 export const registerSerdeHook = mod.registerSerdeHook;
+export const registerSerdeHooksForTable = mod.registerSerdeHooksForTable;
 export const registerSerializeHook = mod.registerSerializeHook;
 export const repeatableRead = mod.repeatableRead;
 export const repeatableReadRO = mod.repeatableReadRO;

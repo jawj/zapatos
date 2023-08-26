@@ -243,6 +243,13 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
 
   constructor(protected literals: string[], protected expressions: SQL[]) { }
 
+  getExpressions() {
+    return this.expressions
+  }
+
+  setExpressions(expressions: SQL[]) {
+    this.expressions = expressions
+  }
   /**
    * Instruct Postgres to treat this as a prepared statement: see
    * https://node-postgres.com/features/queries#prepared-statements
@@ -377,7 +384,6 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
     } else if (expression instanceof ColumnValues) {
       // a ColumnValues-wrapped object OR array
       // -> values (in ColumnNames-matching order, if applicable) punted as SQLFragments or Parameters
-
       if (Array.isArray(expression.value)) {
         const values: any[] = expression.value;
         for (let i = 0, len = values.length; i < len; i++) {

@@ -4,9 +4,10 @@ import {
   InsertableForTable,
   SelectableForTable,
   Table,
+  WhereableForTable,
 } from "zapatos/schema";
-import { FullLateralOption } from "./shortcuts";
-import { SQLFragment } from "./core";
+import { type FullLateralOption } from "./shortcuts";
+import { ColumnValues, ParentColumn, SQL, SQLFragment } from "./core";
 
 export interface Hook<U, V> {
   [t: Table]: { [c: Column]: (x: U) => V };
@@ -46,6 +47,28 @@ function applyHookSingle<
 >(hook: Hook<U, W>, table: T, values: V, lateral?: FullLateralOption): V {
   const processed: V = {} as V;
   for (const [k, v] of Object.entries(values)) {
+    if (v instanceof ParentColumn) {
+      processed[k as T] = v as any;
+      continue;
+    } else if (v instanceof SQLFragment) {
+      const processedExpressions: SQL[] = [];
+      for (const expression of v.getExpressions()) {
+        if (expression instanceof ColumnValues) {
+          const processedExpressionValue = Array.isArray(expression.value)
+            ? expression.value.map(
+                (x: any) => applyHookSingle(hook, table, { [k]: x })[k]
+              )
+            : applyHookSingle(hook, table, { [k]: expression.value })[k]; //expression.value
+          expression.value = processedExpressionValue;
+          processedExpressions.push(expression);
+        } else {
+          processedExpressions.push(expression);
+        }
+      }
+      v.setExpressions(processedExpressions);
+      processed[k as T] = v as any;
+      continue;
+    }
     const f = hook?.[table]?.[k];
     processed[k as T] = f ? f(v) : v;
   }
@@ -90,8 +113,8 @@ export function applyDeserializeHook<T extends Table>(
 
 export function applySerializeHook<T extends Table>(
   table: T,
-  values: InsertableForTable<T> | InsertableForTable<T>[]
-): InsertableForTable<T> | InsertableForTable<T>[] {
+  values: InsertableForTable<T> | InsertableForTable<T>[] | WhereableForTable<T>
+): InsertableForTable<T> | InsertableForTable<T>[] | WhereableForTable<T> {
   return applyHook(SERIALIZE_HOOK, table, values);
 }
 
@@ -113,21 +136,35 @@ export function registerSerializeHook<T extends Table, U>(
   registerHook(SERIALIZE_HOOK, table, column, f);
 }
 
+export type SerdeHook<T> = {
+  serialize?: (x: T) => any;
+  deserialize?: (x: any) => T;
+};
+
 export function registerSerdeHook<T extends Table, U>(
   table: T,
   column: ColumnForTable<T>,
-  {
-    serialize,
-    deserialize,
-  }: {
-    serialize?: (x: U) => any;
-    deserialize?: (x: any) => U;
-  }
+  { serialize, deserialize }: SerdeHook<U>
 ) {
   if (deserialize) {
     registerDeserializeHook(table, column, deserialize);
   }
   if (serialize) {
     registerSerializeHook(table, column, serialize);
+  }
+}
+
+type SerdeTableMap<T extends Table> = Partial<
+  Record<ColumnForTable<T>, SerdeHook<any>>
+>;
+
+export function registerSerdeHooksForTable<T extends Table>(
+  table: T,
+  map: SerdeTableMap<T>
+) {
+  for (const [column, serde] of Object.entries(map)) {
+    if (serde) {
+      registerSerdeHook(table, column, serde);
+    }
   }
 }

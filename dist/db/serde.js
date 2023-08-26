@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.registerSerdeHook = exports.registerSerializeHook = exports.registerDeserializeHook = exports.applySerializeHook = exports.applyDeserializeHook = void 0;
+exports.registerSerdeHooksForTable = exports.registerSerdeHook = exports.registerSerializeHook = exports.registerDeserializeHook = exports.applySerializeHook = exports.applyDeserializeHook = void 0;
 const core_1 = require("./core");
 // TODO: narrow these types
 const DESERIALIZE_HOOK = {};
@@ -14,6 +14,28 @@ function applyHookSingle(hook, table, values, lateral) {
     var _a;
     const processed = {};
     for (const [k, v] of Object.entries(values)) {
+        if (v instanceof core_1.ParentColumn) {
+            processed[k] = v;
+            continue;
+        }
+        else if (v instanceof core_1.SQLFragment) {
+            const processedExpressions = [];
+            for (const expression of v.getExpressions()) {
+                if (expression instanceof core_1.ColumnValues) {
+                    const processedExpressionValue = Array.isArray(expression.value)
+                        ? expression.value.map((x) => applyHookSingle(hook, table, { [k]: x })[k])
+                        : applyHookSingle(hook, table, { [k]: expression.value })[k]; //expression.value
+                    expression.value = processedExpressionValue;
+                    processedExpressions.push(expression);
+                }
+                else {
+                    processedExpressions.push(expression);
+                }
+            }
+            v.setExpressions(processedExpressions);
+            processed[k] = v;
+            continue;
+        }
         const f = (_a = hook === null || hook === void 0 ? void 0 : hook[table]) === null || _a === void 0 ? void 0 : _a[k];
         processed[k] = f ? f(v) : v;
     }
@@ -60,7 +82,7 @@ function registerSerializeHook(table, column, f) {
     registerHook(SERIALIZE_HOOK, table, column, f);
 }
 exports.registerSerializeHook = registerSerializeHook;
-function registerSerdeHook(table, column, { serialize, deserialize, }) {
+function registerSerdeHook(table, column, { serialize, deserialize }) {
     if (deserialize) {
         registerDeserializeHook(table, column, deserialize);
     }
@@ -69,3 +91,11 @@ function registerSerdeHook(table, column, { serialize, deserialize, }) {
     }
 }
 exports.registerSerdeHook = registerSerdeHook;
+function registerSerdeHooksForTable(table, map) {
+    for (const [column, serde] of Object.entries(map)) {
+        if (serde) {
+            registerSerdeHook(table, column, serde);
+        }
+    }
+}
+exports.registerSerdeHooksForTable = registerSerdeHooksForTable;

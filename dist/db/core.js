@@ -384,5 +384,11 @@ class SQLFragment {
             }
         };
     }
+    getExpressions() {
+        return this.expressions;
+    }
+    setExpressions(expressions) {
+        this.expressions = expressions;
+    }
 }
 exports.SQLFragment = SQLFragment;

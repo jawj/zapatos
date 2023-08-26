@@ -108,7 +108,7 @@ exports.upsert = upsert;
 const update = function (table, values, where, options) {
     // note: the ROW() constructor below is required in Postgres 10+ if we're updating a single column
     // more info: https://www.postgresql-archive.org/Possible-regression-in-UPDATE-SET-lt-column-list-gt-lt-row-expression-gt-with-just-one-single-column0-td5989074.html
-    const postValues = (0, serde_1.applySerializeHook)(table, values), returningSQL = SQLForColumnsOfTable(options === null || options === void 0 ? void 0 : options.returning, table), extrasSQL = SQLForExtras(options === null || options === void 0 ? void 0 : options.extras), query = (0, core_1.sql) `UPDATE ${table} SET (${(0, core_1.cols)(postValues)}) = ROW(${(0, core_1.vals)(postValues)}) WHERE ${where} RETURNING ${returningSQL}${extrasSQL} AS result`;
+    const postValues = (0, serde_1.applySerializeHook)(table, values), returningSQL = SQLForColumnsOfTable(options === null || options === void 0 ? void 0 : options.returning, table), extrasSQL = SQLForExtras(options === null || options === void 0 ? void 0 : options.extras), postWhere = (0, serde_1.applySerializeHook)(table, where), query = (0, core_1.sql) `UPDATE ${table} SET (${(0, core_1.cols)(postValues)}) = ROW(${(0, core_1.vals)(postValues)}) WHERE ${postWhere} RETURNING ${returningSQL}${extrasSQL} AS result`;
     query.runResultTransform = (qr) => qr.rows.map(r => (0, serde_1.applyDeserializeHook)(table, r.result));
     return query;
 };
@@ -119,7 +119,7 @@ exports.update = update;
  * @param where A `Whereable` (or `SQLFragment`) defining which rows to delete
  */
 const deletes = function (table, where, options) {
-    const returningSQL = SQLForColumnsOfTable(options === null || options === void 0 ? void 0 : options.returning, table), extrasSQL = SQLForExtras(options === null || options === void 0 ? void 0 : options.extras), query = (0, core_1.sql) `DELETE FROM ${table} WHERE ${where} RETURNING ${returningSQL}${extrasSQL} AS result`;
+    const returningSQL = SQLForColumnsOfTable(options === null || options === void 0 ? void 0 : options.returning, table), extrasSQL = SQLForExtras(options === null || options === void 0 ? void 0 : options.extras), postWhere = (0, serde_1.applySerializeHook)(table, where), query = (0, core_1.sql) `DELETE FROM ${table} WHERE ${postWhere} RETURNING ${returningSQL}${extrasSQL} AS result`;
     query.runResultTransform = (qr) => qr.rows.map(r => (0, serde_1.applyDeserializeHook)(table, r.result));
     return query;
 };
@@ -183,7 +183,9 @@ const select = function (table, where = core_1.all, options = {}, mode = SelectR
             (columns ? (0, core_1.sql) `${(0, core_1.raw)(aggregate)}(${(0, core_1.cols)(columns)})` : (0, core_1.sql) `${(0, core_1.raw)(aggregate)}(${alias}.*)`) :
             SQLForColumnsOfTable(columns, alias), colsExtraSQL = lateral instanceof core_1.SQLFragment || mode === SelectResultMode.Numeric ? [] : SQLForExtras(extras), colsLateralSQL = lateral === undefined || mode === SelectResultMode.Numeric ? [] :
         lateral instanceof core_1.SQLFragment ? (0, core_1.sql) `"lateral_passthru".result` :
-            (0, core_1.sql) ` || jsonb_build_object(${(0, utils_1.mapWithSeparator)(Object.keys(lateral).sort(), (0, core_1.sql) `, `, k => (0, core_1.sql) `${(0, core_1.param)(k)}::text, "lateral_${(0, core_1.raw)(k)}".result`)})`, allColsSQL = (0, core_1.sql) `${colsSQL}${colsExtraSQL}${colsLateralSQL}`, whereSQL = where === core_1.all ? [] : (0, core_1.sql) ` WHERE ${where}`, groupBySQL = !groupBy ? [] : (0, core_1.sql) ` GROUP BY ${groupBy instanceof core_1.SQLFragment || typeof groupBy === 'string' ? groupBy : (0, core_1.cols)(groupBy)}`, havingSQL = !having ? [] : (0, core_1.sql) ` HAVING ${having}`, orderSQL = order === undefined ? [] :
+            (0, core_1.sql) ` || jsonb_build_object(${(0, utils_1.mapWithSeparator)(Object.keys(lateral).sort(), (0, core_1.sql) `, `, k => (0, core_1.sql) `${(0, core_1.param)(k)}::text, "lateral_${(0, core_1.raw)(k)}".result`)})`, allColsSQL = (0, core_1.sql) `${colsSQL}${colsExtraSQL}${colsLateralSQL}`, whereSQL = where === core_1.all ? [] : (0, core_1.sql) ` WHERE ${(0, serde_1.applySerializeHook)(table, where)}`, 
+    //whereSQL = where === all ? [] : sql` WHERE ${where}`,
+    groupBySQL = !groupBy ? [] : (0, core_1.sql) ` GROUP BY ${groupBy instanceof core_1.SQLFragment || typeof groupBy === 'string' ? groupBy : (0, core_1.cols)(groupBy)}`, havingSQL = !having ? [] : (0, core_1.sql) ` HAVING ${having}`, orderSQL = order === undefined ? [] :
         (0, core_1.sql) ` ORDER BY ${(0, utils_1.mapWithSeparator)(order, (0, core_1.sql) `, `, o => {
             if (!['ASC', 'DESC'].includes(o.direction))
                 throw new Error(`Direction must be ASC/DESC, not '${o.direction}'`);
