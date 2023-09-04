@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.registerSerdeHooksForTable = exports.registerSerdeHook = exports.registerSerializeHook = exports.registerDeserializeHook = exports.applySerializeHook = exports.applyDeserializeHook = void 0;
+exports.registerSerdeHooksForTable = exports.registerSerdeHook = exports.registerSerializeHook = exports.registerDeserializeHook = exports.applySerializeHook = exports.applyDeserializeHook = exports.applyHookForWhere = void 0;
 const core_1 = require("./core");
 // TODO: narrow these types
 const DESERIALIZE_HOOK = {};
@@ -55,6 +55,15 @@ function applyHookSingle(hook, table, values, lateral) {
     }
     return processed;
 }
+function applyHookForWhere(table, where) {
+    if (where instanceof core_1.SQLFragment) {
+        return where;
+    }
+    else {
+        return applySerializeHook(table, where);
+    }
+}
+exports.applyHookForWhere = applyHookForWhere;
 function registerHook(hook, table, column, f) {
     if (!(table in hook)) {
         hook[table] = {};

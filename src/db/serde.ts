@@ -4,6 +4,7 @@ import {
   InsertableForTable,
   SelectableForTable,
   Table,
+  Whereable,
   WhereableForTable,
 } from "zapatos/schema";
 import { type FullLateralOption } from "./shortcuts";
@@ -86,6 +87,17 @@ function applyHookSingle<
     }
   }
   return processed;
+}
+
+export function applyHookForWhere<T extends Table, U, W>(
+  table: T,
+  where: Whereable
+) {
+  if (where instanceof SQLFragment) {
+    return where;
+  } else {
+    return applySerializeHook(table, where);
+  }
 }
 
 function registerHook<T extends Table, U, V>(

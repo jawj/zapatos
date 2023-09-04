@@ -32,7 +32,11 @@ import {
   Default,
 } from './core';
 
-import { applyDeserializeHook, applySerializeHook } from "./serde";
+import {
+  applyDeserializeHook,
+  applyHookForWhere,
+  applySerializeHook
+} from "./serde";
 
 import {
   completeKeysWithDefaultValue,
@@ -526,7 +530,7 @@ export const select: SelectSignatures = function (
         sql` || jsonb_build_object(${mapWithSeparator(
           Object.keys(lateral).sort(), sql`, `, k => sql`${param(k)}::text, "lateral_${raw(k)}".result`)})`,
     allColsSQL = sql`${colsSQL}${colsExtraSQL}${colsLateralSQL}`,
-    whereSQL = where === all ? [] : sql` WHERE ${applySerializeHook(table, where)}`,
+    whereSQL = where === all ? [] : sql` WHERE ${applyHookForWhere(table, where)}`,
     //whereSQL = where === all ? [] : sql` WHERE ${where}`,
     groupBySQL = !groupBy ? [] : sql` GROUP BY ${groupBy instanceof SQLFragment || typeof groupBy === 'string' ? groupBy : cols(groupBy)}`,
     havingSQL = !having ? [] : sql` HAVING ${having}`,
