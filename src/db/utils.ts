@@ -23,7 +23,7 @@ export const pad = (n: number, pad: 2 | 3 | 4 = 2) => {
 export const wait = (delayMs: number) => new Promise(resolve => setTimeout(resolve, delayMs));
 
 /**
- * Map an input array to an output array, interspersing a constant separator value 
+ * Map an input array to an output array, interspersing a constant separator value
  * between the mapped values.
  * @param arr Input array
  * @param separator Separator value
@@ -45,8 +45,8 @@ export const mapWithSeparator = <TIn, TSep, TOut>(
 
 /**
  * Map an array of objects to an output array by taking the union of all objects' keys
- * and ensuring that any key not present on any object gets a default value. 
- * 
+ * and ensuring that any key not present on any object gets a default value.
+ *
  * `e.g. [{ x: 1 }, { y: 2 }] => [{ x: 1, y: defaultValue }, { x: defaultValue, y: 2}]`
  * @param objs The array of objects
  * @param defaultValue The default value to assign to missing keys for each object
@@ -58,9 +58,9 @@ export const completeKeysWithDefaultValue = <T extends object>(objs: T[], defaul
 };
 
 /**
- * Test that a value is a Plain Old JavaScript Object (such as one created by an object 
+ * Test that a value is a Plain Old JavaScript Object (such as one created by an object
  * literal, e.g. `{x: 1, y: 2}`)
- * @param x The value to test 
+ * @param x The value to test
  */
 export const isPOJO = (x: any) =>
   typeof x === 'object' &&

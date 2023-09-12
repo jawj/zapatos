@@ -13,7 +13,7 @@ import type { Queryable } from './core';
 
 
 export enum IsolationLevel {
-  // these are the only meaningful values in Postgres: 
+  // these are the only meaningful values in Postgres:
   // see https://www.postgresql.org/docs/11/sql-set-transaction.html
   Serializable = "SERIALIZABLE",
   RepeatableRead = "REPEATABLE READ",
@@ -68,9 +68,9 @@ function typeofQueryable(queryable: Queryable) {
 let txnSeq = 0;
 
 /**
- * Provide a database client to the callback, whose queries are then wrapped in 
+ * Provide a database client to the callback, whose queries are then wrapped in
  * a database transaction. The transaction is committed, retried, or rolled back
- * as appropriate. 
+ * as appropriate.
  * @param txnClientOrQueryable The `pg.Pool` from which to check out a client,
  * a plain client, or an existing transaction client to be passed through
  * @param isolationLevel The desired isolation level (e.g.
@@ -170,7 +170,7 @@ export async function repeatableRead<T>(txnClientOrQueryable: Queryable | TxnCli
  * Shortcut for `transaction` with isolation level `ReadCommitted`.
  * @param txnClientOrQueryable The `pg.Pool` from which to check out a client,
  * a plain client, or an existing transaction client to be passed through
- * @param callback A callback function that runs queries on the client provided 
+ * @param callback A callback function that runs queries on the client provided
  * to it
  */
 export async function readCommitted<T>(txnClientOrQueryable: Queryable | TxnClientForReadCommitted, callback: (client: TxnClientForReadCommitted) => Promise<T>) {
