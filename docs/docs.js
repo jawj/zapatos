@@ -116,7 +116,7 @@ document.addEventListener('click', function (e) {
         commonOpts = {
           minimap: { enabled: false },
           scrollBeyondLastLine: false,
-          fontFamily: 'source-code-pro',
+          fontFamily: 'Source Code Pro',
           fontSize: 15,
           theme: 'vs-dark',
           automaticLayout: true,  // resize with host <div>
