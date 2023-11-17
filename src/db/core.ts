@@ -1,6 +1,6 @@
 /*
 Zapatos: https://jawj.github.io/zapatos/
-Copyright (C) 2020 - 2022 George MacKerron
+Copyright (C) 2020 - 2023 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
@@ -48,9 +48,10 @@ export type JSONObject = { [k: string]: JSONValue };
 export type JSONArray = JSONValue[];
 
 /**
- * `int8` value represented as a string
+ * `int8` or `numeric` value represented as a string
  */
 export type Int8String = `${number}`;
+export type NumericString = `${number}`;
 
 /**
  * Generic range value represented as a string

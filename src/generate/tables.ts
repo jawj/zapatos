@@ -1,6 +1,6 @@
 /*
 Zapatos: https://jawj.github.io/zapatos/
-Copyright (C) 2020 - 2022 George MacKerron
+Copyright (C) 2020 - 2023 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
@@ -113,11 +113,11 @@ export const definitionForRelationInSchema = async (
   rows.forEach(row => {
     const { column, isGenerated, isNullable, hasDefault, udtName, domainName } = row;
     let
-      selectableType = tsTypeForPgType(udtName, enums, 'Selectable'),
-      JSONSelectableType = tsTypeForPgType(udtName, enums, 'JSONSelectable'),
-      whereableType = tsTypeForPgType(udtName, enums, 'Whereable'),
-      insertableType = tsTypeForPgType(udtName, enums, 'Insertable'),
-      updatableType = tsTypeForPgType(udtName, enums, 'Updatable');
+      selectableType = tsTypeForPgType(udtName, enums, 'Selectable', config),
+      JSONSelectableType = tsTypeForPgType(udtName, enums, 'JSONSelectable', config),
+      whereableType = tsTypeForPgType(udtName, enums, 'Whereable', config),
+      insertableType = tsTypeForPgType(udtName, enums, 'Insertable', config),
+      updatableType = tsTypeForPgType(udtName, enums, 'Updatable', config);
 
     const
       columnDoc = createColumnDoc(config, schemaName, rel, row),

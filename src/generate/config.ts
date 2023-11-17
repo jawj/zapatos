@@ -1,6 +1,6 @@
 /*
 Zapatos: https://jawj.github.io/zapatos/
-Copyright (C) 2020 - 2022 George MacKerron
+Copyright (C) 2020 - 2023 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
@@ -10,10 +10,11 @@ import type * as pg from 'pg';
 
 
 export interface RequiredConfig {
-  db: pg.ClientConfig;
+  // nothing is required any more
 }
 
 export interface OptionalConfig {
+  db: pg.ClientConfig;
   outDir: string;
   outExt: string;
   schemas: SchemaRules;
@@ -24,6 +25,7 @@ export interface OptionalConfig {
   columnOptions: ColumnOptions;
   schemaJSDoc: boolean;
   unprefixedSchema: string | null;
+  customJSONParsingForLargeNumbers: boolean;
 }
 
 interface SchemaRules {
@@ -45,7 +47,7 @@ interface ColumnOptions {
 export type Config = RequiredConfig & Partial<OptionalConfig>;
 export type CompleteConfig = RequiredConfig & OptionalConfig;
 
-const defaultConfig: OptionalConfig = {
+const defaultConfig: Config = {
   outDir: '.',
   outExt: '.d.ts',
   schemas: { public: { include: '*', exclude: [] } },
@@ -56,6 +58,7 @@ const defaultConfig: OptionalConfig = {
   columnOptions: {},
   schemaJSDoc: true,
   unprefixedSchema: 'public',
+  customJSONParsingForLargeNumbers: false,
 };
 
 export const moduleRoot = () => {
@@ -68,6 +71,5 @@ export const moduleRoot = () => {
 
 export const finaliseConfig = (config: Config) => {
   const finalConfig = { ...defaultConfig, ...config };
-  if (!finalConfig.db || Object.keys(finalConfig.db).length < 1) throw new Error(`Zapatos needs database connection details`);
   return finalConfig as CompleteConfig;
 };

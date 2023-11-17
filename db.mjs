@@ -20,6 +20,7 @@ export const constraint = mod.constraint;
 export const count = mod.count;
 export const deletes = mod.deletes;
 export const doNothing = mod.doNothing;
+export const enableCustomJSONParsingForLargeNumbers = mod.enableCustomJSONParsingForLargeNumbers;
 export const getConfig = mod.getConfig;
 export const insert = mod.insert;
 export const isDatabaseError = mod.isDatabaseError;
