@@ -12,8 +12,7 @@ function parseJSONWithLargeNumbersAsStrings(str: string) {
   return parse(str, undefined, function (k, str) {
     const n = +str;  // hex etc. is rejected by JSON parser, so don't need parseInt(str, 10)
     if (n === Infinity || n === -Infinity) return str;
-    const strlen = str.length;
-    if (strlen <= 15) return n;  // float64 always offers 15sf, so if it's not too big (caught above) it must be representable
+    if (str.length <= 15) return n;  // float64 always gives >=15sf, so if it's not too big (caught above) it must be representable
     if (Big(str).cmp(Big(n)) !== 0) return str;  // expensive, which is why we try the shortcuts above first
     return n;
   });
