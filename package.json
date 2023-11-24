@@ -64,7 +64,6 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@types/big.js": "^6.2.2",
     "json-custom-numbers": "^3.0.4"
   }
 }

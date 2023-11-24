@@ -19,7 +19,7 @@ const baseTsTypeForBasePgType = (pgType: string, enums: EnumData, context: TypeC
 
   function warnAboutLargeNumbers() {
     if (warnedAboutInt8AndNumeric || config.customJSONParsingForLargeNumbers) return;
-    warn(`Note: this database has bigint/int8 and/or numeric/decimal columns, for which JSON.parse may lose precision. Please read the docs: https://jawj.github.io/zapatos/`);
+    warn(`Note: this database has bigint/int8 and/or numeric/decimal columns, for which JSON.parse may lose precision. Please read the docs: https://jawj.github.io/zapatos/#custom-json-parsing-for-bigint-and-numeric`);
     warnedAboutInt8AndNumeric = true;
   }
 
