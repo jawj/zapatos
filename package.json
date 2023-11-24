@@ -65,7 +65,6 @@
   },
   "dependencies": {
     "@types/big.js": "^6.2.2",
-    "big.js": "^6.2.1",
     "json-custom-numbers": "^3.0.4"
   }
 }
