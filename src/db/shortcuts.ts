@@ -253,7 +253,7 @@ export const upsert: UpsertSignatures = function (
       sql<string>`ON CONSTRAINT ${conflictTarget.value}`,
     updateColsSQL = mapWithSeparator(updateColumns, sql`, `, c => c),
     updateValuesSQL = mapWithSeparator(updateColumns, sql`, `, c =>
-      updateValues[c] !== undefined ?  updateValues[c] :
+      updateValues[c] !== undefined ? updateValues[c] :
         noNullUpdateColumns.includes(c) ? sql`CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END` :
           sql`EXCLUDED.${c}`),
     returningSQL = SQLForColumnsOfTable(options?.returning, table),
