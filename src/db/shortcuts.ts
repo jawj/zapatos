@@ -58,7 +58,7 @@ type LimitedLateralOption = SQLFragmentMap | undefined;
 type FullLateralOption = LimitedLateralOption | SQLFragment<any>;
 type LateralOption<
   C extends ColumnsOption<Table>,
-  E extends ExtrasOption<Table>
+  E extends ExtrasOption<Table>,
   > =
   undefined extends C ? undefined extends E ? FullLateralOption : LimitedLateralOption : LimitedLateralOption;
 
@@ -78,7 +78,7 @@ type ReturningTypeForTable<T extends Table, C extends ColumnsOption<T>, E extend
 
 function SQLForColumnsOfTable(columns: readonly Column[] | undefined, table: Table) {
   return columns === undefined ? sql`to_jsonb(${table}.*)` :
-    sql`jsonb_build_object(${mapWithSeparator(columns, sql`, `, (c) => sql`${param(c)}::text, ${c}`)})`;
+    sql`jsonb_build_object(${mapWithSeparator(columns, sql`, `, c => sql`${param(c)}::text, ${c}`)})`;
 }
 
 function SQLForExtras<T extends Table>(extras: ExtrasOption<T>) {
@@ -126,7 +126,7 @@ export const insert: InsertSignatures = function (
       completedValues = Array.isArray(values) ? completeKeysWithDefaultValue(values, Default) : values,
       colsSQL = cols(Array.isArray(completedValues) ? completedValues[0] : completedValues),
       valuesSQL = Array.isArray(completedValues) ?
-        mapWithSeparator(completedValues as Insertable[], sql`, `, (v) => sql`(${vals(v)})`) :
+        mapWithSeparator(completedValues as Insertable[], sql`, `, v => sql`(${vals(v)})`) :
         sql`(${vals(completedValues)})`,
       returningSQL = SQLForColumnsOfTable(options?.returning, table),
       extrasSQL = SQLForExtras(options?.extras);
@@ -134,9 +134,9 @@ export const insert: InsertSignatures = function (
     query = sql`INSERT INTO ${table} (${colsSQL}) VALUES ${valuesSQL} RETURNING ${returningSQL}${extrasSQL} AS result`;
   }
 
-  query.runResultTransform = Array.isArray(values)
-    ? (qr) => qr.rows.map((r) => r.result)
-    : (qr) => qr.rows[0].result;
+  query.runResultTransform = Array.isArray(values) ?
+    (qr) => qr.rows.map(r => r.result) :
+    (qr) => qr.rows[0].result;
 
   return query;
 };
@@ -229,8 +229,8 @@ export const upsert: UpsertSignatures = function (
   options?: UpsertOptions<Table, ColumnsOption<Table>, ExtrasOption<Table>, UpdateColumns<Table>, UpsertReportAction>
 ): SQLFragment<any> {
 
-  if (Array.isArray(values) && values.length === 0) return insert(table, values); // punt a no-op to plain insert
-  if (typeof conflictTarget === 'string') conflictTarget = [conflictTarget]; // now either Column[] or Constraint
+  if (Array.isArray(values) && values.length === 0) return insert(table, values);  // punt a no-op to plain insert
+  if (typeof conflictTarget === 'string') conflictTarget = [conflictTarget];  // now either Column[] or Constraint
 
   let noNullUpdateColumns = options?.noNullUpdateColumns ?? [];
   if (!Array.isArray(noNullUpdateColumns)) noNullUpdateColumns = [noNullUpdateColumns];
@@ -242,17 +242,17 @@ export const upsert: UpsertSignatures = function (
     completedValues = Array.isArray(values) ? completeKeysWithDefaultValue(values, Default) : [values],
     firstRow = completedValues[0],
     insertColsSQL = cols(firstRow),
-    insertValuesSQL = mapWithSeparator(completedValues, sql`, `, (v) => sql`(${vals(v)})`),
+    insertValuesSQL = mapWithSeparator(completedValues, sql`, `, v => sql`(${vals(v)})`),
     colNames = Object.keys(firstRow) as Column[],
     updateValues = options?.updateValues ?? {},
     updateColumns = [ ...new Set(  // deduplicate the keys here
       [...((specifiedUpdateColumns as string[]) ?? colNames), ...Object.keys(updateValues)]
     )],
     conflictTargetSQL = Array.isArray(conflictTarget) ?
-      sql`(${mapWithSeparator(conflictTarget, sql`, `, (c) => c)})` :
+      sql`(${mapWithSeparator(conflictTarget, sql`, `, c => c)})` :
       sql<string>`ON CONSTRAINT ${conflictTarget.value}`,
-    updateColsSQL = mapWithSeparator(updateColumns, sql`, `, (c) => c),
-    updateValuesSQL = mapWithSeparator(updateColumns, sql`, `, (c) =>
+    updateColsSQL = mapWithSeparator(updateColumns, sql`, `, c => c),
+    updateValuesSQL = mapWithSeparator(updateColumns, sql`, `, c =>
       updateValues[c] !== undefined ?  updateValues[c] :
         noNullUpdateColumns.includes(c) ? sql`CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END` :
           sql`EXCLUDED.${c}`),
@@ -272,7 +272,7 @@ export const upsert: UpsertSignatures = function (
     query = sql`${insertPart} ${conflictPart} ${conflictActionPart} ${returningPart}`;
 
   query.runResultTransform = Array.isArray(values) ?
-    (qr) => qr.rows.map((r) => r.result) :
+    (qr) => qr.rows.map(r => r.result) :
     (qr) => qr.rows[0]?.result;
 
   return query;
@@ -300,13 +300,13 @@ export const update: UpdateSignatures = function (
   table: Table,
   values: Updatable,
   where: Whereable | SQLFragment<any>,
-options?: ReturningOptionsForTable<Table, ColumnsOption<Table>, ExtrasOption<Table>>
+  options?: ReturningOptionsForTable<Table, ColumnsOption<Table>, ExtrasOption<Table>>
 ): SQLFragment {
   
   // note: the ROW() constructor below is required in Postgres 10+ if we're updating a single column
   // more info: https://www.postgresql-archive.org/Possible-regression-in-UPDATE-SET-lt-column-list-gt-lt-row-expression-gt-with-just-one-single-column0-td5989074.html
 
- const
+  const
     returningSQL = SQLForColumnsOfTable(options?.returning, table),
     extrasSQL = SQLForExtras(options?.extras),
     query = sql`UPDATE ${table} SET (${cols(values)}) = ROW(${vals(values)}) WHERE ${where} RETURNING ${returningSQL}${extrasSQL} AS result`;
@@ -437,7 +437,7 @@ export type FullSelectReturnTypeForTable<
   C extends ColumnsOption<T>,
   L extends LateralOption<C, E>,
   E extends ExtrasOption<T>,
-  M extends SelectResultMode
+  M extends SelectResultMode,
 > =
   {
   [SelectResultMode.Many]: SelectReturnTypeForTable<T, C, L, E>[];
@@ -508,7 +508,7 @@ export const select: SelectSignatures = function (
   where: Whereable | SQLFragment<any> | AllType = all,
   options: SelectOptionsForTable<Table, ColumnsOption<Table>, LateralOption<ColumnsOption<Table>, ExtrasOption<Table>>, ExtrasOption<Table>, any> = {},
   mode: SelectResultMode = SelectResultMode.Many,
-  aggregate: string = 'count'
+  aggregate: string = 'count',
 ) {
   const limit1 =
       mode === SelectResultMode.Boolean ||
@@ -577,10 +577,12 @@ export const select: SelectSignatures = function (
         // we need the aggregate to sit in a sub-SELECT in order to keep ORDER and LIMIT working as usual
         sql<SQL, any>`SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${raw(`"sq_${alias}"`)}`;
   query.runResultTransform =
+
     mode === SelectResultMode.Numeric ?
       // note: pg deliberately returns strings for int8 in case 64-bit numbers overflow
       // (see https://github.com/brianc/node-pg-types#use), but we assume our counts aren't that big
       (qr) => Number(qr.rows[0].result) :
+
       mode === SelectResultMode.ExactlyOne ?
         (qr) => {
           const result = qr.rows[0]?.result;
