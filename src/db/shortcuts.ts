@@ -59,13 +59,13 @@ type FullLateralOption = LimitedLateralOption | SQLFragment<any>;
 type LateralOption<
   C extends ColumnsOption<Table>,
   E extends ExtrasOption<Table>,
-  > =
+> =
   undefined extends C ? undefined extends E ? FullLateralOption : LimitedLateralOption : LimitedLateralOption;
 
 export interface ReturningOptionsForTable<T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>> {
   returning?: C;
   extras?: E;
-}
+};
 
 type ReturningTypeForTable<T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>> =
   (undefined extends C ? JSONSelectableForTable<T> :
@@ -245,8 +245,8 @@ export const upsert: UpsertSignatures = function (
     insertValuesSQL = mapWithSeparator(completedValues, sql`, `, v => sql`(${vals(v)})`),
     colNames = Object.keys(firstRow) as Column[],
     updateValues = options?.updateValues ?? {},
-    updateColumns = [ ...new Set(  // deduplicate the keys here
-      [...((specifiedUpdateColumns as string[]) ?? colNames), ...Object.keys(updateValues)]
+    updateColumns = [...new Set(  // deduplicate the keys here
+      [...specifiedUpdateColumns as string[] ?? colNames, ...Object.keys(updateValues)]
     )],
     conflictTargetSQL = Array.isArray(conflictTarget) ?
       sql`(${mapWithSeparator(conflictTarget, sql`, `, c => c)})` :
@@ -302,7 +302,7 @@ export const update: UpdateSignatures = function (
   where: Whereable | SQLFragment<any>,
   options?: ReturningOptionsForTable<Table, ColumnsOption<Table>, ExtrasOption<Table>>
 ): SQLFragment {
-  
+
   // note: the ROW() constructor below is required in Postgres 10+ if we're updating a single column
   // more info: https://www.postgresql-archive.org/Possible-regression-in-UPDATE-SET-lt-column-list-gt-lt-row-expression-gt-with-just-one-single-column0-td5989074.html
 
@@ -646,6 +646,7 @@ export const selectOne: SelectOneSignatures = function (table, where, options = 
 
   return select(table, where, options, mode ?? SelectResultMode.One);
 };
+
 
 /* === selectExactlyOne === */
 

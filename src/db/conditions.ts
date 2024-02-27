@@ -55,8 +55,8 @@ export const reImatch = <T extends string>(a: T) => sql<SQL, boolean | null, T>`
 export const notReMatch = <T extends string>(a: T) => sql<SQL, boolean | null, T>`${self} !~ ${conditionalParam(a)}`;
 export const notReImatch = <T extends string>(a: T) => sql<SQL, boolean | null, T>`${self} !~* ${conditionalParam(a)}`;
 
-export const isIn = <T>(a: readonly T[]) => "run" in a ? sql`${self} IN ${a}` : a.length > 0 ? sql<SQL, boolean | null, T>`${self} IN (${vals(a)})` : sql`false`;
-export const isNotIn = <T>(a: readonly T[]) => "run" in a ? sql`${self} NOT IN ${a}` : a.length > 0 ? sql<SQL, boolean | null, T>`${self} NOT IN (${vals(a)})` : sql`true`;
+export const isIn = <T>(a: readonly T[]) => 'run' in a ? sql`${self} IN ${a}` : a.length > 0 ? sql<SQL, boolean | null, T>`${self} IN (${vals(a)})` : sql`false`;
+export const isNotIn = <T>(a: readonly T[]) => 'run' in a ? sql`${self} NOT IN ${a}` : a.length > 0 ? sql<SQL, boolean | null, T>`${self} NOT IN (${vals(a)})` : sql`true`;
 
 export const or = <T>(...conditions: SQLFragment<any, T>[] | Whereable[]) => sql<SQL, boolean | null, T>`(${mapWithSeparator(conditions, sql` OR `, c => c)})`;
 export const and = <T>(...conditions: SQLFragment<any, T>[] | Whereable[]) => sql<SQL, boolean | null, T>`(${mapWithSeparator(conditions, sql` AND `, c => c)})`;
@@ -65,7 +65,7 @@ export const not = <T>(condition: SQLFragment<any, T> | Whereable) => sql<SQL, b
 // things that aren't genuinely conditions
 type PluralisingIntervalUnit = 'microsecond' | 'millisecond' | 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year' | 'decade';
 type IntervalUnit = PluralisingIntervalUnit | `${PluralisingIntervalUnit}s` | 'century' | 'centuries' | 'millennium' | 'millennia';
-export const fromNow = (n: number, unit: IntervalUnit = "millisecond") => sql`now() + ${param(String(n) + ' ' + unit)}`;
+export const fromNow = (n: number, unit: IntervalUnit = 'millisecond') => sql`now() + ${param(String(n) + ' ' + unit)}`;
 export const after = gt;
 export const before = lt;
 export const now = sql`now()`;
