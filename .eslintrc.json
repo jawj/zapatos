@@ -3,35 +3,21 @@
     "node": true,
     "es2017": true
   },
-  "extends": [
-    "eslint:recommended",
-    "prettier",
-    "plugin:import/typescript"
-  ],
+  "extends": ["eslint:recommended", "prettier", "plugin:import/typescript"],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
     "project": "tsconfig.json",
     "sourceType": "module"
   },
-  "ignorePatterns": [
-    "**/*.d.ts",
-    "**/*.js",
-    "**/*.mjs"
-  ],
-  "plugins": [
-    "@typescript-eslint",
-    "import"
-  ],
+  "ignorePatterns": ["**/*.d.ts", "**/*.js", "**/*.mjs"],
+  "plugins": ["@typescript-eslint", "import"],
   "globals": {
     "globalThis": false
   },
   "rules": {
     "import/no-self-import": "warn",
     "import/no-cycle": "warn",
-    "curly": [
-      "error",
-      "multi-line"
-    ],
+    "curly": ["error", "multi-line"],
     "no-template-curly-in-string": "error",
     "prefer-const": "error",
     "prefer-object-spread": "error",
@@ -64,9 +50,6 @@
         }
       }
     ],
-    "@typescript-eslint/semi": [
-      "error",
-      "always"
-    ]
+    "@typescript-eslint/semi": ["error", "always"]
   }
 }
