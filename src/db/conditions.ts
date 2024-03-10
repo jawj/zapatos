@@ -62,6 +62,11 @@ export const or = <T>(...conditions: (SQLFragment<any, T> | Whereable)[]) => sql
 export const and = <T>(...conditions: (SQLFragment<any, T> | Whereable)[]) => sql<SQL, boolean | null, T>`(${mapWithSeparator(conditions, sql` AND `, c => c)})`;
 export const not = <T>(condition: SQLFragment<any, T> | Whereable) => sql<SQL, boolean | null, T>`(NOT ${condition})`;
 
+// array conditions
+export const arrayContains = <T>(a: readonly T[]) => a.length > 0 ? sql<SQL, boolean | null, T[]>`${self} @> ARRAY[${vals(a)}]` : sql`true`;
+export const arrayIsContained = <T>(a: readonly T[]) => sql<SQL, boolean | null, T[]>`${self} <@ ARRAY[${vals(a)}]`;
+export const arrayOverlaps = <T>(a: readonly T[]) => a.length > 0 ? sql<SQL, boolean | null, T[]>`${self} && ARRAY[${vals(a)}]` : sql`false`;
+
 // things that aren't genuinely conditions
 type PluralisingIntervalUnit = 'microsecond' | 'millisecond' | 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year' | 'decade';
 type IntervalUnit = PluralisingIntervalUnit | `${PluralisingIntervalUnit}s` | 'century' | 'centuries' | 'millennium' | 'millennia';
