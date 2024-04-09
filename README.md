@@ -4,4 +4,4 @@ Zapatos aims to make Postgres and TypeScript work beautifully together. No abstr
 
 ### »&nbsp; [Go to documentation](https://jawj.github.io/zapatos/)
 
-Copyright ©️ 2020 - 2023 George MacKerron. Released under the MIT licence.
+Copyright ©️ 2020 - 2024 George MacKerron. Released under the MIT licence.
