@@ -30,7 +30,7 @@ const baseTsTypeForBasePgType = (pgType: string, enums: EnumData, context: TypeC
     case 'int8':
       warnAboutLargeNumbers();
       return context === 'JSONSelectable' ? (config.customJSONParsingForLargeNumbers ? '(number | db.Int8String)' : 'number') :
-        context === 'Selectable' ? 'db.Int8String' : '(number | db.Int8String)';
+        context === 'Selectable' ? 'db.Int8String' : '(number | db.Int8String | bigint)';
     case 'numeric':
       warnAboutLargeNumbers();
       return context === 'JSONSelectable' ? (config.customJSONParsingForLargeNumbers ? '(number | db.NumericString)' : 'number') :
