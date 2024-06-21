@@ -180,7 +180,7 @@ interface UpsertOptions<
 > extends ReturningOptionsForTable<T, C, E> {
   updateValues?: UpdatableForTable<T>;
   updateColumns?: UC;
-  noNullUpdateColumns?: ColumnForTable<T> | ColumnForTable<T>[];
+  noNullUpdateColumns?: ColumnForTable<T> | ColumnForTable<T>[] | typeof all;
   reportAction?: RA;
 }
 
@@ -235,7 +235,7 @@ export const upsert: UpsertSignatures = function (
   if (typeof conflictTarget === 'string') conflictTarget = [conflictTarget];  // now either Column[] or Constraint
 
   let noNullUpdateColumns = options?.noNullUpdateColumns ?? [];
-  if (!Array.isArray(noNullUpdateColumns)) noNullUpdateColumns = [noNullUpdateColumns];
+  if (noNullUpdateColumns !== all && !Array.isArray(noNullUpdateColumns)) noNullUpdateColumns = [noNullUpdateColumns];
 
   let specifiedUpdateColumns = options?.updateColumns;
   if (specifiedUpdateColumns && !Array.isArray(specifiedUpdateColumns)) specifiedUpdateColumns = [specifiedUpdateColumns];
@@ -256,7 +256,7 @@ export const upsert: UpsertSignatures = function (
     updateColsSQL = mapWithSeparator(updateColumns, sql`, `, c => c),
     updateValuesSQL = mapWithSeparator(updateColumns, sql`, `, c =>
       updateValues[c] !== undefined ? updateValues[c] :
-        noNullUpdateColumns.includes(c) ? sql`CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END` :
+        (noNullUpdateColumns === all || noNullUpdateColumns.includes(c)) ? sql`CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END` :
           sql`EXCLUDED.${c}`),
     returningSQL = SQLForColumnsOfTable(options?.returning, table),
     extrasSQL = SQLForExtras(options?.extras),
