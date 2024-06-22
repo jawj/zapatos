@@ -245,6 +245,28 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
   constructor(protected literals: string[], protected expressions: SQL[]) { }
 
   /**
+   * Performs a shallow copy of this SQLFragment, optionally overriding some of its properties.
+   * @param override The properties to override
+   */
+  copy(override?: {
+    literals?: string[];
+    expressions?: SQL[];
+    parentTable?: string;
+    preparedName?: string;
+    noop?: boolean;
+    noopResult?: any;
+  }): SQLFragment<RunResult, Constraint> {
+    const { literals = this.literals, expressions = this.expressions, ...overrideRest } = override ?? {};
+    const copy = new SQLFragment<RunResult, Constraint>(literals, expressions);
+    return Object.assign(copy, {
+      parentTable: this.parentTable,
+      preparedName: this.preparedName,
+      noop: this.noop,
+      noopResult: this.noopResult
+    }, overrideRest);
+  }
+
+  /**
    * Instruct Postgres to treat this as a prepared statement: see
    * https://node-postgres.com/features/queries#prepared-statements
    * @param name A name for the prepared query. If not specified, it takes the
