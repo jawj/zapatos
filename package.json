@@ -11,7 +11,7 @@
     "zapatos": "dist/generate/cli.js"
   },
   "scripts": {
-    "lint": "eslint --ext .ts .",
+    "lint": "eslint src/db/*.ts src/generate/*.ts",
     "build": "npx tsc && npx gen-esm-wrapper db db.mjs && npx gen-esm-wrapper generate generate.mjs",
     "version": "npm run lint && npm run build",
     "postversion": "git push && git push --tags && npm publish",
@@ -52,14 +52,21 @@
     "pg": ">=7.18.2",
     "typescript": ">=4.1"
   },
+  "overrides": {
+    "eslint": "^9.5.0"
+  },
   "devDependencies": {
+    "@eslint/compat": "^1.1.0",
+    "@eslint/eslintrc": "^3.1.0",
+    "@eslint/js": "^9.5.0",
     "@types/pg": "^8.6.5",
-    "@typescript-eslint/eslint-plugin": "^6.11.0",
-    "@typescript-eslint/parser": "^6.11.0",
-    "eslint": "^8.24.0",
+    "@typescript-eslint/eslint-plugin": "^7.13.1",
+    "@typescript-eslint/parser": "^7.13.1",
+    "eslint": "^9.5.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "^2.26.0",
     "gen-esm-wrapper": "^1.1.3",
+    "globals": "^15.6.0",
     "pg": "^8.7.3",
     "typescript": "^5.2.2"
   },
