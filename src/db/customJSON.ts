@@ -12,10 +12,13 @@ export function enableCustomJSONParsingForLargeNumbers(pg: typeof pgLib) {
   pg.types.setTypeParser(pg.types.builtins.JSONB, parseJSONWithLargeNumbersAsStrings);
 }
 
+const { MAX_SAFE_INTEGER, MIN_SAFE_INTEGER } = Number;
+
 function parseJSONWithLargeNumbersAsStrings(str: string) {
   return parse(str, undefined, function (k, str) {
     const n = +str;  // JSON parser ensures this is an ordinary number, parseInt(str, 10) not needed
     if (n === Infinity || n === -Infinity) return str;
+    if ((n < MIN_SAFE_INTEGER || n > MAX_SAFE_INTEGER) && str.indexOf('.') === -1) return str;
     if (str.length <= 15 || numericStringToExponential(str) === n.toExponential()) return n;
     return str;
   });
