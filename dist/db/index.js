@@ -34,7 +34,4 @@ __exportStar(require("./shortcuts"), exports);
 __exportStar(require("./transaction"), exports);
 var utils_1 = require("./utils");
 Object.defineProperty(exports, "mapWithSeparator", { enumerable: true, get: function () { return utils_1.mapWithSeparator; } });
-const pg_1 = require("pg");
-const JSONBigNative = require('json-bigint')({ useNativeBigInt: true });
-pg_1.types.setTypeParser(pg_1.types.builtins.JSONB, JSONBigNative.parse);
 exports.conditions = require("./conditions");

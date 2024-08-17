@@ -9,6 +9,7 @@ import { tsTypeForPgType } from './pgTypes';
 import type { EnumData } from './enums';
 import type { CustomTypes } from './tsOutput';
 import { CompleteConfig } from './config';
+import { TYPE_HOOK } from '../db/serde';
 
 
 export interface Relation {
@@ -113,19 +114,19 @@ export const definitionForRelationInSchema = async (
   rows.forEach(row => {
     const { column, isGenerated, isNullable, hasDefault, udtName, domainName } = row;
     let selectableType =
-        config.types[rel.name]?.[column] ??
+        TYPE_HOOK[rel.name]?.[column] ??
         tsTypeForPgType(udtName, enums, "Selectable"),
       JSONSelectableType =
-        config.types[rel.name]?.[column] ??
+        TYPE_HOOK[rel.name]?.[column] ??
         tsTypeForPgType(udtName, enums, "JSONSelectable"),
       whereableType =
-        config.types[rel.name]?.[column] ??
+        TYPE_HOOK[rel.name]?.[column] ??
         tsTypeForPgType(udtName, enums, "Whereable"),
       insertableType =
-        config.types[rel.name]?.[column] ??
+        TYPE_HOOK[rel.name]?.[column] ??
         tsTypeForPgType(udtName, enums, "Insertable"),
       updatableType =
-        config.types[rel.name]?.[column] ??
+        TYPE_HOOK[rel.name]?.[column] ??
         tsTypeForPgType(udtName, enums, "Updatable");
 
     const
