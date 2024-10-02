@@ -280,7 +280,7 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
       result = this.noopResult;
     }
 
-    if (resultListener) resultListener(result, txnId, timing() - startMs!);
+    if (resultListener) resultListener(result, txnId, timing() - startMs!, query);
     return result;
   };
 
