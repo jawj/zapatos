@@ -53,12 +53,12 @@ export type ExtrasResult<T extends Table, E extends SQLFragmentOrColumnMap<T>> =
   E[K] extends SQLFragment<any> ? RunResultForSQLFragment<E[K]> : E[K] extends keyof JSONSelectableForTable<T> ? JSONSelectableForTable<T>[E[K]] : never;
 };
 
-type ExtrasOption<T extends Table> = SQLFragmentOrColumnMap<T> | undefined;
-type ColumnsOption<T extends Table> = readonly ColumnForTable<T>[] | undefined;
+export type ExtrasOption<T extends Table> = SQLFragmentOrColumnMap<T> | undefined;
+export type ColumnsOption<T extends Table> = readonly ColumnForTable<T>[] | undefined;
 
 type LimitedLateralOption = SQLFragmentMap | undefined;
 type FullLateralOption = LimitedLateralOption | SQLFragment<any>;
-type LateralOption<
+export type LateralOption<
   C extends ColumnsOption<Table>,
   E extends ExtrasOption<Table>,
 > =
