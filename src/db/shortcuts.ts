@@ -542,12 +542,11 @@ export const select: SelectSignatures = function (
     }),
     lateralSQL = lateral === undefined ? [] :
       lateral instanceof SQLFragment ? (() => {
-        lateral.parentTable = alias;
-        return sql` LEFT JOIN LATERAL (${lateral}) AS "lateral_passthru" ON true`;
+        return sql` LEFT JOIN LATERAL (${lateral.copy({ parentTable: alias })}) AS "lateral_passthru" ON true`;
       })() :
         Object.keys(lateral).sort().map(k => {
-          const subQ = lateral[k];
-          subQ.parentTable = alias;  // enables `parent('column')` in subquery's Whereables
+          /// enables `parent('column')` in subquery's Whereables
+          const subQ = lateral[k].copy({ parentTable: alias });
           return sql` LEFT JOIN LATERAL (${subQ}) AS "lateral_${raw(k)}" ON true`;
         });
 
