@@ -31,8 +31,6 @@ export const generate = async (suppliedConfig: Config) => {
     folderName = 'zapatos',
     schemaName = 'schema' + config.outExt,
     customFolderName = 'custom',
-    eslintrcName = '.eslintrc.json',
-    eslintrcContent = '{\n  "ignorePatterns": [\n    "*"\n  ]\n}',
     customTypesIndexName = 'index' + config.outExt,
     customTypesIndexContent = header() + `
 // this empty declaration appears to fix relative imports in other custom type files
@@ -42,7 +40,6 @@ declare module 'zapatos/custom' { }
     folderTargetPath = path.join(config.outDir, folderName),
     schemaTargetPath = path.join(folderTargetPath, schemaName),
     customFolderTargetPath = path.join(folderTargetPath, customFolderName),
-    eslintrcTargetPath = path.join(folderTargetPath, eslintrcName),
     customTypesIndexTargetPath = path.join(customFolderTargetPath, customTypesIndexName);
 
   log(`(Re)creating schema folder: ${schemaTargetPath}`);
@@ -50,9 +47,6 @@ declare module 'zapatos/custom' { }
 
   log(`Writing generated schema: ${schemaTargetPath}`);
   fs.writeFileSync(schemaTargetPath, ts, { flag: 'w' });
-
-  log(`Writing local ESLint config: ${eslintrcTargetPath}`);
-  fs.writeFileSync(eslintrcTargetPath, eslintrcContent, { flag: 'w' });
 
   if (Object.keys(customTypeSourceFiles).length > 0) {
     fs.mkdirSync(customFolderTargetPath, { recursive: true });
