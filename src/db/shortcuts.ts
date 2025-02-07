@@ -53,12 +53,12 @@ export type ExtrasResult<T extends Table, E extends SQLFragmentOrColumnMap<T>> =
   E[K] extends SQLFragment<any> ? RunResultForSQLFragment<E[K]> : E[K] extends keyof JSONSelectableForTable<T> ? JSONSelectableForTable<T>[E[K]] : never;
 };
 
-type ExtrasOption<T extends Table> = SQLFragmentOrColumnMap<T> | undefined;
-type ColumnsOption<T extends Table> = readonly ColumnForTable<T>[] | undefined;
+export type ExtrasOption<T extends Table> = SQLFragmentOrColumnMap<T> | undefined;
+export type ColumnsOption<T extends Table> = readonly ColumnForTable<T>[] | undefined;
 
 type LimitedLateralOption = SQLFragmentMap | undefined;
 type FullLateralOption = LimitedLateralOption | SQLFragment<any>;
-type LateralOption<
+export type LateralOption<
   C extends ColumnsOption<Table>,
   E extends ExtrasOption<Table>,
 > =
@@ -542,12 +542,11 @@ export const select: SelectSignatures = function (
     }),
     lateralSQL = lateral === undefined ? [] :
       lateral instanceof SQLFragment ? (() => {
-        lateral.parentTable = alias;
-        return sql` LEFT JOIN LATERAL (${lateral}) AS "lateral_passthru" ON true`;
+        return sql` LEFT JOIN LATERAL (${lateral.copy({ parentTable: alias })}) AS "lateral_passthru" ON true`;
       })() :
         Object.keys(lateral).sort().map(k => {
-          const subQ = lateral[k];
-          subQ.parentTable = alias;  // enables `parent('column')` in subquery's Whereables
+          /// enables `parent('column')` in subquery's Whereables
+          const subQ = lateral[k].copy({ parentTable: alias });
           return sql` LEFT JOIN LATERAL (${subQ}) AS "lateral_${raw(k)}" ON true`;
         });
 
