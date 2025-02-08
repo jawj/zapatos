@@ -410,7 +410,10 @@ export interface SelectOptionsForTable<
   offset?: number;
   withTies?: boolean;
   columns?: C;
+  column?: ColumnForTable<T>;
+  array?: ColumnForTable<T>;
   extras?: E;
+  extra?: SQLFragment<any>;
   groupBy?: ColumnForTable<T> | ColumnForTable<T>[] | SQLFragment<any>;
   having?: WhereableForTable<T> | SQLFragment<any>;
   lateral?: L;
@@ -429,7 +432,7 @@ type SelectReturnTypeForTable<
     L extends SQLFragment<any> ? RunResultForSQLFragment<L> :
     never);
 
-export enum SelectResultMode { Many, One, ExactlyOne, Numeric }
+export enum SelectResultMode { Many, One, ExactlyOne, Numeric, Boolean, Number, String, BooleanArray, NumberArray, StringArray }
 
 export type FullSelectReturnTypeForTable<
   T extends Table,
@@ -439,11 +442,17 @@ export type FullSelectReturnTypeForTable<
   M extends SelectResultMode,
 > =
   {
-    [SelectResultMode.Many]: SelectReturnTypeForTable<T, C, L, E>[];
-    [SelectResultMode.ExactlyOne]: SelectReturnTypeForTable<T, C, L, E>;
-    [SelectResultMode.One]: SelectReturnTypeForTable<T, C, L, E> | undefined;
-    [SelectResultMode.Numeric]: number;
-  }[M];
+  [SelectResultMode.Many]: SelectReturnTypeForTable<T, C, L, E>[];
+  [SelectResultMode.ExactlyOne]: SelectReturnTypeForTable<T, C, L, E>;
+  [SelectResultMode.One]: SelectReturnTypeForTable<T, C, L, E> | undefined;
+  [SelectResultMode.Numeric]: number;
+  [SelectResultMode.Boolean]: boolean;
+  [SelectResultMode.Number]: number;
+  [SelectResultMode.String]: string;
+  [SelectResultMode.BooleanArray]: boolean[];
+  [SelectResultMode.NumberArray]: number[];
+  [SelectResultMode.StringArray]: string[];
+}[M];
 
 export interface SelectSignatures {
   <T extends Table,
@@ -480,8 +489,9 @@ export class NotExactlyOneError extends Error {
  * or `all`
  * @param options Options object. Keys (all optional) are: 
  * * `columns` — an array of column names: only these columns will be returned
- * * `order` – an array of `OrderSpec` objects, such as 
- * `{ by: 'column', direction: 'ASC' }`  
+ * * `column` — a single column name for nested queries
+ * * `order` – an array of `OrderSpec` objects, such as
+ * `{ by: 'column', direction: 'ASC' }`
  * * `limit` and `offset` – numbers: apply this limit and offset to the query
  * * `lateral` — either an object mapping keys to nested `select`/`selectOne`/
  * `count` queries to be `LATERAL JOIN`ed, or a single `select`/`selectOne`/
@@ -489,9 +499,11 @@ export class NotExactlyOneError extends Error {
  * the containing query
  * * `alias` — table alias (string): required if using `lateral` to join a table
  * to itself
- * * `extras` — an object mapping key(s) to `SQLFragment`s, so that derived 
+ * * `extras` — an object mapping key(s) to `SQLFragment`s, so that derived
+ * * `extra` — a single extra name for nested queries
+ * * `array` — a single column name to be concatenated with array_agg in nested queries
  * quantities can be included in the JSON result
- * @param mode (Used internally by `selectOne` and `count`)
+ * @param mode (Used internally by `selectOne`, `count` and sub-queries)
  */
 export const select: SelectSignatures = function (
   table: Table,
@@ -500,26 +512,32 @@ export const select: SelectSignatures = function (
   mode: SelectResultMode = SelectResultMode.Many,
   aggregate: string = 'count',
 ) {
-
-  const
-    limit1 = mode === SelectResultMode.One || mode === SelectResultMode.ExactlyOne,
+  const limit1 =
+      mode === SelectResultMode.Boolean ||
+      mode === SelectResultMode.Number ||
+      mode === SelectResultMode.String ||
+      mode === SelectResultMode.One ||
+      mode === SelectResultMode.ExactlyOne,
     allOptions = limit1 ? { ...options, limit: 1 } : options,
     alias = allOptions.alias || table,
-    { distinct, groupBy, having, lateral, columns, extras } = allOptions,
+    { distinct, groupBy, having, lateral, columns, column, extras, extra, array } = allOptions,
     lock = allOptions.lock === undefined || Array.isArray(allOptions.lock) ? allOptions.lock : [allOptions.lock],
     order = allOptions.order === undefined || Array.isArray(allOptions.order) ? allOptions.order : [allOptions.order],
     tableAliasSQL = alias === table ? [] : sql<string>` AS ${alias}`,
     distinctSQL = !distinct ? [] : sql` DISTINCT${distinct instanceof SQLFragment || typeof distinct === 'string' ? sql` ON (${distinct})` :
       Array.isArray(distinct) ? sql` ON (${cols(distinct)})` : []}`,
-    colsSQL = lateral instanceof SQLFragment ? [] :
-      mode === SelectResultMode.Numeric ?
+    colsSQL = lateral instanceof SQLFragment || extra ? [] :
+     mode === SelectResultMode.Numeric ?
         (columns ? sql`${raw(aggregate)}(${cols(columns)})` : sql`${raw(aggregate)}(${alias}.*)`) :
-        SQLForColumnsOfTable(columns, alias as Table),
-    colsExtraSQL = lateral instanceof SQLFragment || mode === SelectResultMode.Numeric ? [] : SQLForExtras(extras),
-    colsLateralSQL = lateral === undefined || mode === SelectResultMode.Numeric ? [] :
-      lateral instanceof SQLFragment ? sql`"lateral_passthru".result` :
+        array ? sql`array_agg(${array})` :
+        column ? sql`${column}` :
+        SQLForColumnsOfTable(columns as Column[], alias as Table),
+    colsExtraSQL = lateral instanceof SQLFragment || mode === SelectResultMode.Numeric ? [] : extra ? sql`${extra}` : SQLForExtras(extras),
+    colsLateralSQL =
+      lateral === undefined || mode === SelectResultMode.Numeric ? [] :
+        lateral instanceof SQLFragment ? sql`"lateral_passthru".result` :
         sql` || jsonb_build_object(${mapWithSeparator(
-          Object.keys(lateral).sort(), sql`, `, k => sql`${param(k)}::text, "lateral_${raw(k)}".result`)})`,
+            Object.keys(lateral).sort(), sql`, `, k => sql`${param(k)}::text, "lateral_${raw(k)}".result`)})`,
     allColsSQL = sql`${colsSQL}${colsExtraSQL}${colsLateralSQL}`,
     whereSQL = where === all ? [] : sql` WHERE ${where}`,
     groupBySQL = !groupBy ? [] : sql` GROUP BY ${groupBy instanceof SQLFragment || typeof groupBy === 'string' ? groupBy : cols(groupBy)}`,
@@ -552,10 +570,13 @@ export const select: SelectSignatures = function (
 
   const
     rowsQuery = sql<SQL, any>`SELECT${distinctSQL} ${allColsSQL} AS result FROM ${table}${tableAliasSQL}${lateralSQL}${whereSQL}${groupBySQL}${havingSQL}${orderSQL}${limitSQL}${offsetSQL}${lockSQL}`,
-    query = mode !== SelectResultMode.Many ? rowsQuery :
-      // we need the aggregate to sit in a sub-SELECT in order to keep ORDER and LIMIT working as usual
-      sql<SQL, any>`SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${raw(`"sq_${alias}"`)}`;
-
+    query = mode !== SelectResultMode.Many &&
+      mode !== SelectResultMode.BooleanArray &&
+      mode !== SelectResultMode.NumberArray &&
+      mode !== SelectResultMode.StringArray ? rowsQuery :
+        column || array ? sql<SQL, any>`${rowsQuery}` :
+        // we need the aggregate to sit in a sub-SELECT in order to keep ORDER and LIMIT working as usual
+        sql<SQL, any>`SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${raw(`"sq_${alias}"`)}`;
   query.runResultTransform =
 
     mode === SelectResultMode.Numeric ?
@@ -569,7 +590,7 @@ export const select: SelectSignatures = function (
           if (result === undefined) throw new NotExactlyOneError(query, 'One result expected but none returned (hint: check `.query.compile()` on this Error)');
           return result;
         } :
-        // SelectResultMode.One or SelectResultMode.Many
+        // SelectResultMode.One or SelectResultMode.Many or types of subqueries results
         (qr) => qr.rows[0]?.result;
 
   return query;
@@ -585,11 +606,26 @@ export interface SelectOneSignatures {
     L extends LateralOption<C, E>,
     E extends ExtrasOption<T>,
     A extends string,
+    M extends SelectResultMode = SelectResultMode.One
   >(
     table: T,
     where: WhereableForTable<T> | SQLFragment<any> | AllType,
     options?: SelectOptionsForTable<T, C, L, E, A>,
-  ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, SelectResultMode.One>>;
+    mode?: null
+  ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, M>>;
+  <
+    T extends Table,
+    C extends ColumnsOption<T>,
+    L extends LateralOption<C, E>,
+    E extends ExtrasOption<T>,
+    A extends string,
+    M extends SelectResultMode
+  >(
+    table: T,
+    where: WhereableForTable<T> | SQLFragment<any> | AllType,
+    options?: SelectOptionsForTable<T, C, L, E, A>,
+    mode?: M
+  ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, M>>;
 }
 
 /**
@@ -599,17 +635,17 @@ export interface SelectOneSignatures {
  * @param table The table to select from
  * @param where A `Whereable` or `SQLFragment` defining the rows to be selected,
  * or `all`
- * @param options Options object. See documentation for `select` for details.
+ * @param mode Type of the value returned by a subquery, default to SelectResultMode.One
  */
-export const selectOne: SelectOneSignatures = function (table, where, options = {}) {
-  // you might argue that 'selectOne' offers little that you can't get with 
-  // destructuring assignment and plain 'select' 
+export const selectOne: SelectOneSignatures = function (table, where, options = {}, mode) {
+  // you might argue that 'selectOne' offers little that you can't get with
+  // destructuring assignment and plain 'select'
   // -- e.g.let[x] = async select(...).run(pool); -- but something worth having
   // is '| undefined' in the return signature, because the result of indexing 
   // never includes undefined (until 4.1 and --noUncheckedIndexedAccess)
   // (see https://github.com/Microsoft/TypeScript/issues/13778)
 
-  return select(table, where, options, SelectResultMode.One);
+  return select(table, where, options, mode ?? SelectResultMode.One);
 };
 
 
@@ -622,11 +658,26 @@ export interface SelectExactlyOneSignatures {
     L extends LateralOption<C, E>,
     E extends ExtrasOption<T>,
     A extends string,
+    M extends SelectResultMode = SelectResultMode.ExactlyOne
   >(
     table: T,
     where: WhereableForTable<T> | SQLFragment<any> | AllType,
     options?: SelectOptionsForTable<T, C, L, E, A>,
-  ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, SelectResultMode.ExactlyOne>>;
+    mode?: null
+  ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, M>>;
+  <
+    T extends Table,
+    C extends ColumnsOption<T>,
+    L extends LateralOption<C, E>,
+    E extends ExtrasOption<T>,
+    A extends string,
+    M extends SelectResultMode
+  >(
+    table: T,
+    where: WhereableForTable<T> | SQLFragment<any> | AllType,
+    options?: SelectOptionsForTable<T, C, L, E, A>,
+    mode?: M
+  ): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, M>>;
 }
 
 /**
@@ -638,10 +689,11 @@ export interface SelectExactlyOneSignatures {
  * @param where A `Whereable` or `SQLFragment` defining the rows to be selected,
  * or `all`
  * @param options Options object. See documentation for `select` for details.
+ * @param mode Type of the value returned by a subquery, default to SelectResultMode.ExactlyOne
  */
 
-export const selectExactlyOne: SelectExactlyOneSignatures = function (table, where, options = {}) {
-  return select(table, where, options, SelectResultMode.ExactlyOne);
+export const selectExactlyOne: SelectExactlyOneSignatures = function (table, where, options = {}, mode) {
+  return select(table, where, options, mode ?? SelectResultMode.ExactlyOne);
 };
 
 
@@ -722,4 +774,17 @@ export const min: NumericAggregateSignatures = function (table, where, options?)
  */
 export const max: NumericAggregateSignatures = function (table, where, options?) {
   return select(table, where, options, SelectResultMode.Numeric, 'max');
+};
+
+/**
+ * Transforms an `SQLFragment` into a sub-query to obtain a value instead of an object
+ * @param frag The `SQLFragment` to be transformed
+ * @returns The value of type T result
+ */
+export const nested: <T extends SQLFragment<any>>(
+  frag: T
+) => RunResultForSQLFragment<T> = function <T extends SQLFragment<any>>(
+  frag: T
+): RunResultForSQLFragment<T> {
+  return sql`(${frag})` as RunResultForSQLFragment<T>;
 };
