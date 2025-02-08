@@ -29,11 +29,11 @@ export const isNotFalse = sql<SQL, boolean>`${self} IS NOT FALSE`;
 export const isUnknown = sql<SQL, boolean>`${self} IS UNKNOWN`;
 export const isNotUnknown = sql<SQL, boolean>`${self} IS NOT UNKNOWN`;
 
-export const isDistinctFrom = <T>(a: T) => sql<SQL, boolean, T>`${self} IS DISTINCT FROM ${conditionalParam(a)}`;
-export const isNotDistinctFrom = <T>(a: T) => sql<SQL, boolean, T>`${self} IS NOT DISTINCT FROM ${conditionalParam(a)}`;
+export const isDistinctFrom = <const T>(a: T) => sql<SQL, boolean, T>`${self} IS DISTINCT FROM ${conditionalParam(a)}`;
+export const isNotDistinctFrom = <const T>(a: T) => sql<SQL, boolean, T>`${self} IS NOT DISTINCT FROM ${conditionalParam(a)}`;
 
-export const eq = <T>(a: T) => sql<SQL, boolean | null, T>`${self} = ${conditionalParam(a)}`;
-export const ne = <T>(a: T) => sql<SQL, boolean | null, T>`${self} <> ${conditionalParam(a)}`;
+export const eq = <const T>(a: T) => sql<SQL, boolean | null, T>`${self} = ${conditionalParam(a)}`;
+export const ne = <const T>(a: T) => sql<SQL, boolean | null, T>`${self} <> ${conditionalParam(a)}`;
 export const gt = <T>(a: T) => sql<SQL, boolean | null, T>`${self} > ${conditionalParam(a)}`;
 export const gte = <T>(a: T) => sql<SQL, boolean | null, T>`${self} >= ${conditionalParam(a)}`;
 export const lt = <T>(a: T) => sql<SQL, boolean | null, T>`${self} < ${conditionalParam(a)}`;
@@ -55,8 +55,8 @@ export const reImatch = <T extends string>(a: T) => sql<SQL, boolean | null, T>`
 export const notReMatch = <T extends string>(a: T) => sql<SQL, boolean | null, T>`${self} !~ ${conditionalParam(a)}`;
 export const notReImatch = <T extends string>(a: T) => sql<SQL, boolean | null, T>`${self} !~* ${conditionalParam(a)}`;
 
-export const isIn = <T>(a: readonly T[]) => a.length > 0 ? sql<SQL, boolean | null, T>`${self} IN (${vals(a)})` : sql`false`;
-export const isNotIn = <T>(a: readonly T[]) => a.length > 0 ? sql<SQL, boolean | null, T>`${self} NOT IN (${vals(a)})` : sql`true`;
+export const isIn = <const T extends readonly unknown[]>(a: T) => a.length > 0 ? sql<SQL, boolean | null, T[number]>`${self} IN (${vals(a)})` : sql`false`;
+export const isNotIn = <const T extends readonly unknown[]>(a: T) => a.length > 0 ? sql<SQL, boolean | null, T[number]>`${self} NOT IN (${vals(a)})` : sql`true`;
 
 export const or = <T>(...conditions: (SQLFragment<any, T> | Whereable)[]) => sql<SQL, boolean | null, T>`(${mapWithSeparator(conditions, sql` OR `, c => c)})`;
 export const and = <T>(...conditions: (SQLFragment<any, T> | Whereable)[]) => sql<SQL, boolean | null, T>`(${mapWithSeparator(conditions, sql` AND `, c => c)})`;
