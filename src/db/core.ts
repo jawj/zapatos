@@ -10,10 +10,10 @@ import { getConfig, SQLQuery } from './config';
 import { isPOJO, NoInfer } from './utils';
 
 import type {
+  Column,
+  Table,
   Updatable,
   Whereable,
-  Table,
-  Column,
 } from 'zapatos/schema';
 
 const timing = typeof performance === 'object' ?
@@ -236,6 +236,16 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
    */
   runResultTransform: (qr: pg.QueryResult) => any = qr => qr.rows;
 
+  /**
+   * Flag set by the `selectExactlyOne` shortcut to indicate that, at the
+   * TypeScript level, the calling code expects exactly one row to be returned
+   * by this query. This is primarily used to enforce this expectation when
+   * such a query is used inside a `lateral` option – where the normal
+   * JavaScript‐level `runResultTransform` check would otherwise not be
+   * triggered.
+   */
+  expectExactlyOne?: boolean = undefined;
+
   parentTable?: string = undefined;  // used for nested shortcut select queries
   preparedName?: string = undefined;  // for prepared statements
 
@@ -258,6 +268,10 @@ export class SQLFragment<RunResult = pg.QueryResult['rows'], Constraint = never>
   }): SQLFragment<RunResult, Constraint> {
     const { literals = this.literals, expressions = this.expressions, ...overrideRest } = override ?? {};
     const copy = new SQLFragment<RunResult, Constraint>(literals, expressions);
+
+    // copy across relevant flags that aren’t part of the constructor
+    if (this.expectExactlyOne !== undefined) (copy as any).expectExactlyOne = this.expectExactlyOne;
+
     return Object.assign(copy, {
       parentTable: this.parentTable,
       preparedName: this.preparedName,

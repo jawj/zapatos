@@ -5,31 +5,31 @@ Released under the MIT licence: see LICENCE file
 */
 
 import type {
-  JSONSelectableForTable,
-  WhereableForTable,
-  InsertableForTable,
-  UpdatableForTable,
-  ColumnForTable,
-  UniqueIndexForTable,
-  SQLForTable,
-  Insertable,
-  Updatable,
-  Whereable,
-  Table,
   Column,
+  ColumnForTable,
+  Insertable,
+  InsertableForTable,
+  JSONSelectableForTable,
+  SQLForTable,
+  Table,
+  UniqueIndexForTable,
+  Updatable,
+  UpdatableForTable,
+  Whereable,
+  WhereableForTable,
 } from 'zapatos/schema';
 
 import {
-  AllType,
   all,
-  SQL,
-  SQLFragment,
-  sql,
+  AllType,
   cols,
-  vals,
-  raw,
-  param,
   Default,
+  param,
+  raw,
+  SQL,
+  sql,
+  SQLFragment,
+  vals,
 } from './core';
 
 import {
@@ -431,7 +431,7 @@ type SelectReturnTypeForTable<
 
 export enum SelectResultMode { Many, One, ExactlyOne, Numeric }
 
-export type FullSelectReturnTypeForTable<
+type FullSelectReturnTypeForTable<
   T extends Table,
   C extends ColumnsOption<T>,
   L extends LateralOption<C, E>,
@@ -556,21 +556,68 @@ export const select: SelectSignatures = function (
       // we need the aggregate to sit in a sub-SELECT in order to keep ORDER and LIMIT working as usual
       sql<SQL, any>`SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${raw(`"sq_${alias}"`)}`;
 
-  query.runResultTransform =
-
+  // ----  runtime transform -------------------------------------------------
+  const baseTransform =
     mode === SelectResultMode.Numeric ?
       // note: pg deliberately returns strings for int8 in case 64-bit numbers overflow
       // (see https://github.com/brianc/node-pg-types#use), but we assume our counts aren't that big
-      (qr) => Number(qr.rows[0].result) :
+      (qr: any) => Number(qr.rows[0].result) :
 
       mode === SelectResultMode.ExactlyOne ?
-        (qr) => {
+        (qr: any) => {
           const result = qr.rows[0]?.result;
           if (result === undefined) throw new NotExactlyOneError(query, 'One result expected but none returned (hint: check `.query.compile()` on this Error)');
           return result;
         } :
         // SelectResultMode.One or SelectResultMode.Many
-        (qr) => qr.rows[0]?.result;
+        (qr: any) => qr.rows[0]?.result;
+
+  // If there are any lateral subqueries that themselves expected exactly one
+  // row, we need to verify those expectations here (their own transforms will
+  // not run, because only the outermost query's transform executes).
+
+  let exactlyOneKeys: string[] = [];
+  const lateralPassthruExpectExactlyOne = lateral instanceof SQLFragment ? lateral.expectExactlyOne === true : false;
+
+  if (lateral && !(lateral instanceof SQLFragment)) {
+    exactlyOneKeys = Object.keys(lateral).filter(k => lateral[k].expectExactlyOne === true);
+  }
+
+  if ((lateralPassthruExpectExactlyOne || exactlyOneKeys.length) && mode !== SelectResultMode.Numeric) {
+    query.runResultTransform = (qr) => {
+      const base = baseTransform(qr);
+
+      // Helper to run the check on a single row object
+      const checkRow = (row: any) => {
+        // First: handle pass-through lateral expectation. This check must run
+        // even if the row is a primitive value (null, number, etc).
+        if (lateralPassthruExpectExactlyOne && (row === null || row === undefined)) {
+          throw new NotExactlyOneError(query, 'One result expected but none returned from lateral subquery (hint: check `.query.compile()` on this Error)');
+        }
+
+        // For object-mapped lateral queries, we only need to inspect objects.
+        if (row === null || typeof row !== 'object') return;
+
+        for (const k of exactlyOneKeys) {
+          if (row[k] === null || row[k] === undefined) {
+            throw new NotExactlyOneError(query, `One result expected but none returned from lateral subquery "${k}" (hint: check .query.compile() on this Error)`);
+          }
+        }
+      };
+
+      if (mode === SelectResultMode.Many) {
+        // base is expected to be an array
+        (base as any[]).forEach(checkRow);
+      } else {
+        // base is a single row or undefined/null
+        checkRow(base);
+      }
+
+      return base;
+    };
+  } else {
+    query.runResultTransform = baseTransform;
+  }
 
   return query;
 };
@@ -641,7 +688,12 @@ export interface SelectExactlyOneSignatures {
  */
 
 export const selectExactlyOne: SelectExactlyOneSignatures = function (table, where, options = {}) {
-  return select(table, where, options, SelectResultMode.ExactlyOne);
+  const q = select(table, where, options, SelectResultMode.ExactlyOne);
+  // Mark this SQLFragment so that its parent query can spot that it expects
+  // exactly one row, even when it is used inside a `lateral` join (where the
+  // usual runtime check would not fire).
+  (q as any).expectExactlyOne = true;
+  return q;
 };
 
 
