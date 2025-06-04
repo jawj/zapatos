@@ -15,7 +15,8 @@
     "build": "npx tsc && npx gen-esm-wrapper db db.mjs && npx gen-esm-wrapper generate generate.mjs",
     "version": "npm run lint && npm run build",
     "postversion": "git push && git push --tags && npm publish",
-    "postinstall": "node -e \"console.warn('>>> \\u001b[1;33mZapatos was installed or upgraded. Please (re-)run \\u001b[1;32mnpx zapatos\\u001b[1;33m.\\u001b[0m <<<\\u000a')\""
+    "postinstall": "node -e \"console.warn('>>> \\u001b[1;33mZapatos was installed or upgraded. Please (re-)run \\u001b[1;32mnpx zapatos\\u001b[1;33m.\\u001b[0m <<<\\u000a')\"",
+    "test": "vitest"
   },
   "files": [
     "dist/db",
@@ -68,7 +69,8 @@
     "gen-esm-wrapper": "^1.1.3",
     "globals": "^15.6.0",
     "pg": "^8.7.3",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "vitest": "^3.2.1"
   },
   "dependencies": {
     "json-custom-numbers": "^3.1.1"
