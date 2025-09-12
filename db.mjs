@@ -27,6 +27,7 @@ export const isDatabaseError = mod.isDatabaseError;
 export const mapWithSeparator = mod.mapWithSeparator;
 export const max = mod.max;
 export const min = mod.min;
+export const nested = mod.nested;
 export const param = mod.param;
 export const parent = mod.parent;
 export const raw = mod.raw;
