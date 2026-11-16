@@ -26,6 +26,7 @@ export interface OptionalConfig {
   schemaJSDoc: boolean;
   unprefixedSchema: string | null;
   customJSONParsingForLargeNumbers: boolean;
+  temporalSupport: boolean;
 }
 
 interface SchemaRules {
@@ -59,6 +60,7 @@ const defaultConfig: Config = {
   schemaJSDoc: true,
   unprefixedSchema: 'public',
   customJSONParsingForLargeNumbers: false,
+  temporalSupport: false,
 };
 
 export const moduleRoot = () => {
