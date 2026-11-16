@@ -10,6 +10,50 @@ import type { EnumData } from './enums';
 type TypeContext = 'JSONSelectable' | 'Selectable' | 'Insertable' | 'Updatable' | 'Whereable';
 
 
+type DateTimePgType = 'date' | 'timestamp' | 'timestamptz';
+
+const stringTypeForDateTimePgType = (pgType: DateTimePgType) => {
+  if (pgType === 'date') {
+    return 'db.DateString';
+  } else if (pgType === 'timestamp') {
+    return 'db.TimestampString';
+  } else {
+    return 'db.TimestampTzString';
+  }
+};
+
+const temporalTypeForDateTimePgType = (pgType: DateTimePgType) => {
+  if (pgType === 'date') {
+    return 'Temporal.PlainDate';
+  } else if (pgType === 'timestamp') {
+    return 'Temporal.PlainDateTime';
+  } else {
+    return 'Temporal.Instant';
+  }
+};
+
+const objectTypeForDateTimePgType = (pgType: DateTimePgType, config: CompleteConfig) => {
+  if (config.temporalSupport) {
+    return temporalTypeForDateTimePgType(pgType);
+  } else {
+    return 'Date';
+  }
+};
+
+const tsTypeForDateTimePgType = (pgType: DateTimePgType, context: TypeContext, config: CompleteConfig) => {
+  const
+    stringType = stringTypeForDateTimePgType(pgType),
+    objectType = objectTypeForDateTimePgType(pgType, config);
+
+  if (context === 'JSONSelectable') {
+    return stringType;
+  } else if (context === 'Selectable') {
+    return objectType;
+  } else {
+    return `(${stringType} | ${objectType})`;
+  }
+};
+
 let warnedAboutInt8AndNumeric = false;
 
 const baseTsTypeForBasePgType = (pgType: string, enums: EnumData, context: TypeContext, config: CompleteConfig) => {
@@ -40,17 +84,9 @@ const baseTsTypeForBasePgType = (pgType: string, enums: EnumData, context: TypeC
         context === 'Selectable' ? 'Buffer' :
           '(db.ByteArrayString | Buffer)';
     case 'date':
-      return context === 'JSONSelectable' ? 'db.DateString' :
-        context === 'Selectable' ? 'Date' :
-          '(db.DateString | Date)';
     case 'timestamp':
-      return context === 'JSONSelectable' ? 'db.TimestampString' :
-        context === 'Selectable' ? 'Date' :
-          '(db.TimestampString | Date)';
     case 'timestamptz':
-      return context === 'JSONSelectable' ? 'db.TimestampTzString' :
-        context === 'Selectable' ? 'Date' :
-          '(db.TimestampTzString | Date)';
+      return tsTypeForDateTimePgType(pgType, context, config);
     case 'time':
       return 'db.TimeString';
     case 'timetz':
